@@ -1,21 +1,20 @@
 "use client";
 // Right-hand panel (a bottom sheet on phones): the open block, or selection actions, proposals,
-// workshop context, suggestions, sharing and exports.
+// workshop context, suggestions and the methods in use. Exports live in the header menu.
 import { C, WORKSHOP_CMDS } from "../constants";
 import { RDB, RDL } from "../engine";
 import { eng, applyChanges, mins, uid } from "../items";
-import { agendaCsv, agendaText, copyText, download, exportRows, fileName } from "../exportDoc";
+import { agendaText, copyText, exportRows } from "../exportDoc";
 import type { SelCmd } from "../commands";
 import { hm } from "../time";
 import { BLANK_FILTERS, type Item } from "../types";
-import { BODY, DISPLAY, Kicker, KickerRow, accent, field, outline, path, solid, textBtn, useBuilder } from "../ui";
+import { DISPLAY, Kicker, accent, field, outline, path, textBtn, useBuilder } from "../ui";
 import BlockDetail from "./BlockDetail";
 import ContextPanel from "./ContextPanel";
 import SuggestionsPanel from "./Suggestions";
 import { panelStyle } from "./LibraryPanel";
 
 const chipBtn = (hover = "bh-line-ink") => ({ className: hover, style: outline({ minHeight: 34, padding: "0 9px", fontSize: 13 }) });
-const small = outline({ minHeight: 36, padding: "0 10px", fontSize: 13 });
 
 export default function SidePanel() {
   const { S, store, d } = useBuilder();
@@ -38,7 +37,7 @@ export default function SidePanel() {
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
             {WORKSHOP_CMDS.map(([l, c]) => <button key={c} onClick={() => store.propose(c, c === "cut" ? 30 : null)} {...chipBtn()}>{l}</button>)}
           </div>
-          <ShareExport />
+          <Methods />
         </>
       )}
     </aside>
@@ -158,33 +157,11 @@ function ProposalView() {
   );
 }
 
-function ShareExport() {
-  const { S, store, d } = useBuilder();
-  const share = store.shareState();
-  const rows = () => exportRows(S.items, S.start);
+function Methods() {
+  const { d } = useBuilder();
   const methods = d.eb.filter(x => x.ref).map(x => RDL().get(x.ref)).filter((x, i, a) => x && a.findIndex(y => y?.id === x.id) === i).map(it => ({ it: it!, deco: RDL().deco(it!) }));
   return (
     <>
-      <Kicker style={{ marginTop: 24 }}>SHARE</Kicker>
-      <button onClick={() => store.shareLink()} className="bh-raise" style={outline({ marginTop: 8, width: "100%", border: "1px solid " + C.ink, minHeight: 42, fontSize: 14, fontWeight: 500 })}>
-        {S.sharing ? "Saving…" : share.shared ? (share.upToDate ? "Copy share link" : "Update share link") : "Create share link"}
-      </button>
-      {share.shared && <input readOnly value={share.url} onFocus={e => e.target.select()} aria-label="Share link" style={{ marginTop: 6, width: "100%", boxSizing: "border-box", background: "#141413", border: "1px solid " + C.line, color: C.soft, minHeight: 36, padding: "0 10px", font: "inherit", fontSize: 13 }} />}
-      <p role="status" style={{ margin: "6px 0 0", fontSize: 13, lineHeight: 1.45, color: C.mute }}>{S.shareMsg || (share.shared ? "Updating keeps the same link." : "Saves a copy online. Run notes stay in this browser.")}</p>
-
-      <Kicker style={{ marginTop: 24 }}>EXPORT</Kicker>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
-        <button onClick={() => store.exportFile("pdf")} style={solid({ minHeight: 36, padding: "0 12px", fontSize: 13 })}>{S.exporting === "pdf" ? "Preparing…" : "Agenda PDF"}</button>
-        <button onClick={() => store.exportFile("docx")} style={small}>{S.exporting === "docx" ? "Preparing…" : ".docx"}</button>
-        <CopyAgenda style={small} />
-        <button onClick={() => download(fileName(S.name, ".csv"), "text/csv", agendaCsv(rows()))} style={small}>.csv</button>
-        <button onClick={() => download(fileName(S.name, ".json"), "application/json", JSON.stringify({ name: S.name, start: S.start, brief: S.brief, items: S.items }, null, 2))} style={small}>.json</button>
-      </div>
-      <p style={{ margin: "16px 0 0", fontSize: 13, lineHeight: 1.45, color: C.mute }}>Saved in this browser. PDF and Word files download straight away.</p>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
-        <button onClick={() => store.saveTemplate(S.name)} style={small}>Save as template</button>
-        <button onClick={() => store.duplicateWorkshop()} style={small}>Duplicate</button>
-      </div>
       {methods.length > 0 && (
         <>
           <Kicker style={{ marginTop: 20 }}>METHODS IN THIS WORKSHOP</Kicker>

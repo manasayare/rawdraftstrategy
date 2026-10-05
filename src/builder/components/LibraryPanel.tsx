@@ -12,7 +12,7 @@ import { BODY, Chip, DISPLAY, Kicker, KickerRow, field, path, textBtn, useBuilde
 /** On wide screens panels sit beside the canvas; on phones they open as bottom sheets. */
 export const panelStyle = (wide: boolean, show: boolean): CSSProperties => ({
   position: wide ? "sticky" : "fixed", display: show ? "block" : "none", top: wide ? "84px" : "auto", left: 0, right: 0, bottom: 0,
-  maxHeight: wide ? "calc(100vh - 100px)" : "86vh", overflow: "auto", zIndex: 80, background: wide ? "transparent" : "#0f0f0e",
+  maxHeight: wide ? "calc(100vh - 100px)" : "86vh", overflow: "auto", zIndex: wide ? 1 : 80, background: wide ? "transparent" : "#0f0f0e",
   borderTop: wide ? "0" : "1px solid " + C.edge, padding: wide ? "0 4px 24px 0" : "16px 16px 28px", boxShadow: wide ? "none" : "0 -24px 60px rgba(0,0,0,.7)", minWidth: 0
 });
 

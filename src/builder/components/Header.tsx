@@ -3,7 +3,8 @@
 import { BLANK_NOTICE, C } from "../constants";
 import { clock, hm } from "../time";
 import type { View } from "../types";
-import { BODY, DISPLAY, accent, outline, solid, useBuilder } from "../ui";
+import { BODY, DISPLAY, accent, outline, textBtn, useBuilder } from "../ui";
+import ExportMenu from "./ExportMenu";
 
 const VIEWS: [View, string][] = [["timeline", "Timeline"], ["blocks", "Blocks"], ["days", "Days"]];
 const headBtn = (o = {}) => outline({ minHeight: 40, padding: "0 12px", fontSize: 14, ...o });
@@ -18,7 +19,10 @@ export default function Header() {
   return (
     <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-end", gap: "12px 24px", paddingBottom: 14, borderBottom: "1px solid " + C.rule }}>
       <div style={{ minWidth: 0, flex: "1 1 360px" }}>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 14px", fontSize: 14, color: C.mute }}><span>Builder</span><span>{S.center === "tpl" ? "Templates" : "Build"}</span></div>
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 18px", fontSize: 14, color: C.mute }}>
+          <button onClick={() => store.goHome()} className="bh-ink" style={textBtn({ color: C.soft, fontSize: 14, minHeight: 32 })}>← Back</button>
+          <button onClick={() => store.newWorkshop({}, { notice: BLANK_NOTICE })} className="bh-ink" style={textBtn({ color: C.mute, fontSize: 14, minHeight: 32 })}>+ New workshop</button>
+        </div>
         <input aria-label="Workshop name" value={S.name} onChange={e => store.set({ name: e.target.value })} className="bf-under"
           style={{ display: "block", width: "100%", marginTop: 4, background: "none", border: 0, borderBottom: "1px solid transparent", outline: "none", color: C.ink, padding: "2px 0", fontFamily: DISPLAY, fontWeight: 500, fontSize: "clamp(28px,3.4vw,46px)", letterSpacing: "-.03em", lineHeight: 1.05 }} />
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px 16px", marginTop: 8, fontSize: 15 }}>
@@ -37,10 +41,9 @@ export default function Header() {
               style={{ whiteSpace: "nowrap", background: S.view === k ? C.ink : "transparent", color: S.view === k ? C.bg : C.ink, border: 0, minHeight: 38, padding: "0 12px", cursor: "pointer", fontSize: 14 }}>{l}</button>
           ))}
         </div>
-        <button onClick={() => store.goHome()} className="bh-line-mute" style={headBtn()}>Workshops</button>
         <button onClick={() => store.undo()} disabled={!S.hist.length} style={headBtn({ color: S.hist.length ? C.ink : C.faint })}>Undo</button>
         <button onClick={() => store.set({ center: "tpl", open: null, sheet: null })} className="bh-line-mute" style={headBtn()}>Templates</button>
-        <button onClick={() => store.newWorkshop({}, { notice: BLANK_NOTICE })} style={solid({ minHeight: 40, padding: "0 14px", fontSize: 14 })}>New workshop</button>
+        <ExportMenu />
         <button onClick={() => store.openRun()} disabled={!canRun} title={canRun ? "Facilitate this workshop live" : "Add blocks to the session first"}
           style={accent({ minHeight: 40, padding: "0 16px", fontSize: 14, opacity: canRun ? 1 : 0.4 })}>Run workshop</button>
       </div>

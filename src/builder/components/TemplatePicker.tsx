@@ -1,18 +1,20 @@
 "use client";
-// Template picker shown in the canvas area. Each template opens as a new, editable workshop.
+// Template picker, as a popup over the Builder. Each template opens as a new, editable workshop.
 import { C, TILT } from "../constants";
 import { RDB } from "../engine";
 import { mins, tplItems } from "../items";
 import { hm } from "../time";
-import { DISPLAY, textBtn, useBuilder } from "../ui";
+import { DISPLAY, useBuilder } from "../ui";
 
 export default function TemplatePicker() {
   const { S, store, d } = useBuilder();
   return (
-    <div style={{ background: C.well, border: "1px solid " + C.rule, padding: "clamp(18px,3vw,32px)" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, fontSize: 14, color: C.mute }}>
-        <span>Templates · each opens as an editable copy</span>
-        <button onClick={() => store.set({ center: "canvas" })} style={textBtn({ color: C.soft, fontSize: 14 })}>Back to the canvas</button>
+    <div role="dialog" aria-modal="true" aria-label="Templates" onClick={() => store.set({ center: "canvas" })}
+      style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,.72)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "clamp(12px,5vh,64px) clamp(12px,3vw,40px)", overflow: "auto" }}>
+    <div onClick={e => e.stopPropagation()} style={{ width: "min(1080px,100%)", background: C.well, border: "1px solid " + C.edge, boxShadow: "0 30px 80px rgba(0,0,0,.6)", padding: "clamp(18px,3vw,32px)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
+        <span><span style={{ display: "block", fontFamily: DISPLAY, fontWeight: 500, fontSize: 28 }}>Templates</span><span style={{ fontSize: 14, color: C.mute }}>Each opens as a new workshop you can change.</span></span>
+        <button autoFocus onClick={() => store.set({ center: "canvas" })} aria-label="Close templates" style={{ whiteSpace: "nowrap", background: "none", border: "1px solid " + C.line, color: C.ink, minWidth: 40, minHeight: 40, cursor: "pointer", fontSize: 16 }}>×</button>
       </div>
       {S.mylib.templates.length > 0 && (
         <>
@@ -42,7 +44,8 @@ export default function TemplatePicker() {
           );
         })}
       </div>
-      {d.L.hasBlocks && <p style={{ margin: "14px 0 0", fontSize: 14, color: C.mute }}>Opening a template replaces the canvas. Undo brings it back.</p>}
+      {d.L.hasBlocks && <p style={{ margin: "14px 0 0", fontSize: 14, color: C.mute }}>Opening a template starts a new workshop. This one stays in your workshops.</p>}
+    </div>
     </div>
   );
 }

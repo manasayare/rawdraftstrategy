@@ -120,7 +120,7 @@ export class BuilderStore {
     const ws = loadWorkspace(), cur = ws.current ? ws.workshops.find(w => w.id === ws.current) : undefined;
     this.state = {
       ready: enginesReady(), w: window.innerWidth, reducedMotion: !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
-      phase: cur ? "bench" : "home", workshops: ws.workshops, wid: cur ? cur.id : null,
+      phase: cur?.session?.startedAt && !cur.session.endedAt ? "bench" : "home", workshops: ws.workshops, wid: cur ? cur.id : null,
       items: cur?.items || [], brief: cur?.brief || {}, name: cur ? cur.name : "Untitled workshop", start: cur?.start || "09:30", view: cur?.view || "timeline", context: cur?.context || null, session: cur?.session || null, hist: [],
       open: null, sel: [], drag: null, drop: null, proposal: null, dismissed: cur?.dismissed || {}, sugOpen: null, reviewAll: false, notice: "", live: "", center: "canvas", sheet: null,
       lib: { ...BLANK_FILTERS }, filters: false, libPrev: null, libN: 24, suggestFor: null, pendingAdd: null,
@@ -162,7 +162,7 @@ export class BuilderStore {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       if (this.press?.started) this.endDrag(true);
-      else this.set({ open: null, alts: null, sel: [], sheet: null });
+      else this.set({ open: null, alts: null, sel: [], sheet: null, center: "canvas" });
     };
     window.addEventListener("resize", onResize);
     window.addEventListener("keydown", onKey);
@@ -224,7 +224,13 @@ export class BuilderStore {
     });
   }
   goHome() { this.set(s => ({ workshops: this.workshopList(s), phase: "home", open: null, sel: [], proposal: null, sheet: null })); }
+  /** A blank, untouched workshop is replaced rather than left behind when a template opens. */
+  private dropIfEmpty() {
+    const s = this.state;
+    if (s.wid && !s.items.length && s.name === "Untitled workshop" && !s.context && !s.session) this.set(st => ({ workshops: st.workshops.filter(w => w.id !== st.wid), wid: null }));
+  }
   openTemplate(t: Template) {
+    this.dropIfEmpty();
     this.newWorkshop({ name: t.name, items: tplItems(t), brief: { ...(t.brief as Brief) } }, { notice: t.name + " opened as an editable copy. Change anything." });
   }
   blankWorkshop() { this.newWorkshop({}, { notice: BLANK_NOTICE }); }
@@ -539,6 +545,7 @@ export class BuilderStore {
     this.set({ notice: "Saved “" + t.name + "” to My Library as a template." });
   }
   openMyTemplate(t: MyTemplate) {
+    this.dropIfEmpty();
     this.newWorkshop({ name: t.name, items: cleanItems(t.items).map(x => ({ ...x, id: uid() })), brief: { ...t.brief }, start: t.start, context: t.context }, { notice: t.name + " opened from My Library as a new workshop." });
   }
   removeTemplate(id: string) { this.setMyLib(m => ({ ...m, templates: m.templates.filter(t => t.id !== id) })); }

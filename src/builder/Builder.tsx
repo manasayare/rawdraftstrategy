@@ -47,10 +47,11 @@ export default function Builder(props: BuilderProps) {
             <Notices />
             <div style={{ display: "grid", gridTemplateColumns: wide ? "minmax(260px,300px) minmax(0,1fr) minmax(280px,330px)" : "minmax(0,1fr)", gap: "20px clamp(16px,2vw,28px)", alignItems: "start", marginTop: 18 }}>
               <LibraryPanel />
-              <main style={{ minWidth: 0 }}>{S.center === "tpl" ? <TemplatePicker /> : <Canvas />}</main>
+              <main style={{ minWidth: 0 }}><Canvas /></main>
               <SidePanel />
             </div>
             {!wide && !S.drag && <MobileBar />}
+            {S.center === "tpl" && <TemplatePicker />}
           </>
         )}
         <Ghost />
