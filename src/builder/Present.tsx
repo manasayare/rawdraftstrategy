@@ -48,6 +48,7 @@ export default function Present() {
           ) : (
             <>
               {snap.question && <p style={{ margin: "3vh 0 0", fontFamily: DISPLAY, fontSize: "clamp(24px,2.8vw,48px)", lineHeight: 1.2, color: C.ink, maxWidth: "28ch" }}>{snap.question}</p>}
+              {(snap.join || []).map(j => <p key={j.url} style={{ margin: "2vh 0 0", fontSize: "clamp(18px,1.8vw,30px)", color: C.ink }}><span style={{ color: C.mute }}>{j.tool} · </span>{j.url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}</p>)}
               {snap.lines.length > 0 && <ol style={{ margin: "3vh 0 0", paddingLeft: "1.2em", fontSize: "clamp(20px,2vw,34px)", lineHeight: 1.45, color: C.soft, display: "flex", flexDirection: "column", gap: "1vh" }}>{snap.lines.map((l, i) => <li key={i}>{l}</li>)}</ol>}
             </>
           )}

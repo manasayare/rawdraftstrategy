@@ -7,6 +7,7 @@ import { RDB, RDL } from "../engine";
 import { knownTime } from "../library";
 import { scriptFor } from "../run/script";
 import { SuggestionCard } from "./Suggestions";
+import { linksOf } from "../tools";
 import { copyText } from "../exportDoc";
 import { mins, uid } from "../items";
 import { BLANK_FILTERS, type Item } from "../types";
@@ -44,6 +45,7 @@ export default function BlockDetail({ x }: { x: Item }) {
     fld("transition", "Transition", "", 1, "How you hand over to the next block"),
     fld("participant", "Participant screen", sc.participant.join("\n"), 3, "What the room sees. One line each.")
   ];
+  const links = linksOf(x);
   const liveBlocks = S.items.filter(y => y.zone === "live" && y.kind === "block");
   const showAlts = S.alts === x.id, alts = showAlts ? B.alternatives(b, er) : [];
   const suggest = (dir: "before" | "after") => store.set({ suggestFor: { id: x.id, dir }, open: null, sheet: wide ? null : "lib", lib: { ...BLANK_FILTERS } });
@@ -137,6 +139,17 @@ export default function BlockDetail({ x }: { x: Item }) {
             style={{ ...field, display: "block", width: "100%", marginTop: 4, padding: "8px 10px", fontFamily: BODY, fontSize: 14, lineHeight: 1.45, resize: "vertical" }} />
         </label>
       ))}
+      <div style={{ marginTop: 14 }}>
+        <div style={{ fontSize: 12, color: C.mute }}>Boards, polls and slides</div>
+        {links.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
+            {links.map(l => <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer" title={l.url} style={{ whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", minHeight: 32, border: "1px solid " + C.line, color: C.ink, padding: "0 10px", fontSize: 13, textDecoration: "none" }}>{l.tool}{l.label ? " · " + l.label : ""} ↗</a>)}
+          </div>
+        )}
+        <textarea aria-label="Board, poll and slides links" value={x.cfg.links || ""} onChange={e => store.setCfg(x.id, "links", e.target.value)} rows={2}
+          placeholder={"Paste a Miro board, FigJam file, Mentimeter poll or Google Slides link. One per line; text before a link becomes its label."}
+          style={{ ...field, display: "block", width: "100%", marginTop: 6, padding: "8px 10px", fontFamily: BODY, fontSize: 13, lineHeight: 1.45, resize: "vertical" }} />
+      </div>
       <details style={{ marginTop: 14 }}>
         <summary style={{ cursor: "pointer", fontSize: 13, color: C.soft }}>Facilitator script · what Run mode shows</summary>
         {script.map(f => (

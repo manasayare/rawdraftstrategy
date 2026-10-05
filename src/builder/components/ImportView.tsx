@@ -131,7 +131,6 @@ export default function ImportView() {
             <button onClick={kind === "workshop" ? importWorkshop : read} disabled={!text.trim()} style={accent({ minHeight: 48, padding: "0 22px", fontSize: 16, opacity: text.trim() ? 1 : 0.4 })}>{kind === "workshop" ? "Import workshop" : "Read context"}</button>
             {!text && kind !== "workshop" && <button onClick={() => { setText(EXAMPLE); setKind("ai"); }} className="bh-ink" style={textBtn({ color: C.mute, fontSize: 14, minHeight: 40 })}>Try an example conversation</button>}
             <span style={{ flex: "1 1 auto" }} />
-            <button onClick={() => store.set({ phase: fromWorkshop ? "bench" : "home" })} className="bh-ink" style={textBtn({ color: C.mute, fontSize: 14, minHeight: 40 })}>Cancel</button>
           </div>
           <p style={{ margin: "14px 0 0", fontSize: 13, color: C.mute, maxWidth: "70ch" }}>Nothing is sent anywhere. The text is read in this browser and saved with the workshop as a source you can return to.</p>
         </>
@@ -167,6 +166,7 @@ function Review({ r, setR, back, text, fromWorkshop }: { r: ReviewState; setR: (
 
   return (
     <div>
+      <button onClick={back} className="bh-ink" style={textBtn({ color: C.soft, fontSize: 14, minHeight: 36, marginBottom: 10 })}>← Edit the text</button>
       <Kicker>BUILDER · IMPORT · REVIEW</Kicker>
       <h1 style={{ margin: "12px 0 0", fontFamily: DISPLAY, fontWeight: 500, fontSize: "clamp(32px,4.4vw,60px)", letterSpacing: "-.035em", lineHeight: 0.95 }}>Context understood.</h1>
       <p style={{ margin: "10px 0 0", fontSize: 16, color: C.soft, maxWidth: "62ch" }}>Correct anything before building. This stays with the workshop as its brief.</p>
@@ -249,7 +249,6 @@ function Review({ r, setR, back, text, fromWorkshop }: { r: ReviewState; setR: (
         <button onClick={() => go("blank")} style={outline({ minHeight: 50, padding: "0 18px", fontSize: 15, border: "1px solid " + C.edge })}>Start blank with this context</button>
         {fromWorkshop && <button onClick={() => go("attach")} style={outline({ minHeight: 50, padding: "0 18px", fontSize: 15, border: "1px solid " + C.edge })}>Add context to “{S.name}”</button>}
         <span style={{ flex: "1 1 auto" }} />
-        <button onClick={back} className="bh-ink" style={textBtn({ color: C.mute, fontSize: 14, minHeight: 40 })}>← Edit the text</button>
       </div>
     </div>
   );

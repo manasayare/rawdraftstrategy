@@ -10,6 +10,8 @@ export type LibItem = {
   short?: string;
   outputs?: string[];
   steps?: LibStep[];
+  sourceUrl?: string;
+  toolLinks?: { tool?: string; url: string; label?: string }[];
   materials?: string[];
   failures?: string[];
   useWhen?: string[];

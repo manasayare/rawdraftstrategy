@@ -135,6 +135,8 @@ class Component extends DCLogic {
       if (ou && it.origin !== "rawdraft") rows.push({ title: so ? so.name : (it.creator || "Original source"), meta: "Original source · External", actions: [ext("View original", ou)], planned: false });
       if (rows.length) secs.push({ id: "resources", title: "Resources", sub: [], kind: "assets", assets: rows.map(x => Object.assign({ isPrompt: false, open: false, p: {}, hasVis: false, vis: "" }, x)), op: true });
     }
+    const toolL = (it.toolLinks || []).filter(l => l && l.url);
+    if (toolL.length) sec("templates", "Ready-made boards", [links("", toolL.map(l => { let h = "link"; try { h = new URL(l.url).hostname.replace(/^www\./, ""); } catch (e) {} return { title: "Open " + (l.label ? l.label + " " : "template ") + "in " + (l.tool || h), href: l.url, tag: l.tool || "External link" }; }))]);
     if (T === "resource") sec("resource", "Details", [pairs("", [["Creator", it.creator], ["Organization", so && so.name], ["Format", it.format], ["Best for", it.recommendedFor], ["Level", it.level], ["Rights", it.rights]]), links("", (it.sourceUrl || (so && so.url)) ? [{ title: "Go to original source", href: it.sourceUrl || so.url, tag: "External link" }] : null)]);
 
     // Related
@@ -207,8 +209,8 @@ Component.prototype.template = function (V) {
         {V.found ? (
           <>
             <div data-noprint="1" style={{"fontSize":"15px","color":"#8f8b80"}}>
-              <a href="/library" style={{"color":"#8f8b80","textDecoration":"none"}}>
-                {"Library"}
+              <a href="/library" style={{"color":"#c9c5ba","textDecoration":"none"}} className="scp-hover-0">
+                {"← Library"}
               </a>
               {" / "}
               <a href={dcHref(V.typeHref)} style={{"color":"#8f8b80","textDecoration":"none"}}>

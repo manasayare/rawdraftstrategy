@@ -6,6 +6,7 @@ import { C } from "../../constants";
 import { mins } from "../../items";
 import { CAPTURE_TYPES, SHOW_LABELS, curId, elapsed, planOf, recoveryOptions, schedule } from "../../run/session";
 import { scriptFor } from "../../run/script";
+import { linksOf } from "../../tools";
 import { clock, hm, mmss } from "../../time";
 import type { Capture, Item } from "../../types";
 import { BODY, DISPLAY, Kicker, accent, field, outline, solid, textBtn, useBuilder } from "../../ui";
@@ -34,7 +35,7 @@ export default function LiveRun() {
   const prev = pk >= 0 ? byId.get(ss.order[pk]) : undefined, next = nk < ss.order.length ? byId.get(ss.order[nk]) : undefined;
   const planMs = planOf(ss, cur) * 60000, el = elapsed(ss, now), rem = planMs - el, running = !!ss.t0, started = ss.started.includes(cur.id) || el > 0;
   const tstate = timerState(rem, planMs, running, started), isBreak = cur.role === "breaks";
-  const sc = scriptFor(cur, S.brief, next);
+  const sc = scriptFor(cur, S.brief, next), curLinks = linksOf(cur);
   const late = sch.late, showLate = late >= 5 && (lateIgnored == null || late >= lateIgnored + 5);
   const recov = showLate ? recoveryOptions(ss, S.items, late) : [];
   const slot = sch.slots[ss.i], dayL = sch.days > 1 ? "Day " + sch.day + " of " + sch.days : "";
@@ -58,6 +59,7 @@ export default function LiveRun() {
     <div style={{ flex: "1 1 auto", display: "flex", flexDirection: "column", minHeight: 0 }}>
       {/* Workshop bar */}
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 24px", padding: "12px clamp(16px,3vw,36px)", borderBottom: "1px solid " + C.rule }}>
+        <button onClick={() => store.exitRun()} title="Back to Build. The session and its clock keep going." className="bh-ink" style={{ whiteSpace: "nowrap", background: "none", border: 0, borderRight: "1px solid " + C.rule, color: C.soft, cursor: "pointer", alignSelf: "stretch", padding: "0 18px 0 0", fontSize: 15 }}>← Build</button>
         <div style={{ minWidth: 0, flex: "1 1 260px" }}>
           <div style={{ fontSize: 12, letterSpacing: ".07em", color: C.accent }}>RUNNING{dayL ? " · " + dayL.toUpperCase() : ""}</div>
           <div style={{ marginTop: 2, fontSize: 16, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{S.name}</div>
@@ -75,7 +77,6 @@ export default function LiveRun() {
           <button onClick={openPresent} title="Open the participant screen in a new window" style={outline({ minHeight: 40, padding: "0 12px", fontSize: 14 })}>Present ↗</button>
           <button onClick={() => store.set({ runOverlay: S.runOverlay === "view" ? null : "view" })} style={outline({ minHeight: 40, padding: "0 12px", fontSize: 14 })}>View</button>
           <button onClick={() => store.set({ runOverlay: S.runOverlay === "help" ? null : "help" })} aria-label="Keyboard shortcuts" title="Shortcuts (?)" style={outline({ minHeight: 40, minWidth: 40, fontSize: 14 })}>?</button>
-          <button onClick={() => store.exitRun()} title="Leave Run mode. The session keeps going." style={textBtn({ color: C.mute, fontSize: 14, minHeight: 40, padding: "0 6px" })}>Hide</button>
           <button onClick={() => (confirmEnd ? store.runEnd() : setConfirmEnd(true))} style={outline({ minHeight: 40, padding: "0 12px", fontSize: 14, color: confirmEnd ? C.bg : C.ink, background: confirmEnd ? C.accent : "none", border: "1px solid " + (confirmEnd ? C.accent : C.line) })}>{confirmEnd ? "Confirm: end workshop" : "End workshop"}</button>
         </div>
       </div>
@@ -103,6 +104,11 @@ export default function LiveRun() {
         <main style={{ minWidth: 0 }}>
           <Label color={isBreak ? C.accent : undefined}>{isBreak ? "BREAK" : "CURRENT · " + (ss.i + 1) + " OF " + ss.order.length + (slot?.sec ? " · " + slot.sec.toUpperCase() : "")}</Label>
           <h1 style={{ margin: "8px 0 0", fontFamily: DISPLAY, fontWeight: 500, fontSize: isBreak ? "clamp(56px,8vw,120px)" : "clamp(34px,4.6vw,68px)", letterSpacing: "-.035em", lineHeight: 0.98, maxWidth: "18ch", textWrap: "balance" }}>{cur.title}</h1>
+          {curLinks.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
+              {curLinks.map(l => <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer" title={l.url} className="rd-run-btn" style={{ whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", minHeight: 40, padding: "0 14px", border: "1px solid " + C.edge, color: C.ink, textDecoration: "none", fontSize: 15 }}>Open {l.tool}{l.label ? " · " + l.label : ""} ↗</a>)}
+            </div>
+          )}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "28px clamp(28px,4vw,56px)", alignItems: "center", marginTop: 26 }}>
             {show.timer && <Timer remMs={rem} planMs={planMs} state={tstate} size={timerSize} flash={flash} />}
             <div style={{ flex: "1 1 260px", minWidth: 0 }}>

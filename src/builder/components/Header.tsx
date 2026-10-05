@@ -20,7 +20,6 @@ export default function Header() {
     <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-end", gap: "12px 24px", paddingBottom: 14, borderBottom: "1px solid " + C.rule }}>
       <div style={{ minWidth: 0, flex: "1 1 360px" }}>
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 18px", fontSize: 14, color: C.mute }}>
-          <button onClick={() => store.goHome()} className="bh-ink" style={textBtn({ color: C.soft, fontSize: 14, minHeight: 32 })}>← Back</button>
           <button onClick={() => store.newWorkshop({}, { notice: BLANK_NOTICE })} className="bh-ink" style={textBtn({ color: C.mute, fontSize: 14, minHeight: 32 })}>+ New workshop</button>
         </div>
         <input aria-label="Workshop name" value={S.name} onChange={e => store.set({ name: e.target.value })} className="bf-under"

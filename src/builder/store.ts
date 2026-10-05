@@ -223,6 +223,12 @@ export class BuilderStore {
       return { workshops: list, wid: id, items: w.items || [], brief: w.brief || {}, name: w.name, start: w.start || "09:30", view: w.view || "timeline", context: w.context || null, session: w.session || null, dismissed: w.dismissed || {}, sugOpen: null, hist: [], phase: "bench", center: "canvas", open: null, sel: [], proposal: null, notice: "" };
     });
   }
+  /** One level up: Import or Review back to Build, Build back to the workshops list. */
+  back() {
+    const s = this.state;
+    if ((s.phase === "import" || s.phase === "review") && s.wid && s.workshops.some(w => w.id === s.wid)) this.set({ phase: "bench" });
+    else this.goHome();
+  }
   goHome() { this.set(s => ({ workshops: this.workshopList(s), phase: "home", open: null, sel: [], proposal: null, sheet: null })); }
   /** A blank, untouched workshop is replaced rather than left behind when a template opens. */
   private dropIfEmpty() {

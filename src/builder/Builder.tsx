@@ -37,7 +37,7 @@ export default function Builder(props: BuilderProps) {
       <section data-screen-label="Builder" style={{ padding: `clamp(16px,2.5vw,32px) clamp(12px,2vw,28px) ${wide ? "48px" : "96px"}`, fontFamily: BODY, color: "#ece9e0" }}>
         <div aria-live="polite" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>{S.live}</div>
         {S.phase === "home" && <Home />}
-        {(S.phase === "bench" || S.phase === "review" || (S.phase === "import" && !!S.wid)) && <ModeTabs />}
+        {S.phase !== "home" && <ModeTabs />}
         {S.phase === "import" && <ImportView />}
         {S.phase === "review" && <><Notices /><ReviewView /></>}
         {S.phase === "bench" && (

@@ -41,3 +41,9 @@ The Library engines (`window.RD`, `RDL`, `RDB` from `src/rd`) are shared with th
   Review suggests new defaults from how long activities actually took.
 - **Keyboard** in Run mode: Space, N/P, = + −, D Q L F O for capture, A agenda, ? help, Esc. Nothing
   fires while typing.
+
+## Boards, polls and slides
+
+- A block's links (`cfg.links`, one per line) are recognised by host in `src/builder/tools.ts`: Miro, FigJam/Figma, Mentimeter, Slido, Mural, Google Slides/Forms and others. They show in Block detail, Ready → Boards & links, and as "Open {tool} ↗" in Run. Participant-facing tools (polls, boards) also appear on `/present`.
+- Library records can carry `toolLinks` (Sanity field "Template links"). They show on the item page as "Ready-made boards" and in the builder under every block made from that record.
+- `src/builder/exportBoards.ts`: Slides (.pptx through pptxgenjs, script in speaker notes), Board (.svg, one card per activity in section columns), Miro sticky text, Mentimeter poll questions. Miro has no open import for boards, so the SVG lands there as an image; FigJam and Figma keep it as editable shapes and text.

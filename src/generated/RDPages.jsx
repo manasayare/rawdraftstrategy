@@ -224,8 +224,8 @@ Component.prototype.template = function (V) {
         {V.isWork ? (
           <>
             <article data-screen-label="Work entry">
-              <a href="/work" style={{"fontSize":"15px","color":"#8f8b80","textDecoration":"none"}}>
-                {"Work"}
+              <a href="/work" style={{"fontSize":"15px","color":"#c9c5ba","textDecoration":"none"}} className="scp-hover-0">
+                {"← Work"}
               </a>
               <div style={{"maxWidth":"1100px","marginTop":"clamp(32px,5vw,72px)"}}>
                 <div style={{"fontSize":"15px","color":"#8f8b80"}}>
@@ -337,8 +337,8 @@ Component.prototype.template = function (V) {
         {V.isNote ? (
           <>
             <article data-screen-label="Note" style={{"maxWidth":"720px","margin":"0 auto"}}>
-              <a href="/notes" style={{"fontSize":"15px","color":"#8f8b80","textDecoration":"none"}}>
-                {"Work / Notes"}
+              <a href="/notes" style={{"fontSize":"15px","color":"#c9c5ba","textDecoration":"none"}} className="scp-hover-0">
+                {"← Notes"}
               </a>
               <h1 style={{"margin":"clamp(36px,5vw,72px) 0 0","fontFamily":"'Clash Display',sans-serif","fontSize":"clamp(40px,6vw,80px)","fontWeight":"500","letterSpacing":"-.04em","lineHeight":".95"}}>
                 {dcText(V.nt?.title)}

@@ -25,6 +25,8 @@ export type ItemCfg = {
   transition?: string;
   /** What the room sees on the participant screen. */
   participant?: string;
+  /** Board, poll and slides links for this activity (Miro, FigJam, Mentimeter, Google Slides…), one per line. */
+  links?: string;
   log?: NoteEntry[];
 };
 

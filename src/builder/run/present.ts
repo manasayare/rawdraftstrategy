@@ -5,6 +5,7 @@ import { mins } from "../items";
 import type { State } from "../store";
 import { curId, planOf } from "./session";
 import { scriptFor } from "./script";
+import { PARTICIPANT_TOOLS, linksOf } from "../tools";
 
 export type PresentSnapshot = {
   wid: string;
@@ -18,6 +19,8 @@ export type PresentSnapshot = {
   acc: number;
   t0: number | null;
   next: string;
+  /** Polls and boards the room joins, e.g. a Mentimeter code. */
+  join: { tool: string; url: string }[];
   sent: number;
 };
 
@@ -34,7 +37,7 @@ export function snapshotOf(s: State): PresentSnapshot | null {
   return {
     wid: s.wid, name: s.name, status: ss.endedAt ? "ended" : ss.startedAt ? "live" : "waiting", title: x?.title || "", isBreak,
     question: sc?.open || "", lines: isBreak ? [] : (sc?.participant || []).filter(l => l !== sc?.open).slice(0, 5),
-    planMs: x ? planOf(ss, x) * 60000 : 0, acc: ss.acc, t0: ss.t0, next: nx ? nx.title + " · " + mins(nx) + " min" : "", sent: Date.now()
+    planMs: x ? planOf(ss, x) * 60000 : 0, acc: ss.acc, t0: ss.t0, next: nx ? nx.title + " · " + mins(nx) + " min" : "", join: x && !isBreak ? linksOf(x).filter(l => !l.fromLibrary && PARTICIPANT_TOOLS.includes(l.tool)).slice(0, 2).map(l => ({ tool: l.tool, url: l.url })) : [], sent: Date.now()
   };
 }
 

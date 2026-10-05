@@ -10,10 +10,19 @@ import { BLANK_FILTERS, type LibFilters } from "../types";
 import { BODY, Chip, DISPLAY, Kicker, KickerRow, field, path, textBtn, useBuilder } from "../ui";
 
 /** On wide screens panels sit beside the canvas; on phones they open as bottom sheets. */
+/** Right panel: part of the page on wide screens (nothing hidden in a nested scroll); a bottom sheet on phones. */
 export const panelStyle = (wide: boolean, show: boolean): CSSProperties => ({
-  position: wide ? "sticky" : "fixed", display: show ? "block" : "none", top: wide ? "84px" : "auto", left: 0, right: 0, bottom: 0,
-  maxHeight: wide ? "calc(100vh - 100px)" : "86vh", overflow: "auto", zIndex: wide ? 1 : 80, background: wide ? "transparent" : "#0f0f0e",
+  position: wide ? "relative" : "fixed", display: show ? "block" : "none", left: 0, right: 0, bottom: 0,
+  maxHeight: wide ? "none" : "86vh", overflow: wide ? "visible" : "auto", zIndex: wide ? 1 : 80, background: wide ? "transparent" : "#0f0f0e",
   borderTop: wide ? "0" : "1px solid " + C.edge, padding: wide ? "0 4px 24px 0" : "16px 16px 28px", boxShadow: wide ? "none" : "0 -24px 60px rgba(0,0,0,.7)", minWidth: 0
+});
+
+/** Library: stays in view while you scroll the canvas, so there is always something to drag from. Its header (search and
+ *  filters) is fixed and only the list scrolls. */
+const libPanelStyle = (wide: boolean, show: boolean): CSSProperties => ({
+  position: wide ? "sticky" : "fixed", display: show ? "flex" : "none", flexDirection: "column", top: wide ? "84px" : "auto", left: 0, right: 0, bottom: 0,
+  height: wide ? "calc(100vh - 100px)" : "86vh", zIndex: wide ? 1 : 80, background: wide ? "transparent" : "#0f0f0e",
+  borderTop: wide ? "0" : "1px solid " + C.edge, padding: wide ? "0 4px 0 0" : "16px 16px 0", boxShadow: wide ? "none" : "0 -24px 60px rgba(0,0,0,.7)", minWidth: 0
 });
 
 const cardText: CSSProperties = { marginTop: 4, fontSize: 13, lineHeight: 1.4, color: C.soft };
@@ -24,6 +33,10 @@ export default function LibraryPanel() {
   const { wide, eb } = d;
   const L = S.lib, B = RDB();
   const { pool, results, parsed, activeFilters } = searchLibrary(L);
+  const rows = FILTER_ROWS(), purpose = rows[0];
+  // Active filters other than purpose, shown as removable chips so the list is never filtered invisibly.
+  const active = rows.slice(1).flatMap(([, key, opts]) => (L[key] ? [[key, opts.find(o => o[0] === L[key])?.[1] || L[key]] as [keyof LibFilters, string]] : [])).concat(L.type ? [["type", TYPE_LABELS[L.type]] as [keyof LibFilters, string]] : []);
+  const browsingAny = !!(L.q || activeFilters);
   const touch = wide ? "none" : "auto";
   const setL = (k: keyof LibFilters, v: string) => store.set(s => ({ lib: { ...s.lib, [k]: s.lib[k] === v ? "" : v }, libN: 24 }));
 
@@ -53,7 +66,8 @@ export default function LibraryPanel() {
   };
 
   return (
-    <aside aria-label="Library" data-libpanel="1" style={panelStyle(wide, wide || S.sheet === "lib")}>
+    <aside aria-label="Library" data-libpanel="1" style={libPanelStyle(wide, wide || S.sheet === "lib")}>
+      <div style={{ flex: "0 0 auto", paddingBottom: 10, borderBottom: "1px solid " + C.rule }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10 }}>
         <span style={{ fontFamily: DISPLAY, fontWeight: 500, fontSize: 20 }}>Library</span>
         {!wide && <button onClick={() => store.set(s => ({ sheet: null, open: wide ? s.open : null }))} aria-label="Close library" style={{ whiteSpace: "nowrap", background: "none", border: "1px solid " + C.line, color: C.ink, minWidth: 40, minHeight: 40, cursor: "pointer" }}>×</button>}
@@ -66,13 +80,19 @@ export default function LibraryPanel() {
           </button>
         ))}
       </div>
-      {S.libTab !== "raw" ? <MyLibraryTab card={card} /> : <>
+      {S.libTab === "raw" && <>
       <input aria-label="Search the Library" value={L.q} onChange={e => { const q = e.target.value; store.set(s => ({ lib: { ...s.lib, q }, libN: 24 })); }} placeholder="icebreaker for 12 people" className="bf-line"
         style={{ display: "block", width: "100%", marginTop: 10, background: C.well, border: "1px solid " + C.line, outline: "none", color: C.ink, minHeight: 44, padding: "0 12px", fontFamily: BODY, fontSize: 15 }} />
       {parsed && <div style={{ marginTop: 6, fontSize: 13, color: C.mute }}>Reading as: {parsed}</div>}
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginTop: 8 }}>
-        <button onClick={() => store.set(s => ({ filters: !s.filters }))} aria-expanded={S.filters ? "true" : "false"} className="bh-ink" style={textBtn({ color: C.soft, fontSize: 14, minHeight: 32 })}>{(S.filters ? "Hide filters" : "Filters") + (activeFilters ? " · " + activeFilters : "")}</button>
-        {(activeFilters > 0 || !!L.q) && <button onClick={() => store.set({ lib: { ...BLANK_FILTERS } })} style={textBtn({ color: C.mute, fontSize: 14, minHeight: 32 })}>Clear</button>}
+      <div role="group" aria-label="Purpose" style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 8 }}>
+        <Chip on={!L.stage} onClick={() => store.set(s => ({ lib: { ...s.lib, stage: "" }, libN: 24 }))} style={{ minHeight: 28, padding: "0 8px", fontSize: 12 }}>All</Chip>
+        {purpose[2].map(([v, l]) => <Chip key={v} on={L.stage === v} onClick={() => setL("stage", v)} style={{ minHeight: 28, padding: "0 8px", fontSize: 12 }}>{l}</Chip>)}
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 8px", marginTop: 6 }}>
+        <button onClick={() => store.set(s => ({ filters: !s.filters }))} aria-expanded={S.filters ? "true" : "false"} className="bh-ink" style={textBtn({ color: C.soft, fontSize: 13, minHeight: 30 })}>{S.filters ? "Fewer filters" : "More filters"}</button>
+        {active.map(([k, l]) => <button key={k} onClick={() => setL(k, L[k])} aria-label={"Remove filter " + l} style={{ whiteSpace: "nowrap", background: C.ink, color: C.bg, border: 0, minHeight: 26, padding: "0 8px", cursor: "pointer", fontSize: 12 }}>{l} ×</button>)}
+        {(activeFilters > 0 || !!L.q) && <button onClick={() => store.set({ lib: { ...BLANK_FILTERS } })} style={textBtn({ color: C.mute, fontSize: 13, minHeight: 30 })}>Clear all</button>}
+        <span style={{ marginLeft: "auto", fontSize: 12, color: C.mute }}>{browsingAny ? results.length + " match" + (results.length === 1 ? "" : "es") : pool.length + " methods"}</span>
       </div>
       {S.filters && (
         <>
@@ -82,7 +102,7 @@ export default function LibraryPanel() {
               {Object.keys(TYPE_LABELS).map(k => <option key={k} value={k}>{TYPE_LABELS[k]}</option>)}
             </select>
           </label>
-          {FILTER_ROWS().map(([label, key, opts]) => (
+          {FILTER_ROWS().slice(1).map(([label, key, opts]) => (
             <div key={key} role="group" aria-label={label} style={{ marginTop: 10 }}>
               <div style={{ fontSize: 12, color: C.mute }}>{label}</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 5 }}>
@@ -92,8 +112,12 @@ export default function LibraryPanel() {
           ))}
         </>
       )}
+      </>}
+      </div>
 
-      <Kicker style={{ marginTop: 16 }}>STRUCTURE</Kicker>
+      <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "auto", paddingBottom: 28 }}>
+      {S.libTab !== "raw" ? <MyLibraryTab card={card} /> : <>
+      <Kicker style={{ marginTop: 14 }}>STRUCTURE</Kicker>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
         {STRUCTS.map(([t, l]) => (
           <button key={t} aria-label={"Add " + l + ". Drag to place it."} className="bh-line-ink"
@@ -177,6 +201,8 @@ export default function LibraryPanel() {
       {results.length > S.libN && <button onClick={() => store.set(s => ({ libN: s.libN + 24 }))} style={{ whiteSpace: "nowrap", marginTop: 10, width: "100%", background: "none", border: "1px solid " + C.line, color: C.soft, minHeight: 40, cursor: "pointer", fontSize: 14 }}>Show more</button>}
       {!results.length && <p style={{ margin: "8px 0 0", fontSize: 14, lineHeight: 1.45, color: C.mute }}>Nothing matches. Clear a filter, or add a custom block.</p>}
       </>}
+      </div>
+      <div aria-hidden="true" style={{ position: "absolute", left: 0, right: 4, bottom: 0, height: 32, pointerEvents: "none", background: "linear-gradient(rgba(11,11,10,0), " + (wide ? C.bg : "#0f0f0e") + ")" }} />
     </aside>
   );
 }

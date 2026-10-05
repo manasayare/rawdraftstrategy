@@ -14,7 +14,8 @@ export default function ModeTabs() {
     ["review", "Review", () => store.set({ phase: "review" }), hasSession, hasSession ? "What happened and what's next" : "Available after you run it"]
   ];
   return (
-    <nav aria-label="Workshop mode" style={{ display: "flex", flexWrap: "wrap", gap: 0, borderBottom: "1px solid " + C.rule, marginBottom: 18 }}>
+    <nav aria-label="Workshop mode" style={{ display: "flex", flexWrap: "nowrap", overflowX: "auto", scrollbarWidth: "none", alignItems: "center", gap: 0, borderBottom: "1px solid " + C.rule, marginBottom: 18 }}>
+      <button onClick={() => store.back()} className="bh-ink" style={{ whiteSpace: "nowrap", background: "none", border: 0, borderRight: "1px solid " + C.rule, color: C.soft, cursor: "pointer", minHeight: 44, padding: "0 18px 0 0", marginRight: 18, fontSize: 15 }}>← Back</button>
       {tabs.map(([k, l, go, on, tip]) => (
         <button key={k} onClick={go} disabled={!on} title={tip} aria-current={cur === k ? "page" : undefined}
           style={{ whiteSpace: "nowrap", background: "none", border: 0, borderBottom: "2px solid " + (cur === k ? C.accent : "transparent"), marginBottom: -1, color: cur === k ? C.ink : on ? C.soft : C.faint, cursor: on ? "pointer" : "default", minHeight: 44, padding: "0 16px 0 0", marginRight: 18, fontSize: 15, fontWeight: cur === k ? 500 : 400 }}>{l}</button>

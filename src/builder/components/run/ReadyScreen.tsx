@@ -6,6 +6,7 @@ import { C } from "../../constants";
 import { mins } from "../../items";
 import { CHECKLIST, runnable } from "../../run/session";
 import { scriptFor } from "../../run/script";
+import { linksOf } from "../../tools";
 import { clock, hm } from "../../time";
 import { DISPLAY, Kicker, accent, outline, textBtn, useBuilder } from "../../ui";
 
@@ -13,13 +14,14 @@ export const openPresent = () => window.open("/present", "rd-present", "popup,wi
 
 export default function ReadyScreen() {
   const { S, store, d } = useBuilder();
-  const [tab, setTab] = useState<"agenda" | "materials" | "notes" | null>("agenda");
+  const [tab, setTab] = useState<"agenda" | "materials" | "notes" | "links" | null>("agenda");
   const rows = runnable(S.items), people = S.brief.people, decisions = rows.filter(r => ["decide", "prioritise", "criteria"].includes(r.x.role || "")).length;
   const total = d.total, ck = S.readyChecklist, done = CHECKLIST.filter(([k]) => ck[k]).length;
   const prev = S.session?.endedAt;
   let t = d.start, day = 1;
   const timed = rows.map(r => { if (r.day !== day) { day = r.day; t = d.start; } const st = t; t += mins(r.x); return { ...r, st }; });
   const materials = rows.map(r => ({ x: r.x, m: scriptFor(r.x, S.brief).materials })).filter(r => r.m);
+  const links = rows.flatMap(r => linksOf(r.x).map(l => ({ ...l, block: r.x.title })));
   const notes = rows.map(r => ({ x: r.x, n: r.x.cfg.notes || "", p: scriptFor(r.x, S.brief).purpose })).filter(r => r.n || r.p);
   const tabBtn = (k: typeof tab, l: string) => (
     <button key={k} onClick={() => setTab(tab === k ? null : k)} aria-expanded={tab === k} style={{ whiteSpace: "nowrap", background: "none", border: 0, borderBottom: "2px solid " + (tab === k ? C.accent : "transparent"), color: tab === k ? C.ink : C.soft, minHeight: 40, padding: 0, marginRight: 22, cursor: "pointer", fontSize: 15 }}>{l}</button>
@@ -27,6 +29,7 @@ export default function ReadyScreen() {
 
   return (
     <div style={{ flex: "1 1 auto", padding: "clamp(28px,5vw,72px) clamp(16px,4vw,56px)", maxWidth: 1180, width: "100%", margin: "0 auto" }}>
+      <button onClick={() => store.exitRun()} className="bh-ink" style={textBtn({ color: C.soft, fontSize: 15, minHeight: 40, marginBottom: 18 })}>← Back to Build</button>
       <Kicker color={C.accent}>READY TO RUN</Kicker>
       <h1 style={{ margin: "12px 0 0", fontFamily: DISPLAY, fontWeight: 500, fontSize: "clamp(40px,6vw,88px)", letterSpacing: "-.04em", lineHeight: 0.92, maxWidth: "18ch" }}>{S.name}</h1>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 28px", marginTop: 20, fontSize: 18, color: C.soft }}>
@@ -39,13 +42,12 @@ export default function ReadyScreen() {
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 28 }}>
         <button autoFocus onClick={() => store.startRun()} className="rd-run-btn" style={accent({ minHeight: 56, padding: "0 28px", fontSize: 17 })}>Start workshop</button>
         <button onClick={openPresent} className="rd-run-btn" style={outline({ minHeight: 56, padding: "0 20px", fontSize: 15, border: "1px solid " + C.edge })}>Open participant view ↗</button>
-        <button onClick={() => store.exitRun()} className="bh-ink" style={textBtn({ color: C.mute, minHeight: 56, fontSize: 15, marginLeft: 8 })}>Back to Build</button>
       </div>
       {prev && <p style={{ margin: "14px 0 0", fontSize: 14, color: C.mute }}>Starting again begins a new record. The last run's notes and decisions stay in Review until then.</p>}
 
       <div style={{ display: "grid", gridTemplateColumns: d.wide ? "minmax(0,1.5fr) minmax(280px,1fr)" : "minmax(0,1fr)", gap: "32px 56px", marginTop: 44, alignItems: "start" }}>
         <section>
-          <div style={{ display: "flex", flexWrap: "wrap", borderBottom: "1px solid " + C.rule }}>{tabBtn("agenda", "Review agenda")}{tabBtn("materials", "Materials")}{tabBtn("notes", "Facilitator notes")}</div>
+          <div style={{ display: "flex", flexWrap: "wrap", borderBottom: "1px solid " + C.rule }}>{tabBtn("agenda", "Review agenda")}{tabBtn("materials", "Materials")}{tabBtn("notes", "Facilitator notes")}{tabBtn("links", "Boards & links" + (links.length ? " · " + links.length : ""))}</div>
           {tab === "agenda" && timed.map((r, k) => (
             <div key={r.x.id}>
               {r.sec && r.sec !== timed[k - 1]?.sec && <div style={{ padding: "14px 0 4px", fontSize: 12, letterSpacing: ".06em", color: C.accent }}>{(d.nDays > 1 ? "DAY " + r.day + " · " : "") + r.sec.toUpperCase()}</div>}
@@ -59,6 +61,12 @@ export default function ReadyScreen() {
           {tab === "materials" && (materials.length ? materials.map(r => (
             <div key={r.x.id} style={{ padding: "10px 0", borderBottom: "1px solid " + C.hair }}><div style={{ fontSize: 13, color: C.mute }}>{r.x.title}</div><div style={{ marginTop: 2, fontSize: 16 }}>{r.m}</div></div>
           )) : <p style={{ color: C.mute, fontSize: 15 }}>No materials listed. Add them per block in Build.</p>)}
+          {tab === "links" && (links.length ? links.map(l => (
+            <div key={l.block + l.url} style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline", padding: "10px 0", borderBottom: "1px solid " + C.hair }}>
+              <span style={{ minWidth: 0 }}><span style={{ display: "block", fontSize: 13, color: C.mute }}>{l.block}</span><span style={{ fontSize: 16 }}>{l.tool}{l.label ? " · " + l.label : ""}</span></span>
+              <a href={l.url} target="_blank" rel="noopener noreferrer" style={{ whiteSpace: "nowrap", color: C.accent, fontSize: 15 }}>Open ↗</a>
+            </div>
+          )) : <p style={{ color: C.mute, fontSize: 15 }}>No boards, polls or slides linked. Add them per activity in Build, so they open from Run mode.</p>)}
           {tab === "notes" && notes.map(r => (
             <div key={r.x.id} style={{ padding: "10px 0", borderBottom: "1px solid " + C.hair }}>
               <div style={{ fontSize: 13, color: C.mute }}>{r.x.title}</div>
