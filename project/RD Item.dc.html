@@ -38,8 +38,8 @@
 </header>
 
 <sc-if value="{{ hasGlance }}" hint-placeholder-val="{{ true }}">
-<section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:20px 32px;padding:24px 0;border-top:1px solid #ece9e0;border-bottom:1px solid #2a2925">
-<sc-for list="{{ glance }}" as="g" hint-placeholder-count="6"><div><div style="font-size:14px;color:#8f8b80">{{ g.k }}</div><div style="margin-top:4px;font-size:17px;line-height:1.3">{{ g.v }}</div></div></sc-for>
+<section aria-label="At a glance" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:8px;padding:4px 0 0">
+<sc-for list="{{ glance }}" as="g" hint-placeholder-count="6"><div style="background:#111110;border:1px solid #2a2925;padding:14px 16px"><div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#8f8b80">{{ g.k }}</div><div style="margin-top:6px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:19px;line-height:1.15">{{ g.v }}</div></div></sc-for>
 </section>
 </sc-if>
 
@@ -50,36 +50,46 @@
 </div>
 </sc-if>
 
-<div style="display:flex;gap:56px;align-items:flex-start">
-<sc-if value="{{ tocWide }}" hint-placeholder-val="{{ false }}">
-<nav data-noprint="1" style="flex:0 0 170px;position:sticky;top:84px;padding-top:28px;display:flex;flex-direction:column;gap:2px">
-<sc-for list="{{ toc }}" as="t" hint-placeholder-count="8"><button onClick="{{ t.go }}" style="text-align:left;background:none;border:0;color:#8f8b80;padding:5px 0;cursor:pointer;font-size:15px" style-hover="color:#ece9e0">{{ t.label }}</button></sc-for>
-</nav>
-</sc-if>
-<div style="flex:1 1 auto;min-width:0;max-width:980px">
+<sc-if value="{{ narrowSide }}" hint-placeholder-val="{{ false }}"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:0 10px;margin-top:10px">
+<sc-for list="{{ side }}" as="c" hint-placeholder-count="3"><div style="background:#111110;border:1px solid #2a2925;border-top:2px solid {{ c.top }};padding:16px 18px 18px;margin-bottom:10px;min-width:0">
+<div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#8f8b80">{{ c.title }}</div>
+<sc-for list="{{ c.sub }}" as="b" hint-placeholder-count="2"><div style="margin-top:12px">
+<sc-if value="{{ b.hasH }}" hint-placeholder-val="{{ false }}"><div style="margin-bottom:4px;font-size:13px;font-weight:500;color:{{ b.hc }}">{{ b.h }}</div></sc-if>
+<sc-if value="{{ b.hasText }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:15px;line-height:1.45">{{ b.text }}</p></sc-if>
+<sc-if value="{{ b.hasItems }}" hint-placeholder-val="{{ false }}"><ul style="margin:0;padding:0;list-style:none"><sc-for list="{{ b.items }}" as="x" hint-placeholder-count="3"><li style="display:flex;gap:10px;align-items:baseline;padding:4px 0;font-size:15px;line-height:1.4"><span style="flex:none;width:12px;color:{{ b.mc }}">{{ b.mark }}</span><span style="min-width:0">{{ x }}</span></li></sc-for></ul></sc-if>
+<sc-if value="{{ b.hasPairs }}" hint-placeholder-val="{{ false }}"><div><sc-for list="{{ b.pairs }}" as="p" hint-placeholder-count="2"><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #1d1c1a;font-size:14px"><span style="color:#8f8b80">{{ p.k }}</span><span style="text-align:right;color:{{ p.c }}">{{ p.v }}</span></div></sc-for></div></sc-if>
+<sc-if value="{{ b.hasLinks }}" hint-placeholder-val="{{ false }}"><div><sc-for list="{{ b.links }}" as="r" hint-placeholder-count="2"><a href="{{ r.href }}" style="display:block;padding:6px 0;font-size:15px">{{ r.title }}</a></sc-for></div></sc-if>
+</div></sc-for>
+</div></sc-for>
+</div></sc-if>
+<div style="display:grid;grid-template-columns:{{ bodyCols }};gap:clamp(32px,4vw,64px);align-items:start">
+<div style="min-width:0">
 
 <sc-for list="{{ secs }}" as="s" hint-placeholder-count="5">
-<section id="{{ s.id }}" style="padding:clamp(24px,3vw,36px) 0;border-bottom:1px solid #2a2925">
-<div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px">
-<h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(22px,2.2vw,30px);letter-spacing:-.015em;color:{{ s.hc }}">{{ s.title }}</h2>
-<sc-if value="{{ s.collapsible }}" hint-placeholder-val="{{ false }}"><button data-noprint="1" onClick="{{ s.toggle }}" style="background:none;border:0;color:#8f8b80;min-height:40px;cursor:pointer;font-size:15px">{{ s.toggleLabel }}</button></sc-if>
+<sc-if value="{{ s.firstDeep }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px 16px;margin-top:clamp(56px,6vw,88px);padding-top:16px;border-top:2px solid #ece9e0"><span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(26px,3vw,36px);letter-spacing:-.02em">Go deeper</span><span style="font-size:14px;color:#8f8b80">Notes, sources and what connects to it</span></div></sc-if>
+<section id="{{ s.id }}" style="margin-top:{{ s.mt }};padding:{{ s.pad }};background:{{ s.bg }};border:{{ s.bd }};scroll-margin-top:84px">
+<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px">
+<div style="min-width:0"><sc-if value="{{ s.hasKicker }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;letter-spacing:.06em;color:#ff4b23;font-variant-numeric:tabular-nums">{{ s.kicker }}</div></sc-if>
+<h2 style="margin:4px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:{{ s.hs }};letter-spacing:-.02em;line-height:1.05;color:{{ s.hc }}">{{ s.title }}</h2></div>
+<sc-if value="{{ s.collapsible }}" hint-placeholder-val="{{ false }}"><button data-noprint="1" onClick="{{ s.toggle }}" style="flex:none;background:none;border:1px solid #34332e;color:#c9c5ba;min-height:36px;padding:0 12px;cursor:pointer;font-size:14px" style-hover="border-color:#ece9e0">{{ s.toggleLabel }}</button></sc-if>
 </div>
 <sc-if value="{{ s.show }}" hint-placeholder-val="{{ true }}">
 
-<sc-if value="{{ s.isBig }}" hint-placeholder-val="{{ false }}"><p style="margin:16px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(28px,4vw,60px);letter-spacing:-.03em;line-height:1;max-width:18ch">{{ s.text }}</p></sc-if>
+<sc-if value="{{ s.isBig }}" hint-placeholder-val="{{ false }}"><p style="margin:18px 0 0;padding:clamp(20px,3vw,32px) clamp(20px,3vw,36px);background:#141412;border-left:3px solid #ff4b23;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(26px,3.4vw,46px);letter-spacing:-.03em;line-height:1.05;text-wrap:balance">{{ s.text }}</p></sc-if>
 
 <sc-for list="{{ s.sub }}" as="b" hint-placeholder-count="1">
 <div style="margin-top:18px">
 <sc-if value="{{ b.hasH }}" hint-placeholder-val="{{ false }}"><h3 style="margin:0 0 6px;font-size:15px;font-weight:500;color:{{ b.hc }}">{{ b.h }}</h3></sc-if>
-<sc-if value="{{ b.hasText }}" hint-placeholder-val="{{ false }}"><p style="margin:0;max-width:66ch;font-size:18px;line-height:1.5">{{ b.text }}</p></sc-if>
-<sc-if value="{{ b.hasItems }}" hint-placeholder-val="{{ false }}"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:0 32px"><sc-for list="{{ b.items }}" as="x" hint-placeholder-count="3"><div style="padding:9px 0;border-top:1px solid #1d1c1a;font-size:17px;line-height:1.4">{{ x }}</div></sc-for></div></sc-if>
+<sc-if value="{{ b.hasText }}" hint-placeholder-val="{{ false }}"><p style="margin:0;max-width:62ch;font-size:19px;line-height:1.55;color:#ece9e0">{{ b.text }}</p></sc-if>
+<sc-if value="{{ b.isChips }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ b.items }}" as="x" hint-placeholder-count="4"><span style="display:inline-block;background:#111110;border:1px solid #34332e;padding:8px 12px;font-size:15px;line-height:1.3">{{ x }}</span></sc-for></div></sc-if>
+<sc-if value="{{ b.isList }}" hint-placeholder-val="{{ false }}"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:8px"><sc-for list="{{ b.items }}" as="x" hint-placeholder-count="3"><div style="background:#111110;border-left:2px solid #4a4843;padding:12px 14px;font-size:16px;line-height:1.45">{{ x }}</div></sc-for></div></sc-if>
 <sc-if value="{{ b.hasPairs }}" hint-placeholder-val="{{ false }}"><div style="display:grid;grid-template-columns:minmax(120px,200px) minmax(0,1fr)"><sc-for list="{{ b.pairs }}" as="p" hint-placeholder-count="3"><span style="padding:9px 16px 9px 0;border-top:1px solid #1d1c1a;font-size:15px;color:#8f8b80">{{ p.k }}</span><span style="padding:9px 0;border-top:1px solid #1d1c1a;font-size:17px;line-height:1.4;color:{{ p.c }}">{{ p.v }}</span></sc-for></div></sc-if>
-<sc-if value="{{ b.hasLinks }}" hint-placeholder-val="{{ false }}"><div><sc-for list="{{ b.links }}" as="r" hint-placeholder-count="2"><a href="{{ r.href }}" style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px;padding:10px 0;border-top:1px solid #1d1c1a;text-decoration:none" style-hover="color:#ff4b23"><span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:20px">{{ r.title }}</span><span style="font-size:14px;color:#8f8b80">{{ r.tag }}</span></a></sc-for></div></sc-if>
+<sc-if value="{{ b.hasLinks }}" hint-placeholder-val="{{ false }}"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:8px"><sc-for list="{{ b.links }}" as="r" hint-placeholder-count="2"><a href="{{ r.href }}" style="display:flex;flex-direction:column;gap:6px;min-height:84px;padding:14px 16px;background:#0b0b0a;border:1px solid #2a2925;color:#ece9e0;text-decoration:none" style-hover="border-color:#ff4b23;color:#ece9e0"><span style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#8f8b80">{{ r.tag }}</span><span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:19px;line-height:1.15">{{ r.title }}</span></a></sc-for></div></sc-if>
 </div>
 </sc-for>
 
 <sc-if value="{{ s.isSteps }}" hint-placeholder-val="{{ false }}">
-<ol style="margin:16px 0 0;padding:0;list-style:none;max-width:72ch"><sc-for list="{{ s.steps }}" as="x" hint-placeholder-count="4"><li style="display:flex;gap:18px;align-items:baseline;padding:12px 0;border-top:1px solid #1d1c1a"><span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:24px;color:#ff4b23;width:30px;flex:none">{{ x.n }}</span><span style="font-size:18px;line-height:1.45">{{ x.t }}</span></li></sc-for></ol>
+<ol style="margin:18px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:8px"><sc-for list="{{ s.steps }}" as="x" hint-placeholder-count="4"><li style="display:flex;flex-direction:column;gap:10px;background:#111110;border:1px solid #2a2925;padding:16px 18px 18px"><span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:30px;line-height:1;color:#ff4b23">{{ x.n }}</span><span style="font-size:17px;line-height:1.45">{{ x.t }}</span></li></sc-for></ol>
 <sc-if value="{{ s.hasSay }}" hint-placeholder-val="{{ false }}"><p style="margin:16px 0 0;max-width:66ch;padding-left:16px;border-left:2px solid #ff4b23;font-size:18px;line-height:1.5"><span style="color:#8f8b80">Say: </span>“{{ s.say }}”</p></sc-if>
 </sc-if>
 
@@ -108,7 +118,7 @@
 </sc-if>
 
 <sc-if value="{{ s.isFail }}" hint-placeholder-val="{{ false }}">
-<div style="margin-top:12px"><sc-for list="{{ s.fails }}" as="f" hint-placeholder-count="2"><div style="padding:14px 0;border-top:1px solid #1d1c1a;max-width:72ch"><div style="font-size:18px;font-weight:500">{{ f.p }}</div><sc-if value="{{ f.hasWhy }}" hint-placeholder-val="{{ false }}"><div style="font-size:16px;color:#8f8b80;margin-top:6px">Why it happens: {{ f.why }}</div><div style="font-size:16px;margin-top:4px">What to do: {{ f.what }}</div></sc-if></div></sc-for></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:8px;margin-top:18px"><sc-for list="{{ s.fails }}" as="f" hint-placeholder-count="2"><div style="background:#151110;border-left:3px solid #ff4b23;padding:14px 16px"><div style="font-size:17px;font-weight:500;line-height:1.35">{{ f.p }}</div><sc-if value="{{ f.hasWhy }}" hint-placeholder-val="{{ false }}"><div style="font-size:16px;color:#8f8b80;margin-top:6px">Why it happens: {{ f.why }}</div><div style="font-size:16px;margin-top:4px">What to do: {{ f.what }}</div></sc-if></div></sc-for></div>
 </sc-if>
 
 <sc-if value="{{ s.isFormats }}" hint-placeholder-val="{{ false }}">
@@ -187,6 +197,21 @@
 <a href="#/work-with-us" style="display:inline-block;background:#ff4b23;color:#0b0b0a;padding:12px 18px;text-decoration:none;font-weight:500" style-hover="background:#ece9e0;color:#0b0b0a">{{ ctaBtn }}</a>
 </div>
 </div>
+<sc-if value="{{ wideSide }}" hint-placeholder-val="{{ false }}">
+<aside data-noprint="1" style="position:sticky;top:84px;max-height:calc(100vh - 100px);overflow:auto;overscroll-behavior:contain;padding-top:clamp(28px,3vw,40px)">
+<sc-if value="{{ tocWide }}" hint-placeholder-val="{{ false }}"><nav style="display:flex;flex-direction:column;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #2a2925"><div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#8f8b80;margin-bottom:6px">On this page</div><sc-for list="{{ toc }}" as="t" hint-placeholder-count="8"><button onClick="{{ t.go }}" style="text-align:left;background:none;border:0;color:#c9c5ba;padding:4px 0;cursor:pointer;font-size:15px" style-hover="color:#ff4b23">{{ t.label }}</button></sc-for></nav></sc-if>
+<sc-for list="{{ side }}" as="c" hint-placeholder-count="3"><div style="background:#111110;border:1px solid #2a2925;border-top:2px solid {{ c.top }};padding:16px 18px 18px;margin-bottom:10px;min-width:0">
+<div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#8f8b80">{{ c.title }}</div>
+<sc-for list="{{ c.sub }}" as="b" hint-placeholder-count="2"><div style="margin-top:12px">
+<sc-if value="{{ b.hasH }}" hint-placeholder-val="{{ false }}"><div style="margin-bottom:4px;font-size:13px;font-weight:500;color:{{ b.hc }}">{{ b.h }}</div></sc-if>
+<sc-if value="{{ b.hasText }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:15px;line-height:1.45">{{ b.text }}</p></sc-if>
+<sc-if value="{{ b.hasItems }}" hint-placeholder-val="{{ false }}"><ul style="margin:0;padding:0;list-style:none"><sc-for list="{{ b.items }}" as="x" hint-placeholder-count="3"><li style="display:flex;gap:10px;align-items:baseline;padding:4px 0;font-size:15px;line-height:1.4"><span style="flex:none;width:12px;color:{{ b.mc }}">{{ b.mark }}</span><span style="min-width:0">{{ x }}</span></li></sc-for></ul></sc-if>
+<sc-if value="{{ b.hasPairs }}" hint-placeholder-val="{{ false }}"><div><sc-for list="{{ b.pairs }}" as="p" hint-placeholder-count="2"><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #1d1c1a;font-size:14px"><span style="color:#8f8b80">{{ p.k }}</span><span style="text-align:right;color:{{ p.c }}">{{ p.v }}</span></div></sc-for></div></sc-if>
+<sc-if value="{{ b.hasLinks }}" hint-placeholder-val="{{ false }}"><div><sc-for list="{{ b.links }}" as="r" hint-placeholder-count="2"><a href="{{ r.href }}" style="display:block;padding:6px 0;font-size:15px">{{ r.title }}</a></sc-for></div></sc-if>
+</div></sc-for>
+</div></sc-for>
+</aside>
+</sc-if>
 </div>
 <sc-if value="{{ hasEntry }}" hint-placeholder-val="{{ false }}">
 <div data-noprint="1" onClick="{{ closeEntry }}" style="position:fixed;inset:0;z-index:60;background:rgba(5,5,4,.6)"></div>
@@ -400,10 +425,21 @@ class Component extends DCLogic {
       Object.assign(s, { show: isOpen, toggleLabel: isOpen ? "Hide" : "Show", toggle: () => this.setState(st => ({ open: Object.assign({}, st.open, { [s.id]: !st.open[s.id] }) })),
         isBig: s.kind === "big", isSteps: s.kind === "steps", isAgenda: s.kind === "agenda", isFail: s.kind === "fail", isAssets: s.kind === "assets", isEntries: s.kind === "entries", egroups: s.egroups || [], credit: s.credit || "", isFormats: s.kind === "formats", fmts: s.fmts || [], fmt: s.fmt || { shape: [], fields: [] }, fmtCols: s.fmtCols || "1fr",
         steps: s.steps || [], rows: s.rows || [], fails: s.fails || [], assets: s.assets || [], text: s.text || "", hasSay: !!s.hasSay, say: s.say || "" });
-      s.sub = (s.sub || []).map(b => Object.assign({ hasH: false, hasText: false, hasItems: false, hasPairs: false, hasLinks: false, items: [], pairs: [], links: [] }, b));
+      s.sub = (s.sub || []).map(b => Object.assign({ hasH: false, hasText: false, hasItems: false, hasPairs: false, hasLinks: false, items: [], pairs: [], links: [] }, b))
+        // Short lists read as tags; longer ones as cards.
+        .map(b => Object.assign(b, { isChips: b.hasItems && b.items.length <= 16 && b.items.every(x => String(x).length <= 42), isList: b.hasItems && !(b.items.length <= 16 && b.items.every(x => String(x).length <= 42)) }));
     });
     const complex = OPS || T === "methodology";
-    const toc = shown.map(s => ({ label: s.title, go: () => this.go(s.id) }));
+    // Three zones: what you need to decide and prepare (sidebar), the method itself (numbered), and reference (Go deeper).
+    const SIDE = ["when", "prepare", "outputs"], DEEP = ["notes", "adapt", "resources", "related", "source", "principles", "sprint-context"];
+    const sideSecs = shown.filter(s => SIDE.includes(s.id)), deepSecs = shown.filter(s => DEEP.includes(s.id)), mainSecs = shown.filter(s => !SIDE.includes(s.id) && !DEEP.includes(s.id));
+    mainSecs.forEach((s, i) => Object.assign(s, { hasKicker: true, kicker: num(i), mt: i ? "clamp(48px,5vw,76px)" : "clamp(28px,3vw,44px)", pad: "0", bg: "transparent", bd: "0", hs: "clamp(26px,2.8vw,38px)", firstDeep: false }));
+    deepSecs.forEach((s, i) => Object.assign(s, { hasKicker: false, kicker: "", mt: i ? "10px" : "18px", pad: "18px 20px", bg: "#111110", bd: "1px solid #2a2925", hs: "22px", firstDeep: i === 0 }));
+    const SIDE_T = { when: "When it fits", outputs: "You leave with" };
+    const side = sideSecs.map(s => ({ title: SIDE_T[s.id] || s.title, top: s.id === "when" ? "#ff4b23" : s.id === "outputs" ? "#ece9e0" : "#4a4843",
+      sub: s.sub.map(b => Object.assign({}, b, { mark: s.id === "when" ? (b.hc === "#ff4b23" ? "✕" : "✓") : s.id === "outputs" ? "→" : "·", mc: s.id === "when" && b.hc !== "#ff4b23" ? "#ece9e0" : "#ff4b23" })) }));
+    const wideBody = S.w >= 1100;
+    const toc = mainSecs.concat(deepSecs).map(s => ({ label: s.title, go: () => this.go(s.id) }));
     const glance = [["Time", d.timeLabel || it.time], ["People", d.peopleLabel], ["Facilitator", d.levelLabel], ["Format", d.deliveryLabel], ["Stage", d.stageLabel], ["Energy", it.energy], ["Vulnerability", it.vulnerability], ["Remote", it.remote], ["Movement", it.movement], ["Familiarity", it.familiarity], ["Output", (it.outputs || []).slice(0, 2).join(", ")]].filter(r => r[1] && r[1] !== "Variable" || (r[0] === "Time" && r[1])).map(([k, v]) => ({ k, v }));
     const hasRun = !!runLabel && secs.some(s => s.id === runId);
     const notice = obs ? "" : it.summaryOnly ? "Summarised for reference. See the original source for the method." : it.incomplete ? "In development. The full method will be published once tested." : it.template ? "Structure only. No complete version is published yet." : it.status === "draft" ? "Draft. Still being tested." : "";
@@ -418,9 +454,9 @@ class Component extends DCLogic {
       ovBg: fvOn ? "transparent" : "#ece9e0", ovFg: fvOn ? "#ece9e0" : "#0b0b0a", fvBg: fvOn ? "#ece9e0" : "transparent", fvFg: fvOn ? "#0b0b0a" : "#ece9e0",
       doPrint: () => window.print(), builderHref: "#/builder?add=" + it.id, builderLabel: T === "sprint" ? "Adapt in Builder" : T === "workshop" ? "Adapt this workshop" : T === "playbook" ? "Use this playbook" : T === "framework" ? "Build around this" : "Add to Builder", hasHeroVis: S.w >= 900 && d.visual !== "plain_type", heroCols: S.w >= 900 && d.visual !== "plain_type" ? "minmax(0,7fr) minmax(0,4fr)" : "minmax(0,1fr)",
       hasGlance: glance.length > 0, glance,
-      tocWide: complex && S.w >= 1100 && toc.length > 3, tocMobile: complex && S.w < 1100 && toc.length > 3, toc, tocOpen: S.toc, tocSign: S.toc ? "−" : "+", toggleToc: () => this.setState(s => ({ toc: !s.toc })),
+      tocWide: complex && wideBody && toc.length > 3, tocMobile: complex && S.w < 1100 && toc.length > 3, toc, tocOpen: S.toc, tocSign: S.toc ? "−" : "+", toggleToc: () => this.setState(s => ({ toc: !s.toc })),
       hasEntry: !!en, en: en || { facts: [] }, closeEntry: () => this.setState({ entry: null }), prevEntry: () => this.stepEntry(-1), nextEntry: () => this.stepEntry(1),
-      secs: shown, agCols: S.w < 640 ? "52px minmax(0,1fr) 0px" : "70px minmax(0,1fr) 70px",
+      secs: mainSecs.concat(deepSecs), side, wideSide: wideBody && (side.length > 0 || (complex && toc.length > 3)), narrowSide: !wideBody && side.length > 0, bodyCols: wideBody && (side.length > 0 || (complex && toc.length > 3)) ? "minmax(0,1fr) 340px" : "minmax(0,1fr)", agCols: S.w < 640 ? "52px minmax(0,1fr) 0px" : "70px minmax(0,1fr) 70px",
       ctaBtn: CTA_BTN, cta: CTA[T] || "Working through something like this?"
     };
   }

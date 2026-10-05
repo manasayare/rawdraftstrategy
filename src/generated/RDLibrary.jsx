@@ -166,7 +166,7 @@ Component.prototype.template = function (V) {
               <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(min(100%,120px),1fr))","borderTop":"2px solid #ece9e0"}}>
                 {dcList(V.arc).map((a_3, $i3) => (
                   <React.Fragment key={$i3}>
-                    <button onClick={a_3?.pick} style={{"textAlign":"left","background":"none","border":"0","borderRight":"1px solid #2a2925","borderBottom":"1px solid #2a2925","color":"#ece9e0","padding":"16px 14px 18px","cursor":"pointer","alignSelf":"start","height":"100%"}} className="scp-hover-9">
+                    <button onClick={a_3?.pick} style={{"textAlign":"left","background":"none","border":"0","borderRight":"1px solid #2a2925","borderBottom":"1px solid #2a2925","color":"#ece9e0","padding":"16px 14px 18px","cursor":"pointer","alignSelf":"start","height":"100%"}} className="scp-hover-a">
                       <span style={{"display":"block","fontSize":"13px","color":"#5a5850"}}>
                         {dcText(a_3?.n)}
                       </span>

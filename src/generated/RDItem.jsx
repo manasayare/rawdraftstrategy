@@ -193,10 +193,21 @@ class Component extends DCLogic {
       Object.assign(s, { show: isOpen, toggleLabel: isOpen ? "Hide" : "Show", toggle: () => this.setState(st => ({ open: Object.assign({}, st.open, { [s.id]: !st.open[s.id] }) })),
         isBig: s.kind === "big", isSteps: s.kind === "steps", isAgenda: s.kind === "agenda", isFail: s.kind === "fail", isAssets: s.kind === "assets", isEntries: s.kind === "entries", egroups: s.egroups || [], credit: s.credit || "", isFormats: s.kind === "formats", fmts: s.fmts || [], fmt: s.fmt || { shape: [], fields: [] }, fmtCols: s.fmtCols || "1fr",
         steps: s.steps || [], rows: s.rows || [], fails: s.fails || [], assets: s.assets || [], text: s.text || "", hasSay: !!s.hasSay, say: s.say || "" });
-      s.sub = (s.sub || []).map(b => Object.assign({ hasH: false, hasText: false, hasItems: false, hasPairs: false, hasLinks: false, items: [], pairs: [], links: [] }, b));
+      s.sub = (s.sub || []).map(b => Object.assign({ hasH: false, hasText: false, hasItems: false, hasPairs: false, hasLinks: false, items: [], pairs: [], links: [] }, b))
+        // Short lists read as tags; longer ones as cards.
+        .map(b => Object.assign(b, { isChips: b.hasItems && b.items.length <= 16 && b.items.every(x => String(x).length <= 42), isList: b.hasItems && !(b.items.length <= 16 && b.items.every(x => String(x).length <= 42)) }));
     });
     const complex = OPS || T === "methodology";
-    const toc = shown.map(s => ({ label: s.title, go: () => this.go(s.id) }));
+    // Three zones: what you need to decide and prepare (sidebar), the method itself (numbered), and reference (Go deeper).
+    const SIDE = ["when", "prepare", "outputs"], DEEP = ["notes", "adapt", "resources", "related", "source", "principles", "sprint-context"];
+    const sideSecs = shown.filter(s => SIDE.includes(s.id)), deepSecs = shown.filter(s => DEEP.includes(s.id)), mainSecs = shown.filter(s => !SIDE.includes(s.id) && !DEEP.includes(s.id));
+    mainSecs.forEach((s, i) => Object.assign(s, { hasKicker: true, kicker: num(i), mt: i ? "clamp(48px,5vw,76px)" : "clamp(28px,3vw,44px)", pad: "0", bg: "transparent", bd: "0", hs: "clamp(26px,2.8vw,38px)", firstDeep: false }));
+    deepSecs.forEach((s, i) => Object.assign(s, { hasKicker: false, kicker: "", mt: i ? "10px" : "18px", pad: "18px 20px", bg: "#111110", bd: "1px solid #2a2925", hs: "22px", firstDeep: i === 0 }));
+    const SIDE_T = { when: "When it fits", outputs: "You leave with" };
+    const side = sideSecs.map(s => ({ title: SIDE_T[s.id] || s.title, top: s.id === "when" ? "#ff4b23" : s.id === "outputs" ? "#ece9e0" : "#4a4843",
+      sub: s.sub.map(b => Object.assign({}, b, { mark: s.id === "when" ? (b.hc === "#ff4b23" ? "✕" : "✓") : s.id === "outputs" ? "→" : "·", mc: s.id === "when" && b.hc !== "#ff4b23" ? "#ece9e0" : "#ff4b23" })) }));
+    const wideBody = S.w >= 1100;
+    const toc = mainSecs.concat(deepSecs).map(s => ({ label: s.title, go: () => this.go(s.id) }));
     const glance = [["Time", d.timeLabel || it.time], ["People", d.peopleLabel], ["Facilitator", d.levelLabel], ["Format", d.deliveryLabel], ["Stage", d.stageLabel], ["Energy", it.energy], ["Vulnerability", it.vulnerability], ["Remote", it.remote], ["Movement", it.movement], ["Familiarity", it.familiarity], ["Output", (it.outputs || []).slice(0, 2).join(", ")]].filter(r => r[1] && r[1] !== "Variable" || (r[0] === "Time" && r[1])).map(([k, v]) => ({ k, v }));
     const hasRun = !!runLabel && secs.some(s => s.id === runId);
     const notice = obs ? "" : it.summaryOnly ? "Summarised for reference. See the original source for the method." : it.incomplete ? "In development. The full method will be published once tested." : it.template ? "Structure only. No complete version is published yet." : it.status === "draft" ? "Draft. Still being tested." : "";
@@ -211,9 +222,9 @@ class Component extends DCLogic {
       ovBg: fvOn ? "transparent" : "#ece9e0", ovFg: fvOn ? "#ece9e0" : "#0b0b0a", fvBg: fvOn ? "#ece9e0" : "transparent", fvFg: fvOn ? "#0b0b0a" : "#ece9e0",
       doPrint: () => window.print(), builderHref: "#/builder?add=" + it.id, builderLabel: T === "sprint" ? "Adapt in Builder" : T === "workshop" ? "Adapt this workshop" : T === "playbook" ? "Use this playbook" : T === "framework" ? "Build around this" : "Add to Builder", hasHeroVis: S.w >= 900 && d.visual !== "plain_type", heroCols: S.w >= 900 && d.visual !== "plain_type" ? "minmax(0,7fr) minmax(0,4fr)" : "minmax(0,1fr)",
       hasGlance: glance.length > 0, glance,
-      tocWide: complex && S.w >= 1100 && toc.length > 3, tocMobile: complex && S.w < 1100 && toc.length > 3, toc, tocOpen: S.toc, tocSign: S.toc ? "−" : "+", toggleToc: () => this.setState(s => ({ toc: !s.toc })),
+      tocWide: complex && wideBody && toc.length > 3, tocMobile: complex && S.w < 1100 && toc.length > 3, toc, tocOpen: S.toc, tocSign: S.toc ? "−" : "+", toggleToc: () => this.setState(s => ({ toc: !s.toc })),
       hasEntry: !!en, en: en || { facts: [] }, closeEntry: () => this.setState({ entry: null }), prevEntry: () => this.stepEntry(-1), nextEntry: () => this.stepEntry(1),
-      secs: shown, agCols: S.w < 640 ? "52px minmax(0,1fr) 0px" : "70px minmax(0,1fr) 70px",
+      secs: mainSecs.concat(deepSecs), side, wideSide: wideBody && (side.length > 0 || (complex && toc.length > 3)), narrowSide: !wideBody && side.length > 0, bodyCols: wideBody && (side.length > 0 || (complex && toc.length > 3)) ? "minmax(0,1fr) 340px" : "minmax(0,1fr)", agCols: S.w < 640 ? "52px minmax(0,1fr) 0px" : "70px minmax(0,1fr) 70px",
       ctaBtn: CTA_BTN, cta: CTA[T] || "Working through something like this?"
     };
   }
@@ -323,14 +334,14 @@ Component.prototype.template = function (V) {
             </header>
             {V.hasGlance ? (
               <>
-                <section style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(min(100%,150px),1fr))","gap":"20px 32px","padding":"24px 0","borderTop":"1px solid #ece9e0","borderBottom":"1px solid #2a2925"}}>
+                <section aria-label="At a glance" style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(min(100%,150px),1fr))","gap":"8px","padding":"4px 0 0"}}>
                   {dcList(V.glance).map((g_0, $i0) => (
                     <React.Fragment key={$i0}>
-                      <div>
-                        <div style={{"fontSize":"14px","color":"#8f8b80"}}>
+                      <div style={{"background":"#111110","border":"1px solid #2a2925","padding":"14px 16px"}}>
+                        <div style={{"fontSize":"12px","letterSpacing":".08em","textTransform":"uppercase","color":"#8f8b80"}}>
                           {dcText(g_0?.k)}
                         </div>
-                        <div style={{"marginTop":"4px","fontSize":"17px","lineHeight":"1.3"}}>
+                        <div style={{"marginTop":"6px","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"19px","lineHeight":"1.15"}}>
                           {dcText(g_0?.v)}
                         </div>
                       </div>
@@ -366,102 +377,207 @@ Component.prototype.template = function (V) {
                 </div>
               </>
             ) : null}
-            <div style={{"display":"flex","gap":"56px","alignItems":"flex-start"}}>
-              {V.tocWide ? (
-                <>
-                  <nav data-noprint="1" style={{"flex":"0 0 170px","position":"sticky","top":"84px","paddingTop":"28px","display":"flex","flexDirection":"column","gap":"2px"}}>
-                    {dcList(V.toc).map((t_2, $i2) => (
-                      <React.Fragment key={$i2}>
-                        <button onClick={t_2?.go} style={{"textAlign":"left","background":"none","border":"0","color":"#8f8b80","padding":"5px 0","cursor":"pointer","fontSize":"15px"}} className="scp-hover-1">
-                          {dcText(t_2?.label)}
-                        </button>
-                      </React.Fragment>
-                    ))}
-                  </nav>
-                </>
-              ) : null}
-              <div style={{"flex":"1 1 auto","minWidth":"0","maxWidth":"980px"}}>
-                {dcList(V.secs).map((s_3, $i3) => (
-                  <React.Fragment key={$i3}>
-                    <section id={s_3?.id} style={{"padding":"clamp(24px,3vw,36px) 0","borderBottom":"1px solid #2a2925"}}>
-                      <div style={{"display":"flex","justifyContent":"space-between","alignItems":"baseline","gap":"16px"}}>
-                        <h2 style={dcCss(`margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(22px,2.2vw,30px);letter-spacing:-.015em;color:${dcStr(s_3?.hc)}`)}>
-                          {dcText(s_3?.title)}
-                        </h2>
-                        {s_3?.collapsible ? (
+            {V.narrowSide ? (
+              <>
+                <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(min(100%,280px),1fr))","gap":"0 10px","marginTop":"10px"}}>
+                  {dcList(V.side).map((c_2, $i2) => (
+                    <React.Fragment key={$i2}>
+                      <div style={dcCss(`background:#111110;border:1px solid #2a2925;border-top:2px solid ${dcStr(c_2?.top)};padding:16px 18px 18px;margin-bottom:10px;min-width:0`)}>
+                        <div style={{"fontSize":"12px","letterSpacing":".08em","textTransform":"uppercase","color":"#8f8b80"}}>
+                          {dcText(c_2?.title)}
+                        </div>
+                        {dcList(c_2?.sub).map((b_3, $i3) => (
+                          <React.Fragment key={$i3}>
+                            <div style={{"marginTop":"12px"}}>
+                              {b_3?.hasH ? (
+                                <>
+                                  <div style={dcCss(`margin-bottom:4px;font-size:13px;font-weight:500;color:${dcStr(b_3?.hc)}`)}>
+                                    {dcText(b_3?.h)}
+                                  </div>
+                                </>
+                              ) : null}
+                              {b_3?.hasText ? (
+                                <>
+                                  <p style={{"margin":"0","fontSize":"15px","lineHeight":"1.45"}}>
+                                    {dcText(b_3?.text)}
+                                  </p>
+                                </>
+                              ) : null}
+                              {b_3?.hasItems ? (
+                                <>
+                                  <ul style={{"margin":"0","padding":"0","listStyle":"none"}}>
+                                    {dcList(b_3?.items).map((x_4, $i4) => (
+                                      <React.Fragment key={$i4}>
+                                        <li style={{"display":"flex","gap":"10px","alignItems":"baseline","padding":"4px 0","fontSize":"15px","lineHeight":"1.4"}}>
+                                          <span style={dcCss(`flex:none;width:12px;color:${dcStr(b_3?.mc)}`)}>
+                                            {dcText(b_3?.mark)}
+                                          </span>
+                                          <span style={{"minWidth":"0"}}>
+                                            {dcText(x_4)}
+                                          </span>
+                                        </li>
+                                      </React.Fragment>
+                                    ))}
+                                  </ul>
+                                </>
+                              ) : null}
+                              {b_3?.hasPairs ? (
+                                <>
+                                  <div>
+                                    {dcList(b_3?.pairs).map((p_5, $i5) => (
+                                      <React.Fragment key={$i5}>
+                                        <div style={{"display":"flex","justifyContent":"space-between","gap":"12px","padding":"6px 0","borderTop":"1px solid #1d1c1a","fontSize":"14px"}}>
+                                          <span style={{"color":"#8f8b80"}}>
+                                            {dcText(p_5?.k)}
+                                          </span>
+                                          <span style={dcCss(`text-align:right;color:${dcStr(p_5?.c)}`)}>
+                                            {dcText(p_5?.v)}
+                                          </span>
+                                        </div>
+                                      </React.Fragment>
+                                    ))}
+                                  </div>
+                                </>
+                              ) : null}
+                              {b_3?.hasLinks ? (
+                                <>
+                                  <div>
+                                    {dcList(b_3?.links).map((r_6, $i6) => (
+                                      <React.Fragment key={$i6}>
+                                        <a href={dcHref(r_6?.href)} style={{"display":"block","padding":"6px 0","fontSize":"15px"}}>
+                                          {dcText(r_6?.title)}
+                                        </a>
+                                      </React.Fragment>
+                                    ))}
+                                  </div>
+                                </>
+                              ) : null}
+                            </div>
+                          </React.Fragment>
+                        ))}
+                      </div>
+                    </React.Fragment>
+                  ))}
+                </div>
+              </>
+            ) : null}
+            <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.bodyCols)};gap:clamp(32px,4vw,64px);align-items:start`)}>
+              <div style={{"minWidth":"0"}}>
+                {dcList(V.secs).map((s_7, $i7) => (
+                  <React.Fragment key={$i7}>
+                    {s_7?.firstDeep ? (
+                      <>
+                        <div style={{"display":"flex","flexWrap":"wrap","justifyContent":"space-between","alignItems":"baseline","gap":"6px 16px","marginTop":"clamp(56px,6vw,88px)","paddingTop":"16px","borderTop":"2px solid #ece9e0"}}>
+                          <span style={{"fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(26px,3vw,36px)","letterSpacing":"-.02em"}}>
+                            {"Go deeper"}
+                          </span>
+                          <span style={{"fontSize":"14px","color":"#8f8b80"}}>
+                            {"Notes, sources and what connects to it"}
+                          </span>
+                        </div>
+                      </>
+                    ) : null}
+                    <section id={s_7?.id} style={dcCss(`margin-top:${dcStr(s_7?.mt)};padding:${dcStr(s_7?.pad)};background:${dcStr(s_7?.bg)};border:${dcStr(s_7?.bd)};scroll-margin-top:84px`)}>
+                      <div style={{"display":"flex","justifyContent":"space-between","alignItems":"flex-end","gap":"16px"}}>
+                        <div style={{"minWidth":"0"}}>
+                          {s_7?.hasKicker ? (
+                            <>
+                              <div style={{"fontSize":"13px","letterSpacing":".06em","color":"#ff4b23","fontVariantNumeric":"tabular-nums"}}>
+                                {dcText(s_7?.kicker)}
+                              </div>
+                            </>
+                          ) : null}
+                          <h2 style={dcCss(`margin:4px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:${dcStr(s_7?.hs)};letter-spacing:-.02em;line-height:1.05;color:${dcStr(s_7?.hc)}`)}>
+                            {dcText(s_7?.title)}
+                          </h2>
+                        </div>
+                        {s_7?.collapsible ? (
                           <>
-                            <button data-noprint="1" onClick={s_3?.toggle} style={{"background":"none","border":"0","color":"#8f8b80","minHeight":"40px","cursor":"pointer","fontSize":"15px"}}>
-                              {dcText(s_3?.toggleLabel)}
+                            <button data-noprint="1" onClick={s_7?.toggle} style={{"flex":"none","background":"none","border":"1px solid #34332e","color":"#c9c5ba","minHeight":"36px","padding":"0 12px","cursor":"pointer","fontSize":"14px"}} className="scp-hover-9">
+                              {dcText(s_7?.toggleLabel)}
                             </button>
                           </>
                         ) : null}
                       </div>
-                      {s_3?.show ? (
+                      {s_7?.show ? (
                         <>
-                          {s_3?.isBig ? (
+                          {s_7?.isBig ? (
                             <>
-                              <p style={{"margin":"16px 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(28px,4vw,60px)","letterSpacing":"-.03em","lineHeight":"1","maxWidth":"18ch"}}>
-                                {dcText(s_3?.text)}
+                              <p style={{"margin":"18px 0 0","padding":"clamp(20px,3vw,32px) clamp(20px,3vw,36px)","background":"#141412","borderLeft":"3px solid #ff4b23","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(26px,3.4vw,46px)","letterSpacing":"-.03em","lineHeight":"1.05","textWrap":"balance"}}>
+                                {dcText(s_7?.text)}
                               </p>
                             </>
                           ) : null}
-                          {dcList(s_3?.sub).map((b_4, $i4) => (
-                            <React.Fragment key={$i4}>
+                          {dcList(s_7?.sub).map((b_8, $i8) => (
+                            <React.Fragment key={$i8}>
                               <div style={{"marginTop":"18px"}}>
-                                {b_4?.hasH ? (
+                                {b_8?.hasH ? (
                                   <>
-                                    <h3 style={dcCss(`margin:0 0 6px;font-size:15px;font-weight:500;color:${dcStr(b_4?.hc)}`)}>
-                                      {dcText(b_4?.h)}
+                                    <h3 style={dcCss(`margin:0 0 6px;font-size:15px;font-weight:500;color:${dcStr(b_8?.hc)}`)}>
+                                      {dcText(b_8?.h)}
                                     </h3>
                                   </>
                                 ) : null}
-                                {b_4?.hasText ? (
+                                {b_8?.hasText ? (
                                   <>
-                                    <p style={{"margin":"0","maxWidth":"66ch","fontSize":"18px","lineHeight":"1.5"}}>
-                                      {dcText(b_4?.text)}
+                                    <p style={{"margin":"0","maxWidth":"62ch","fontSize":"19px","lineHeight":"1.55","color":"#ece9e0"}}>
+                                      {dcText(b_8?.text)}
                                     </p>
                                   </>
                                 ) : null}
-                                {b_4?.hasItems ? (
+                                {b_8?.isChips ? (
                                   <>
-                                    <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(min(100%,260px),1fr))","gap":"0 32px"}}>
-                                      {dcList(b_4?.items).map((x_5, $i5) => (
-                                        <React.Fragment key={$i5}>
-                                          <div style={{"padding":"9px 0","borderTop":"1px solid #1d1c1a","fontSize":"17px","lineHeight":"1.4"}}>
-                                            {dcText(x_5)}
+                                    <div style={{"display":"flex","flexWrap":"wrap","gap":"8px"}}>
+                                      {dcList(b_8?.items).map((x_9, $i9) => (
+                                        <React.Fragment key={$i9}>
+                                          <span style={{"display":"inline-block","background":"#111110","border":"1px solid #34332e","padding":"8px 12px","fontSize":"15px","lineHeight":"1.3"}}>
+                                            {dcText(x_9)}
+                                          </span>
+                                        </React.Fragment>
+                                      ))}
+                                    </div>
+                                  </>
+                                ) : null}
+                                {b_8?.isList ? (
+                                  <>
+                                    <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(min(100%,280px),1fr))","gap":"8px"}}>
+                                      {dcList(b_8?.items).map((x_10, $i10) => (
+                                        <React.Fragment key={$i10}>
+                                          <div style={{"background":"#111110","borderLeft":"2px solid #4a4843","padding":"12px 14px","fontSize":"16px","lineHeight":"1.45"}}>
+                                            {dcText(x_10)}
                                           </div>
                                         </React.Fragment>
                                       ))}
                                     </div>
                                   </>
                                 ) : null}
-                                {b_4?.hasPairs ? (
+                                {b_8?.hasPairs ? (
                                   <>
                                     <div style={{"display":"grid","gridTemplateColumns":"minmax(120px,200px) minmax(0,1fr)"}}>
-                                      {dcList(b_4?.pairs).map((p_6, $i6) => (
-                                        <React.Fragment key={$i6}>
+                                      {dcList(b_8?.pairs).map((p_11, $i11) => (
+                                        <React.Fragment key={$i11}>
                                           <span style={{"padding":"9px 16px 9px 0","borderTop":"1px solid #1d1c1a","fontSize":"15px","color":"#8f8b80"}}>
-                                            {dcText(p_6?.k)}
+                                            {dcText(p_11?.k)}
                                           </span>
-                                          <span style={dcCss(`padding:9px 0;border-top:1px solid #1d1c1a;font-size:17px;line-height:1.4;color:${dcStr(p_6?.c)}`)}>
-                                            {dcText(p_6?.v)}
+                                          <span style={dcCss(`padding:9px 0;border-top:1px solid #1d1c1a;font-size:17px;line-height:1.4;color:${dcStr(p_11?.c)}`)}>
+                                            {dcText(p_11?.v)}
                                           </span>
                                         </React.Fragment>
                                       ))}
                                     </div>
                                   </>
                                 ) : null}
-                                {b_4?.hasLinks ? (
+                                {b_8?.hasLinks ? (
                                   <>
-                                    <div>
-                                      {dcList(b_4?.links).map((r_7, $i7) => (
-                                        <React.Fragment key={$i7}>
-                                          <a href={dcHref(r_7?.href)} style={{"display":"flex","flexWrap":"wrap","justifyContent":"space-between","gap":"4px 16px","padding":"10px 0","borderTop":"1px solid #1d1c1a","textDecoration":"none"}} className="scp-hover-0">
-                                            <span style={{"fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"20px"}}>
-                                              {dcText(r_7?.title)}
+                                    <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fill,minmax(min(100%,230px),1fr))","gap":"8px"}}>
+                                      {dcList(b_8?.links).map((r_12, $i12) => (
+                                        <React.Fragment key={$i12}>
+                                          <a href={dcHref(r_12?.href)} style={{"display":"flex","flexDirection":"column","gap":"6px","minHeight":"84px","padding":"14px 16px","background":"#0b0b0a","border":"1px solid #2a2925","color":"#ece9e0","textDecoration":"none"}} className="scp-hover-7">
+                                            <span style={{"fontSize":"12px","letterSpacing":".06em","textTransform":"uppercase","color":"#8f8b80"}}>
+                                              {dcText(r_12?.tag)}
                                             </span>
-                                            <span style={{"fontSize":"14px","color":"#8f8b80"}}>
-                                              {dcText(r_7?.tag)}
+                                            <span style={{"fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"19px","lineHeight":"1.15"}}>
+                                              {dcText(r_12?.title)}
                                             </span>
                                           </a>
                                         </React.Fragment>
@@ -472,108 +588,108 @@ Component.prototype.template = function (V) {
                               </div>
                             </React.Fragment>
                           ))}
-                          {s_3?.isSteps ? (
+                          {s_7?.isSteps ? (
                             <>
-                              <ol style={{"margin":"16px 0 0","padding":"0","listStyle":"none","maxWidth":"72ch"}}>
-                                {dcList(s_3?.steps).map((x_8, $i8) => (
-                                  <React.Fragment key={$i8}>
-                                    <li style={{"display":"flex","gap":"18px","alignItems":"baseline","padding":"12px 0","borderTop":"1px solid #1d1c1a"}}>
-                                      <span style={{"fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"24px","color":"#ff4b23","width":"30px","flex":"none"}}>
-                                        {dcText(x_8?.n)}
+                              <ol style={{"margin":"18px 0 0","padding":"0","listStyle":"none","display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(min(100%,280px),1fr))","gap":"8px"}}>
+                                {dcList(s_7?.steps).map((x_13, $i13) => (
+                                  <React.Fragment key={$i13}>
+                                    <li style={{"display":"flex","flexDirection":"column","gap":"10px","background":"#111110","border":"1px solid #2a2925","padding":"16px 18px 18px"}}>
+                                      <span style={{"fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"30px","lineHeight":"1","color":"#ff4b23"}}>
+                                        {dcText(x_13?.n)}
                                       </span>
-                                      <span style={{"fontSize":"18px","lineHeight":"1.45"}}>
-                                        {dcText(x_8?.t)}
+                                      <span style={{"fontSize":"17px","lineHeight":"1.45"}}>
+                                        {dcText(x_13?.t)}
                                       </span>
                                     </li>
                                   </React.Fragment>
                                 ))}
                               </ol>
-                              {s_3?.hasSay ? (
+                              {s_7?.hasSay ? (
                                 <>
                                   <p style={{"margin":"16px 0 0","maxWidth":"66ch","paddingLeft":"16px","borderLeft":"2px solid #ff4b23","fontSize":"18px","lineHeight":"1.5"}}>
                                     <span style={{"color":"#8f8b80"}}>
                                       {"Say: "}
                                     </span>
                                     {"“"}
-                                    {dcText(s_3?.say)}
+                                    {dcText(s_7?.say)}
                                     {"”"}
                                   </p>
                                 </>
                               ) : null}
                             </>
                           ) : null}
-                          {s_3?.isAgenda ? (
+                          {s_7?.isAgenda ? (
                             <>
                               <div style={{"marginTop":"12px"}}>
-                                {dcList(s_3?.rows).map((a_9, $i9) => (
-                                  <React.Fragment key={$i9}>
+                                {dcList(s_7?.rows).map((a_14, $i14) => (
+                                  <React.Fragment key={$i14}>
                                     <div>
-                                      {a_9?.hasDay ? (
+                                      {a_14?.hasDay ? (
                                         <>
                                           <div style={{"marginTop":"20px","padding":"8px 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"20px","color":"#ff4b23"}}>
-                                            {dcText(a_9?.day)}
+                                            {dcText(a_14?.day)}
                                           </div>
                                         </>
                                       ) : null}
-                                      <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.agCols)};gap:4px 20px;align-items:baseline;padding:14px 0;border-top:1px solid #2a2925;opacity:${dcStr(a_9?.op)}`)}>
+                                      <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.agCols)};gap:4px 20px;align-items:baseline;padding:14px 0;border-top:1px solid #2a2925;opacity:${dcStr(a_14?.op)}`)}>
                                         <span style={{"fontSize":"15px","color":"#8f8b80"}}>
-                                          {dcText(a_9?.t)}
+                                          {dcText(a_14?.t)}
                                         </span>
                                         <div style={{"minWidth":"0"}}>
                                           <div style={{"fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"21px","lineHeight":"1.15"}}>
-                                            {dcText(a_9?.name)}
+                                            {dcText(a_14?.name)}
                                             {" "}
                                             <span style={{"fontFamily":"'Satoshi',sans-serif","fontSize":"14px","fontWeight":"400","color":"#8f8b80"}}>
-                                              {dcText(a_9?.optional)}
+                                              {dcText(a_14?.optional)}
                                             </span>
                                           </div>
-                                          {a_9?.hasPurpose ? (
+                                          {a_14?.hasPurpose ? (
                                             <>
                                               <div style={{"fontSize":"16px","color":"#c9c5ba","marginTop":"4px"}}>
-                                                {dcText(a_9?.purpose)}
+                                                {dcText(a_14?.purpose)}
                                               </div>
                                             </>
                                           ) : null}
-                                          {a_9?.hasOutput ? (
+                                          {a_14?.hasOutput ? (
                                             <>
                                               <div style={{"fontSize":"15px","color":"#8f8b80","marginTop":"6px"}}>
                                                 {"Output: "}
                                                 <span style={{"color":"#ece9e0"}}>
-                                                  {dcText(a_9?.output)}
+                                                  {dcText(a_14?.output)}
                                                 </span>
                                               </div>
                                             </>
                                           ) : null}
-                                          {a_9?.hasRefs ? (
+                                          {a_14?.hasRefs ? (
                                             <>
                                               <div style={{"display":"flex","flexWrap":"wrap","gap":"4px 16px","marginTop":"6px"}}>
-                                                {dcList(a_9?.refs).map((r_10, $i10) => (
-                                                  <React.Fragment key={$i10}>
-                                                    <a href={dcHref(r_10?.href)} style={{"fontSize":"15px"}}>
-                                                      {dcText(r_10?.title)}
+                                                {dcList(a_14?.refs).map((r_15, $i15) => (
+                                                  <React.Fragment key={$i15}>
+                                                    <a href={dcHref(r_15?.href)} style={{"fontSize":"15px"}}>
+                                                      {dcText(r_15?.title)}
                                                     </a>
                                                   </React.Fragment>
                                                 ))}
                                               </div>
                                             </>
                                           ) : null}
-                                          {a_9?.hasDetail ? (
+                                          {a_14?.hasDetail ? (
                                             <>
-                                              <button data-noprint="1" onClick={a_9?.toggle} style={{"marginTop":"6px","background":"none","border":"0","padding":"4px 0","color":"#ff4b23","cursor":"pointer","fontSize":"15px"}}>
-                                                {dcText(a_9?.toggleLabel)}
+                                              <button data-noprint="1" onClick={a_14?.toggle} style={{"marginTop":"6px","background":"none","border":"0","padding":"4px 0","color":"#ff4b23","cursor":"pointer","fontSize":"15px"}}>
+                                                {dcText(a_14?.toggleLabel)}
                                               </button>
                                             </>
                                           ) : null}
-                                          {a_9?.open ? (
+                                          {a_14?.open ? (
                                             <>
                                               <div style={{"marginTop":"8px","display":"grid","gridTemplateColumns":"minmax(110px,170px) minmax(0,1fr)"}}>
-                                                {dcList(a_9?.detail).map((p_11, $i11) => (
-                                                  <React.Fragment key={$i11}>
+                                                {dcList(a_14?.detail).map((p_16, $i16) => (
+                                                  <React.Fragment key={$i16}>
                                                     <span style={{"padding":"8px 16px 8px 0","borderTop":"1px solid #1d1c1a","fontSize":"14px","color":"#8f8b80"}}>
-                                                      {dcText(p_11?.k)}
+                                                      {dcText(p_16?.k)}
                                                     </span>
                                                     <span style={{"padding":"8px 0","borderTop":"1px solid #1d1c1a","fontSize":"16px","lineHeight":"1.45"}}>
-                                                      {dcText(p_11?.v)}
+                                                      {dcText(p_16?.v)}
                                                     </span>
                                                   </React.Fragment>
                                                 ))}
@@ -582,7 +698,7 @@ Component.prototype.template = function (V) {
                                           ) : null}
                                         </div>
                                         <span style={{"fontSize":"15px","color":"#8f8b80","textAlign":"right"}}>
-                                          {dcText(a_9?.dur)}
+                                          {dcText(a_14?.dur)}
                                         </span>
                                       </div>
                                     </div>
@@ -591,24 +707,24 @@ Component.prototype.template = function (V) {
                               </div>
                             </>
                           ) : null}
-                          {s_3?.isFail ? (
+                          {s_7?.isFail ? (
                             <>
-                              <div style={{"marginTop":"12px"}}>
-                                {dcList(s_3?.fails).map((f_12, $i12) => (
-                                  <React.Fragment key={$i12}>
-                                    <div style={{"padding":"14px 0","borderTop":"1px solid #1d1c1a","maxWidth":"72ch"}}>
-                                      <div style={{"fontSize":"18px","fontWeight":"500"}}>
-                                        {dcText(f_12?.p)}
+                              <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(min(100%,300px),1fr))","gap":"8px","marginTop":"18px"}}>
+                                {dcList(s_7?.fails).map((f_17, $i17) => (
+                                  <React.Fragment key={$i17}>
+                                    <div style={{"background":"#151110","borderLeft":"3px solid #ff4b23","padding":"14px 16px"}}>
+                                      <div style={{"fontSize":"17px","fontWeight":"500","lineHeight":"1.35"}}>
+                                        {dcText(f_17?.p)}
                                       </div>
-                                      {f_12?.hasWhy ? (
+                                      {f_17?.hasWhy ? (
                                         <>
                                           <div style={{"fontSize":"16px","color":"#8f8b80","marginTop":"6px"}}>
                                             {"Why it happens: "}
-                                            {dcText(f_12?.why)}
+                                            {dcText(f_17?.why)}
                                           </div>
                                           <div style={{"fontSize":"16px","marginTop":"4px"}}>
                                             {"What to do: "}
-                                            {dcText(f_12?.what)}
+                                            {dcText(f_17?.what)}
                                           </div>
                                         </>
                                       ) : null}
@@ -618,51 +734,51 @@ Component.prototype.template = function (V) {
                               </div>
                             </>
                           ) : null}
-                          {s_3?.isFormats ? (
+                          {s_7?.isFormats ? (
                             <>
                               <div style={{"marginTop":"16px"}}>
                                 <div role="tablist" aria-label="Formats" style={{"display":"flex","flexWrap":"wrap","gap":"4px 24px","borderBottom":"1px solid #2a2925"}}>
-                                  {dcList(s_3?.fmts).map((x_13, $i13) => (
-                                    <React.Fragment key={$i13}>
-                                      <button role="tab" aria-selected={x_13?.aria} onClick={x_13?.pick} style={dcCss(`background:none;border:0;border-bottom:2px solid ${dcStr(x_13?.rule)};margin-bottom:-1px;color:${dcStr(x_13?.c)};min-height:48px;padding:0;cursor:pointer;font-size:16px;font-weight:500;text-align:left`)} className="scp-hover-1">
-                                        {dcText(x_13?.name)}
+                                  {dcList(s_7?.fmts).map((x_18, $i18) => (
+                                    <React.Fragment key={$i18}>
+                                      <button role="tab" aria-selected={x_18?.aria} onClick={x_18?.pick} style={dcCss(`background:none;border:0;border-bottom:2px solid ${dcStr(x_18?.rule)};margin-bottom:-1px;color:${dcStr(x_18?.c)};min-height:48px;padding:0;cursor:pointer;font-size:16px;font-weight:500;text-align:left`)} className="scp-hover-1">
+                                        {dcText(x_18?.name)}
                                       </button>
                                     </React.Fragment>
                                   ))}
                                 </div>
-                                <div style={dcCss(`display:grid;grid-template-columns:${dcStr(s_3?.fmtCols)};gap:20px clamp(24px,3vw,48px);padding-top:20px`)}>
+                                <div style={dcCss(`display:grid;grid-template-columns:${dcStr(s_7?.fmtCols)};gap:20px clamp(24px,3vw,48px);padding-top:20px`)}>
                                   <div style={{"minWidth":"0"}}>
-                                    <rd-visual key={[s_3?.fmt?.vis, s_3?.fmt?.daysLabel, s_3?.fmt?.id].join("|")} type="sprint_format" variant={s_3?.fmt?.vis} label={s_3?.fmt?.daysLabel} seed={s_3?.fmt?.id} style={{"display":"block","width":"100%","height":"110px","border":"1px solid #2a2925","background":"#0f0f0e"}}></rd-visual>
+                                    <rd-visual key={[s_7?.fmt?.vis, s_7?.fmt?.daysLabel, s_7?.fmt?.id].join("|")} type="sprint_format" variant={s_7?.fmt?.vis} label={s_7?.fmt?.daysLabel} seed={s_7?.fmt?.id} style={{"display":"block","width":"100%","height":"110px","border":"1px solid #2a2925","background":"#0f0f0e"}}></rd-visual>
                                     <div style={{"marginTop":"10px","fontSize":"14px","color":"#8f8b80"}}>
-                                      {dcText(s_3?.fmt?.meta)}
+                                      {dcText(s_7?.fmt?.meta)}
                                     </div>
-                                    {s_3?.fmt?.hasIntro ? (
+                                    {s_7?.fmt?.hasIntro ? (
                                       <>
                                         <p style={{"margin":"8px 0 0","fontSize":"16px","lineHeight":"1.5","color":"#c9c5ba"}}>
-                                          {dcText(s_3?.fmt?.intro)}
+                                          {dcText(s_7?.fmt?.intro)}
                                         </p>
                                       </>
                                     ) : null}
-                                    {s_3?.fmt?.hasUrl ? (
+                                    {s_7?.fmt?.hasUrl ? (
                                       <>
-                                        <a href={dcHref(s_3?.fmt?.url)} target="_blank" rel="noopener" style={{"display":"inline-flex","alignItems":"center","minHeight":"44px","fontSize":"15px"}}>
+                                        <a href={dcHref(s_7?.fmt?.url)} target="_blank" rel="noopener" style={{"display":"inline-flex","alignItems":"center","minHeight":"44px","fontSize":"15px"}}>
                                           {"View the original format"}
                                         </a>
                                       </>
                                     ) : null}
                                   </div>
                                   <div style={{"minWidth":"0"}}>
-                                    {s_3?.fmt?.hasShape ? (
+                                    {s_7?.fmt?.hasShape ? (
                                       <>
                                         <div style={{"borderTop":"1px solid #ece9e0"}}>
-                                          {dcList(s_3?.fmt?.shape).map((r_14, $i14) => (
-                                            <React.Fragment key={$i14}>
+                                          {dcList(s_7?.fmt?.shape).map((r_19, $i19) => (
+                                            <React.Fragment key={$i19}>
                                               <div style={{"display":"grid","gridTemplateColumns":"minmax(80px,140px) minmax(0,1fr)","gap":"4px 16px","padding":"10px 0","borderBottom":"1px solid #1d1c1a","fontSize":"16px"}}>
                                                 <span style={{"color":"#8f8b80"}}>
-                                                  {dcText(r_14?.k)}
+                                                  {dcText(r_19?.k)}
                                                 </span>
                                                 <span>
-                                                  {dcText(r_14?.v)}
+                                                  {dcText(r_19?.v)}
                                                 </span>
                                               </div>
                                             </React.Fragment>
@@ -670,17 +786,17 @@ Component.prototype.template = function (V) {
                                         </div>
                                       </>
                                     ) : null}
-                                    {dcList(s_3?.fmt?.fields).map((fl_15, $i15) => (
-                                      <React.Fragment key={$i15}>
+                                    {dcList(s_7?.fmt?.fields).map((fl_20, $i20) => (
+                                      <React.Fragment key={$i20}>
                                         <div style={{"marginTop":"18px"}}>
                                           <div style={{"fontSize":"14px","color":"#8f8b80"}}>
-                                            {dcText(fl_15?.k)}
+                                            {dcText(fl_20?.k)}
                                           </div>
                                           <ul style={{"margin":"6px 0 0","paddingLeft":"18px","fontSize":"16px","lineHeight":"1.5"}}>
-                                            {dcList(fl_15?.items).map((i_16, $i16) => (
-                                              <React.Fragment key={$i16}>
+                                            {dcList(fl_20?.items).map((i_21, $i21) => (
+                                              <React.Fragment key={$i21}>
                                                 <li>
-                                                  {dcText(i_16)}
+                                                  {dcText(i_21)}
                                                 </li>
                                               </React.Fragment>
                                             ))}
@@ -696,41 +812,41 @@ Component.prototype.template = function (V) {
                               </div>
                             </>
                           ) : null}
-                          {s_3?.isEntries ? (
+                          {s_7?.isEntries ? (
                             <>
                               <p style={{"margin":"10px 0 0","maxWidth":"66ch","fontSize":"15px","color":"#8f8b80"}}>
-                                {dcText(s_3?.credit)}
+                                {dcText(s_7?.credit)}
                               </p>
-                              {dcList(s_3?.egroups).map((g_17, $i17) => (
-                                <React.Fragment key={$i17}>
+                              {dcList(s_7?.egroups).map((g_22, $i22) => (
+                                <React.Fragment key={$i22}>
                                   <div style={{"marginTop":"22px"}}>
-                                    {g_17?.hasName ? (
+                                    {g_22?.hasName ? (
                                       <>
                                         <h3 style={{"position":"sticky","top":"61px","zIndex":"2","margin":"0","padding":"10px 0","background":"#0b0b0a","fontSize":"13px","letterSpacing":".08em","fontWeight":"500","color":"#ff4b23"}}>
-                                          {dcText(g_17?.name)}
+                                          {dcText(g_22?.name)}
                                           {" "}
                                           <span style={{"color":"#5a5850"}}>
-                                            {dcText(g_17?.n)}
+                                            {dcText(g_22?.n)}
                                           </span>
                                         </h3>
                                       </>
                                     ) : null}
                                     <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fill,minmax(min(100%,220px),1fr))","borderTop":"1px solid #2a2925","borderLeft":"1px solid #2a2925"}}>
-                                      {dcList(g_17?.list).map((e_18, $i18) => (
-                                        <React.Fragment key={$i18}>
-                                          <button onClick={e_18?.pick} style={dcCss(`display:flex;flex-direction:column;gap:6px;text-align:left;background:${dcStr(e_18?.bg)};border:0;box-shadow:inset -1px -1px 0 #2a2925;color:#ece9e0;padding:14px 16px 16px;cursor:pointer;min-height:112px`)} className="scp-hover-9">
+                                      {dcList(g_22?.list).map((e_23, $i23) => (
+                                        <React.Fragment key={$i23}>
+                                          <button onClick={e_23?.pick} style={dcCss(`display:flex;flex-direction:column;gap:6px;text-align:left;background:${dcStr(e_23?.bg)};border:0;box-shadow:inset -1px -1px 0 #2a2925;color:#ece9e0;padding:14px 16px 16px;cursor:pointer;min-height:112px`)} className="scp-hover-a">
                                             <span style={{"fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"19px","lineHeight":"1.1"}}>
-                                              {dcText(e_18?.name)}
+                                              {dcText(e_23?.name)}
                                             </span>
                                             <span style={{"fontSize":"14px","lineHeight":"1.4","color":"#8f8b80"}}>
-                                              {dcText(e_18?.short)}
+                                              {dcText(e_23?.short)}
                                             </span>
                                             <span style={{"marginTop":"auto","display":"flex","justifyContent":"space-between","gap":"8px","fontSize":"12px","color":"#5a5850"}}>
                                               <span>
-                                                {dcText(e_18?.meta)}
+                                                {dcText(e_23?.meta)}
                                               </span>
                                               <span style={{"color":"#c9c5ba"}}>
-                                                {dcText(e_18?.inLib)}
+                                                {dcText(e_23?.inLib)}
                                               </span>
                                             </span>
                                           </button>
@@ -742,42 +858,42 @@ Component.prototype.template = function (V) {
                               ))}
                             </>
                           ) : null}
-                          {s_3?.isAssets ? (
+                          {s_7?.isAssets ? (
                             <>
                               <div style={{"marginTop":"12px"}}>
-                                {dcList(s_3?.assets).map((a_19, $i19) => (
-                                  <React.Fragment key={$i19}>
+                                {dcList(s_7?.assets).map((a_24, $i24) => (
+                                  <React.Fragment key={$i24}>
                                     <div style={{"borderTop":"1px solid #1d1c1a","padding":"12px 0"}}>
                                       <div style={{"display":"flex","flexWrap":"wrap","justifyContent":"space-between","alignItems":"center","gap":"6px 24px"}}>
-                                        {a_19?.hasVis ? (
+                                        {a_24?.hasVis ? (
                                           <>
-                                            <rd-visual key={[a_19?.vis, a_19?.title].join("|")} type={a_19?.vis} seed={a_19?.title} style={{"display":"block","width":"56px","height":"34px","flex":"none","border":"1px solid #2a2925"}}></rd-visual>
+                                            <rd-visual key={[a_24?.vis, a_24?.title].join("|")} type={a_24?.vis} seed={a_24?.title} style={{"display":"block","width":"56px","height":"34px","flex":"none","border":"1px solid #2a2925"}}></rd-visual>
                                           </>
                                         ) : null}
                                         <div style={{"flex":"1 1 220px","minWidth":"0"}}>
                                           <div style={{"fontSize":"17px"}}>
-                                            {dcText(a_19?.title)}
+                                            {dcText(a_24?.title)}
                                           </div>
                                           <div style={{"fontSize":"14px","color":"#8f8b80","marginTop":"2px"}}>
-                                            {dcText(a_19?.meta)}
+                                            {dcText(a_24?.meta)}
                                           </div>
                                         </div>
                                         <div style={{"display":"flex","flexWrap":"wrap","gap":"4px 20px","alignItems":"center"}}>
-                                          {dcList(a_19?.actions).map((x_20, $i20) => (
-                                            <React.Fragment key={$i20}>
-                                              <a href={dcHref(x_20?.href)} target={x_20?.target} rel="noopener" style={{"display":"inline-flex","alignItems":"center","minHeight":"44px","fontSize":"15px","fontWeight":"500"}}>
-                                                {dcText(x_20?.label)}
+                                          {dcList(a_24?.actions).map((x_25, $i25) => (
+                                            <React.Fragment key={$i25}>
+                                              <a href={dcHref(x_25?.href)} target={x_25?.target} rel="noopener" style={{"display":"inline-flex","alignItems":"center","minHeight":"44px","fontSize":"15px","fontWeight":"500"}}>
+                                                {dcText(x_25?.label)}
                                               </a>
                                             </React.Fragment>
                                           ))}
-                                          {a_19?.isPrompt ? (
+                                          {a_24?.isPrompt ? (
                                             <>
-                                              <button onClick={a_19?.toggle} aria-expanded={a_19?.openAria} style={{"background":"none","border":"0","color":"#ece9e0","minHeight":"44px","padding":"0","cursor":"pointer","fontSize":"15px","fontWeight":"500","borderBottom":"1px solid #ff4b23"}}>
-                                                {dcText(a_19?.toggleLabel)}
+                                              <button onClick={a_24?.toggle} aria-expanded={a_24?.openAria} style={{"background":"none","border":"0","color":"#ece9e0","minHeight":"44px","padding":"0","cursor":"pointer","fontSize":"15px","fontWeight":"500","borderBottom":"1px solid #ff4b23"}}>
+                                                {dcText(a_24?.toggleLabel)}
                                               </button>
                                             </>
                                           ) : null}
-                                          {a_19?.planned ? (
+                                          {a_24?.planned ? (
                                             <>
                                               <span style={{"fontSize":"14px","color":"#8f8b80"}}>
                                                 {"In preparation"}
@@ -786,7 +902,7 @@ Component.prototype.template = function (V) {
                                           ) : null}
                                         </div>
                                       </div>
-                                      {a_19?.open ? (
+                                      {a_24?.open ? (
                                         <>
                                           <div style={{"margin":"16px 0 8px","display":"grid","gap":"20px","maxWidth":"760px"}}>
                                             <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(min(100%,240px),1fr))","gap":"16px 32px"}}>
@@ -795,7 +911,7 @@ Component.prototype.template = function (V) {
                                                   {"Purpose"}
                                                 </div>
                                                 <div style={{"marginTop":"4px","fontSize":"16px","lineHeight":"1.45"}}>
-                                                  {dcText(a_19?.p?.purpose)}
+                                                  {dcText(a_24?.p?.purpose)}
                                                 </div>
                                               </div>
                                               <div>
@@ -803,7 +919,7 @@ Component.prototype.template = function (V) {
                                                   {"When to use it"}
                                                 </div>
                                                 <div style={{"marginTop":"4px","fontSize":"16px","lineHeight":"1.45"}}>
-                                                  {dcText(a_19?.p?.when)}
+                                                  {dcText(a_24?.p?.when)}
                                                 </div>
                                               </div>
                                             </div>
@@ -812,10 +928,10 @@ Component.prototype.template = function (V) {
                                                 {"What context to provide"}
                                               </div>
                                               <ul style={{"margin":"6px 0 0","paddingLeft":"18px","fontSize":"16px","lineHeight":"1.5"}}>
-                                                {dcList(a_19?.p?.context).map((c_21, $i21) => (
-                                                  <React.Fragment key={$i21}>
+                                                {dcList(a_24?.p?.context).map((c_26, $i26) => (
+                                                  <React.Fragment key={$i26}>
                                                     <li>
-                                                      {dcText(c_21)}
+                                                      {dcText(c_26)}
                                                     </li>
                                                   </React.Fragment>
                                                 ))}
@@ -826,12 +942,12 @@ Component.prototype.template = function (V) {
                                                 <span style={{"fontSize":"14px","color":"#8f8b80"}}>
                                                   {"Prompt"}
                                                 </span>
-                                                <button onClick={a_19?.copy} style={dcCss(`background:${dcStr(a_19?.copyBg)};color:#0b0b0a;border:0;min-height:40px;padding:0 14px;cursor:pointer;font-size:14px;font-weight:500`)}>
-                                                  {dcText(a_19?.copyLabel)}
+                                                <button onClick={a_24?.copy} style={dcCss(`background:${dcStr(a_24?.copyBg)};color:#0b0b0a;border:0;min-height:40px;padding:0 14px;cursor:pointer;font-size:14px;font-weight:500`)}>
+                                                  {dcText(a_24?.copyLabel)}
                                                 </button>
                                               </div>
                                               <pre style={{"margin":"8px 0 0","padding":"16px","background":"#121210","border":"1px solid #2a2925","color":"#ece9e0","fontFamily":"ui-monospace,SFMono-Regular,Menlo,monospace","fontSize":"13.5px","lineHeight":"1.6","whiteSpace":"pre-wrap","overflowWrap":"anywhere"}}>
-                                                {dcText(a_19?.p?.prompt)}
+                                                {dcText(a_24?.p?.prompt)}
                                               </pre>
                                             </div>
                                             <div>
@@ -839,7 +955,7 @@ Component.prototype.template = function (V) {
                                                 {"Expected output"}
                                               </div>
                                               <div style={{"marginTop":"4px","fontSize":"16px","lineHeight":"1.45"}}>
-                                                {dcText(a_19?.p?.output)}
+                                                {dcText(a_24?.p?.output)}
                                               </div>
                                             </div>
                                             <div>
@@ -847,17 +963,17 @@ Component.prototype.template = function (V) {
                                                 {"Check by hand"}
                                               </div>
                                               <ul style={{"margin":"6px 0 0","paddingLeft":"18px","fontSize":"16px","lineHeight":"1.5"}}>
-                                                {dcList(a_19?.p?.verify).map((c_22, $i22) => (
-                                                  <React.Fragment key={$i22}>
+                                                {dcList(a_24?.p?.verify).map((c_27, $i27) => (
+                                                  <React.Fragment key={$i27}>
                                                     <li>
-                                                      {dcText(c_22)}
+                                                      {dcText(c_27)}
                                                     </li>
                                                   </React.Fragment>
                                                 ))}
                                               </ul>
                                             </div>
                                             <div style={{"fontSize":"14px","color":"#8f8b80"}}>
-                                              {dcText(a_19?.p?.author)}
+                                              {dcText(a_24?.p?.author)}
                                               {". Draft, not yet tested in a session. Use with any agent you prefer."}
                                             </div>
                                           </div>
@@ -883,6 +999,106 @@ Component.prototype.template = function (V) {
                   </a>
                 </div>
               </div>
+              {V.wideSide ? (
+                <>
+                  <aside data-noprint="1" style={{"position":"sticky","top":"84px","maxHeight":"calc(100vh - 100px)","overflow":"auto","overscrollBehavior":"contain","paddingTop":"clamp(28px,3vw,40px)"}}>
+                    {V.tocWide ? (
+                      <>
+                        <nav style={{"display":"flex","flexDirection":"column","marginBottom":"16px","paddingBottom":"12px","borderBottom":"1px solid #2a2925"}}>
+                          <div style={{"fontSize":"12px","letterSpacing":".08em","textTransform":"uppercase","color":"#8f8b80","marginBottom":"6px"}}>
+                            {"On this page"}
+                          </div>
+                          {dcList(V.toc).map((t_28, $i28) => (
+                            <React.Fragment key={$i28}>
+                              <button onClick={t_28?.go} style={{"textAlign":"left","background":"none","border":"0","color":"#c9c5ba","padding":"4px 0","cursor":"pointer","fontSize":"15px"}} className="scp-hover-0">
+                                {dcText(t_28?.label)}
+                              </button>
+                            </React.Fragment>
+                          ))}
+                        </nav>
+                      </>
+                    ) : null}
+                    {dcList(V.side).map((c_29, $i29) => (
+                      <React.Fragment key={$i29}>
+                        <div style={dcCss(`background:#111110;border:1px solid #2a2925;border-top:2px solid ${dcStr(c_29?.top)};padding:16px 18px 18px;margin-bottom:10px;min-width:0`)}>
+                          <div style={{"fontSize":"12px","letterSpacing":".08em","textTransform":"uppercase","color":"#8f8b80"}}>
+                            {dcText(c_29?.title)}
+                          </div>
+                          {dcList(c_29?.sub).map((b_30, $i30) => (
+                            <React.Fragment key={$i30}>
+                              <div style={{"marginTop":"12px"}}>
+                                {b_30?.hasH ? (
+                                  <>
+                                    <div style={dcCss(`margin-bottom:4px;font-size:13px;font-weight:500;color:${dcStr(b_30?.hc)}`)}>
+                                      {dcText(b_30?.h)}
+                                    </div>
+                                  </>
+                                ) : null}
+                                {b_30?.hasText ? (
+                                  <>
+                                    <p style={{"margin":"0","fontSize":"15px","lineHeight":"1.45"}}>
+                                      {dcText(b_30?.text)}
+                                    </p>
+                                  </>
+                                ) : null}
+                                {b_30?.hasItems ? (
+                                  <>
+                                    <ul style={{"margin":"0","padding":"0","listStyle":"none"}}>
+                                      {dcList(b_30?.items).map((x_31, $i31) => (
+                                        <React.Fragment key={$i31}>
+                                          <li style={{"display":"flex","gap":"10px","alignItems":"baseline","padding":"4px 0","fontSize":"15px","lineHeight":"1.4"}}>
+                                            <span style={dcCss(`flex:none;width:12px;color:${dcStr(b_30?.mc)}`)}>
+                                              {dcText(b_30?.mark)}
+                                            </span>
+                                            <span style={{"minWidth":"0"}}>
+                                              {dcText(x_31)}
+                                            </span>
+                                          </li>
+                                        </React.Fragment>
+                                      ))}
+                                    </ul>
+                                  </>
+                                ) : null}
+                                {b_30?.hasPairs ? (
+                                  <>
+                                    <div>
+                                      {dcList(b_30?.pairs).map((p_32, $i32) => (
+                                        <React.Fragment key={$i32}>
+                                          <div style={{"display":"flex","justifyContent":"space-between","gap":"12px","padding":"6px 0","borderTop":"1px solid #1d1c1a","fontSize":"14px"}}>
+                                            <span style={{"color":"#8f8b80"}}>
+                                              {dcText(p_32?.k)}
+                                            </span>
+                                            <span style={dcCss(`text-align:right;color:${dcStr(p_32?.c)}`)}>
+                                              {dcText(p_32?.v)}
+                                            </span>
+                                          </div>
+                                        </React.Fragment>
+                                      ))}
+                                    </div>
+                                  </>
+                                ) : null}
+                                {b_30?.hasLinks ? (
+                                  <>
+                                    <div>
+                                      {dcList(b_30?.links).map((r_33, $i33) => (
+                                        <React.Fragment key={$i33}>
+                                          <a href={dcHref(r_33?.href)} style={{"display":"block","padding":"6px 0","fontSize":"15px"}}>
+                                            {dcText(r_33?.title)}
+                                          </a>
+                                        </React.Fragment>
+                                      ))}
+                                    </div>
+                                  </>
+                                ) : null}
+                              </div>
+                            </React.Fragment>
+                          ))}
+                        </div>
+                      </React.Fragment>
+                    ))}
+                  </aside>
+                </>
+              ) : null}
             </div>
             {V.hasEntry ? (
               <>
@@ -894,10 +1110,10 @@ Component.prototype.template = function (V) {
                       {dcText(V.d?.title)}
                     </button>
                     <span style={{"display":"flex","gap":"4px"}}>
-                      <button onClick={V.prevEntry} aria-label="Previous" style={{"background":"none","border":"1px solid #2a2925","color":"#ece9e0","width":"40px","height":"40px","cursor":"pointer"}} className="scp-hover-a">
+                      <button onClick={V.prevEntry} aria-label="Previous" style={{"background":"none","border":"1px solid #2a2925","color":"#ece9e0","width":"40px","height":"40px","cursor":"pointer"}} className="scp-hover-9">
                         {"↑"}
                       </button>
-                      <button onClick={V.nextEntry} aria-label="Next" style={{"background":"none","border":"1px solid #2a2925","color":"#ece9e0","width":"40px","height":"40px","cursor":"pointer"}} className="scp-hover-a">
+                      <button onClick={V.nextEntry} aria-label="Next" style={{"background":"none","border":"1px solid #2a2925","color":"#ece9e0","width":"40px","height":"40px","cursor":"pointer"}} className="scp-hover-9">
                         {"↓"}
                       </button>
                     </span>
@@ -913,13 +1129,13 @@ Component.prototype.template = function (V) {
                       {dcText(V.en?.short)}
                     </p>
                     <div style={{"display":"grid","gridTemplateColumns":"100px minmax(0,1fr)","marginTop":"22px","borderTop":"1px solid #2a2925"}}>
-                      {dcList(V.en?.facts).map((f_23, $i23) => (
-                        <React.Fragment key={$i23}>
+                      {dcList(V.en?.facts).map((f_34, $i34) => (
+                        <React.Fragment key={$i34}>
                           <span style={{"padding":"10px 12px 10px 0","borderBottom":"1px solid #1d1c1a","fontSize":"14px","color":"#8f8b80"}}>
-                            {dcText(f_23?.k)}
+                            {dcText(f_34?.k)}
                           </span>
                           <span style={{"padding":"10px 0","borderBottom":"1px solid #1d1c1a","fontSize":"15px","lineHeight":"1.4"}}>
-                            {dcText(f_23?.v)}
+                            {dcText(f_34?.v)}
                           </span>
                         </React.Fragment>
                       ))}

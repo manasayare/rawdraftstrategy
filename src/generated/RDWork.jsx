@@ -171,7 +171,7 @@ Component.prototype.template = function (V) {
                       <div role={V.groupRole} aria-labelledby="rdq" style={{"display":"flex","flexDirection":"column","gap":"8px","marginTop":"24px"}}>
                         {dcList(V.opts).map((o_0, $i0) => (
                           <React.Fragment key={$i0}>
-                            <button type="button" role={o_0?.role} aria-checked={o_0?.aria} onClick={o_0?.pick} style={dcCss(`display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:${dcStr(o_0?.bg)};color:#ece9e0;border:1px solid ${dcStr(o_0?.bd)};min-height:54px;padding:10px 14px;cursor:pointer;font-size:17px;line-height:1.3`)} className="scp-hover-a">
+                            <button type="button" role={o_0?.role} aria-checked={o_0?.aria} onClick={o_0?.pick} style={dcCss(`display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:${dcStr(o_0?.bg)};color:#ece9e0;border:1px solid ${dcStr(o_0?.bd)};min-height:54px;padding:10px 14px;cursor:pointer;font-size:17px;line-height:1.3`)} className="scp-hover-9">
                               <span style={dcCss(`flex:none;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border:1px solid ${dcStr(o_0?.kbd)};color:${dcStr(o_0?.kfg)};background:${dcStr(o_0?.kbg)};font-size:13px;font-variant-numeric:tabular-nums`)}>
                                 {dcText(o_0?.key)}
                               </span>
