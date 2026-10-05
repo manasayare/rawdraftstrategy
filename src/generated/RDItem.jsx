@@ -261,7 +261,7 @@ Component.prototype.template = function (V) {
                   </a>
                   {V.hasRun ? (
                     <>
-                      <button onClick={V.goRun} style={{"background":"#ff4b23","color":"#0b0b0a","border":"0","padding":"0 18px","minHeight":"46px","cursor":"pointer","fontSize":"16px","fontWeight":"500"}} className="scp-hover-i">
+                      <button onClick={V.goRun} style={{"background":"#ff4b23","color":"#0b0b0a","border":"0","padding":"0 18px","minHeight":"46px","cursor":"pointer","fontSize":"16px","fontWeight":"500"}} className="scp-hover-8">
                         {dcText(V.runLabel)}
                       </button>
                     </>

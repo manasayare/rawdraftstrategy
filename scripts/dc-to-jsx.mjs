@@ -18,13 +18,17 @@ const RD_OUT = path.join(ROOT, "src/rd");
 
 const PAGES = {
   "Raw Draft": "RawDraft",
-  "RD Builder": "RDBuilder",
   "RD Item": "RDItem",
   "RD Library": "RDLibrary",
   "RD Pages": "RDPages",
   "RD Sprints": "RDSprints",
   "RD Work": "RDWork",
   "RD Suggest": "RDSuggest",
+};
+
+// Pages that have been rebuilt as hand-written React. dc-import resolves to these instead of generated code.
+const NATIVE = {
+  "RD Builder": ["Builder", "@/builder/Builder"],
 };
 
 // Engine and data scripts, in the order Raw Draft.dc.html loads them.
@@ -162,9 +166,10 @@ function makeCompiler(page, pseudoSheet) {
       return `${ind}{dcList(${list}).map((${id}, ${ix}) => (\n${ind}  <React.Fragment key={${ix}}>\n${kids.join("\n")}\n${ind}  </React.Fragment>\n${ind}))}`;
     }
     if (tag === "dc-import") {
-      const comp = PAGES[n.attribs.name];
+      const native = NATIVE[n.attribs.name];
+      const comp = native ? native[0] : PAGES[n.attribs.name];
       if (!comp) throw new Error(`${page}: unknown dc-import ${n.attribs.name}`);
-      imports.add(comp);
+      imports.add(native ? native.join("|") : comp);
       const props = Object.entries(n.attribs).filter(([k]) => !["name", "hint-size", "style"].includes(k))
         .map(([k, v]) => `${camel(k)}={${compileAttr(v, scope).expr}}`);
       return `${ind}<div className="sc-host"><${comp} ${props.join(" ")} /></div>`;
@@ -281,7 +286,7 @@ for (const [file, comp] of Object.entries(PAGES)) {
 "use client";
 import React from "react";
 import { DCLogic, dcList, dcText, dcStr, dcCss, dcHref, RDNav } from "@/lib/dc";
-${[...C.imports].map(i => `import ${i} from "./${i}";`).join("\n")}
+${[...C.imports].map(i => (i.includes("|") ? `import ${i.split("|")[0]} from "${i.split("|")[1]}";` : `import ${i} from "./${i}";`)).join("\n")}
 
 ${logic}
 

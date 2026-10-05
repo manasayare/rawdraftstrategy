@@ -1,0 +1,13 @@
+/* Builder hover and focus states. Inline styles set the resting look, so these win with !important. */
+.bh-ink:hover { color: #ece9e0 !important; }
+.bh-accent:hover { color: #ff4b23 !important; }
+.bh-line-ink:hover { border-color: #ece9e0 !important; }
+.bh-line-mute:hover { border-color: #8f8b80 !important; }
+.bh-line-accent:hover { border-color: #ff4b23 !important; }
+.bh-raise:hover { background: #1f1e1b !important; }
+.bh-tpl:hover { transform: translateY(-2px) rotate(0deg) !important; border-color: #8f8b80 !important; }
+.bf-under:focus { border-bottom-color: #4a4843 !important; }
+.bf-under-mute:focus { border-bottom-color: #8f8b80 !important; }
+.bf-line:focus { border-color: #8f8b80 !important; }
+.bf-line-ink:focus { border-color: #ece9e0 !important; }
+.bf-accent:focus { color: #ff4b23 !important; }

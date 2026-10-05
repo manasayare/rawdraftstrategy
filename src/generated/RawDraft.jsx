@@ -6,7 +6,7 @@ import { DCLogic, dcList, dcText, dcStr, dcCss, dcHref, RDNav } from "@/lib/dc";
 import RDSprints from "./RDSprints";
 import RDLibrary from "./RDLibrary";
 import RDItem from "./RDItem";
-import RDBuilder from "./RDBuilder";
+import Builder from "@/builder/Builder";
 import RDSuggest from "./RDSuggest";
 import RDWork from "./RDWork";
 import RDPages from "./RDPages";
@@ -1018,7 +1018,7 @@ Component.prototype.template = function (V) {
           ) : null}
           {V.isBuilder ? (
             <>
-              <div className="sc-host"><RDBuilder add={V.builderAdd} q={V.builderQ} tpl={V.builderTpl} w={V.builderW} /></div>
+              <div className="sc-host"><Builder add={V.builderAdd} q={V.builderQ} tpl={V.builderTpl} w={V.builderW} /></div>
             </>
           ) : null}
           {V.isSuggest ? (

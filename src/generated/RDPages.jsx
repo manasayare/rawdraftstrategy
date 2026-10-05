@@ -677,7 +677,7 @@ Component.prototype.template = function (V) {
                   <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.areaCols)};gap:clamp(14px,2vw,28px) clamp(14px,2vw,24px);align-items:start`)}>
                     {dcList(V.areas).map((a_21, $i21) => (
                       <React.Fragment key={$i21}>
-                        <div data-card="1" tabIndex="0" style={dcCss(`grid-column:span ${dcStr(a_21?.span)};margin-top:${dcStr(a_21?.mt)};position:relative;background:#1a1917;border:1px solid #34332e;padding:${dcStr(V.areaPad)};transform:rotate(${dcStr(a_21?.rot)});transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;box-shadow:0 1px 0 rgba(0,0,0,.4);outline:none`)} className="scp-hover-k scp-focus-l">
+                        <div data-card="1" tabIndex="0" style={dcCss(`grid-column:span ${dcStr(a_21?.span)};margin-top:${dcStr(a_21?.mt)};position:relative;background:#1a1917;border:1px solid #34332e;padding:${dcStr(V.areaPad)};transform:rotate(${dcStr(a_21?.rot)});transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;box-shadow:0 1px 0 rgba(0,0,0,.4);outline:none`)} className="scp-hover-a scp-focus-b">
                           <span aria-hidden="true" style={dcCss(`position:absolute;top:-6px;left:${dcStr(a_21?.tape)};width:38px;height:12px;background:rgba(236,233,224,.13);transform:rotate(${dcStr(a_21?.tapeRot)})`)}></span>
                           <div style={{"display":"flex","justifyContent":"space-between","gap":"12px","fontSize":"13px","color":"#8f8b80"}}>
                             <span>
@@ -776,7 +776,7 @@ Component.prototype.template = function (V) {
                             <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.netCols)};gap:clamp(14px,2vw,28px) clamp(14px,2vw,24px);align-items:start`)}>
                               {dcList(g_24?.cards).map((x_25, $i25) => (
                                 <React.Fragment key={$i25}>
-                                  <div data-card="1" style={dcCss(`margin-top:${dcStr(x_25?.mt)};position:relative;background:#1a1917;border:1px solid #34332e;padding:20px 20px 22px;transform:rotate(${dcStr(x_25?.rot)});transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;box-shadow:0 1px 0 rgba(0,0,0,.4)`)} className="scp-hover-k">
+                                  <div data-card="1" style={dcCss(`margin-top:${dcStr(x_25?.mt)};position:relative;background:#1a1917;border:1px solid #34332e;padding:20px 20px 22px;transform:rotate(${dcStr(x_25?.rot)});transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;box-shadow:0 1px 0 rgba(0,0,0,.4)`)} className="scp-hover-a">
                                     <span aria-hidden="true" style={dcCss(`position:absolute;top:-6px;left:${dcStr(x_25?.tape)};width:38px;height:12px;background:rgba(236,233,224,.13);transform:rotate(${dcStr(x_25?.tapeRot)})`)}></span>
                                     <div style={{"display":"flex","justifyContent":"space-between","alignItems":"flex-start","gap":"12px"}}>
                                       <div style={{"display":"flex","gap":"12px","alignItems":"center","minWidth":"0"}}>
@@ -791,7 +791,7 @@ Component.prototype.template = function (V) {
                                       </div>
                                       {x_25?.hasLink ? (
                                         <>
-                                          <a href={dcHref(x_25?.link)} target="_blank" rel="noopener" aria-label={x_25?.linkLabel} style={{"flex":"none","display":"inline-flex","alignItems":"center","justifyContent":"center","minWidth":"32px","height":"32px","border":"1px solid #4a4843","color":"#ece9e0","fontSize":"12px","fontWeight":"700","textDecoration":"none"}} className="scp-hover-g">
+                                          <a href={dcHref(x_25?.link)} target="_blank" rel="noopener" aria-label={x_25?.linkLabel} style={{"flex":"none","display":"inline-flex","alignItems":"center","justifyContent":"center","minWidth":"32px","height":"32px","border":"1px solid #4a4843","color":"#ece9e0","fontSize":"12px","fontWeight":"700","textDecoration":"none"}} className="scp-hover-c">
                                             {dcText(x_25?.glyph)}
                                           </a>
                                         </>
@@ -836,7 +836,7 @@ Component.prototype.template = function (V) {
                           <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fill,minmax(min(100%,180px),1fr))","borderTop":"1px solid #2a2925","borderLeft":"1px solid #2a2925"}}>
                             {dcList(V.worked).map((o_26, $i26) => (
                               <React.Fragment key={$i26}>
-                                <a href={dcHref(o_26?.url)} target="_blank" rel="noopener" style={{"display":"flex","alignItems":"center","justifyContent":"center","minHeight":"110px","padding":"16px","borderRight":"1px solid #2a2925","borderBottom":"1px solid #2a2925","color":"#8f8b80","opacity":".7","textDecoration":"none","fontSize":"16px","textAlign":"center"}} className="scp-hover-m">
+                                <a href={dcHref(o_26?.url)} target="_blank" rel="noopener" style={{"display":"flex","alignItems":"center","justifyContent":"center","minHeight":"110px","padding":"16px","borderRight":"1px solid #2a2925","borderBottom":"1px solid #2a2925","color":"#8f8b80","opacity":".7","textDecoration":"none","fontSize":"16px","textAlign":"center"}} className="scp-hover-d">
                                   {dcText(o_26?.name)}
                                 </a>
                               </React.Fragment>

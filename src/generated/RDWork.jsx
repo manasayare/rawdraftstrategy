@@ -79,7 +79,7 @@ Component.prototype.template = function (V) {
                         <span style={{"fontSize":"14px","color":"#8f8b80"}}>
                           {dcText(f_0?.label)}
                         </span>
-                        <input type={f_0?.type} name={f_0?.key} autoComplete={f_0?.ac} value={f_0?.v ?? ""} onChange={f_0?.on} placeholder={f_0?.ph} aria-invalid={f_0?.bad} style={dcCss(`display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid ${dcStr(f_0?.bd)};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:19px`)} className="scp-focus-o" />
+                        <input type={f_0?.type} name={f_0?.key} autoComplete={f_0?.ac} value={f_0?.v ?? ""} onChange={f_0?.on} placeholder={f_0?.ph} aria-invalid={f_0?.bad} style={dcCss(`display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid ${dcStr(f_0?.bd)};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:19px`)} className="scp-focus-f" />
                       </label>
                     </React.Fragment>
                   ))}
@@ -96,7 +96,7 @@ Component.prototype.template = function (V) {
                       <div style={{"display":"flex","flexWrap":"wrap","gap":"8px","marginTop":"12px"}}>
                         {dcList(g_1?.opts).map((o_2, $i2) => (
                           <React.Fragment key={$i2}>
-                            <button type="button" onClick={o_2?.pick} aria-pressed={o_2?.aria} style={dcCss(`white-space:nowrap;background:${dcStr(o_2?.bg)};color:#ece9e0;border:1px solid ${dcStr(o_2?.bd)};min-height:44px;padding:0 14px;cursor:pointer;font-size:15px`)} className="scp-hover-b">
+                            <button type="button" onClick={o_2?.pick} aria-pressed={o_2?.aria} style={dcCss(`white-space:nowrap;background:${dcStr(o_2?.bg)};color:#ece9e0;border:1px solid ${dcStr(o_2?.bd)};min-height:44px;padding:0 14px;cursor:pointer;font-size:15px`)} className="scp-hover-g">
                               {dcText(o_2?.l)}
                             </button>
                           </React.Fragment>
@@ -129,14 +129,14 @@ Component.prototype.template = function (V) {
                   <span style={{"fontSize":"14px","color":"#8f8b80"}}>
                     {"Anything else I should know? A link, a constraint, a date."}
                   </span>
-                  <textarea value={V.notes ?? ""} onChange={V.onNotes} rows="4" style={{"display":"block","width":"100%","marginTop":"6px","background":"#111110","border":"1px solid #34332e","outline":"none","color":"#ece9e0","padding":"12px 14px","fontFamily":"'Satoshi',sans-serif","fontSize":"17px","lineHeight":"1.45","resize":"vertical"}} className="scp-focus-a"></textarea>
+                  <textarea value={V.notes ?? ""} onChange={V.onNotes} rows="4" style={{"display":"block","width":"100%","marginTop":"6px","background":"#111110","border":"1px solid #34332e","outline":"none","color":"#ece9e0","padding":"12px 14px","fontFamily":"'Satoshi',sans-serif","fontSize":"17px","lineHeight":"1.45","resize":"vertical"}} className="scp-focus-h"></textarea>
                 </label>
                 <label aria-hidden="true" style={{"position":"absolute","left":"-9999px","width":"1px","height":"1px","overflow":"hidden"}}>
                   {"Website"}
                   <input tabIndex="-1" autoComplete="off" value={V.trap ?? ""} onChange={V.onTrap} />
                 </label>
                 <div style={{"display":"flex","flexWrap":"wrap","alignItems":"center","gap":"12px 18px","marginTop":"28px"}}>
-                  <button type="submit" disabled={V.sending} style={dcCss(`white-space:nowrap;background:#ff4b23;color:#0b0b0a;border:0;min-height:56px;padding:0 26px;cursor:pointer;font-size:18px;font-weight:500;opacity:${dcStr(V.sendOp)}`)} className="scp-hover-i">
+                  <button type="submit" disabled={V.sending} style={dcCss(`white-space:nowrap;background:#ff4b23;color:#0b0b0a;border:0;min-height:56px;padding:0 26px;cursor:pointer;font-size:18px;font-weight:500;opacity:${dcStr(V.sendOp)}`)} className="scp-hover-8">
                     {dcText(V.sendL)}
                   </button>
                   <span role="status" aria-live="polite" style={dcCss(`font-size:15px;color:${dcStr(V.msgC)}`)}>
