@@ -3,8 +3,8 @@
 const pick = (...names) => { for (const n of names) if (process.env[n]) return process.env[n]; return ""; };
 
 export const sanity = {
-  projectId: pick("NEXT_PUBLIC_SANITY_PROJECT_ID", "SANITY_PROJECT_ID", "SANITY_STUDIO_PROJECT_ID"),
-  dataset: pick("NEXT_PUBLIC_SANITY_DATASET", "SANITY_DATASET", "SANITY_STUDIO_DATASET") || "production",
+  projectId: pick("NEXT_PUBLIC_SANITY_PROJECT_ID", "SANITY_API_PROJECT_ID", "SANITY_PROJECT_ID", "SANITY_STUDIO_PROJECT_ID"),
+  dataset: pick("NEXT_PUBLIC_SANITY_DATASET", "SANITY_API_DATASET", "SANITY_DATASET", "SANITY_STUDIO_DATASET") || "production",
   apiVersion: "2026-10-05",
   // The dataset is private: reads need a token. The write token also creates suggestions and seeds the dataset.
   readToken: pick("SANITY_API_READ_TOKEN", "SANITY_READ_TOKEN"),
