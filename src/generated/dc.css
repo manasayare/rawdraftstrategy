@@ -25,5 +25,5 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #ff4b
 .scp-hover-d:hover{border-color:#ff4b23 !important}
 .scp-hover-e:hover{opacity:1 !important;color:#ece9e0 !important}
 .scp-hover-f:hover{background:#121210 !important}
-.scp-focus-g:focus{border-bottom-color:#ece9e0 !important}
-.scp-focus-h:focus{border-color:#8f8b80 !important}
+.scp-focus-g:focus{border-color:#8f8b80 !important}
+.scp-focus-h:focus{border-bottom-color:#ece9e0 !important}

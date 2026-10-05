@@ -17,3 +17,6 @@ html, body { height: 100%; margin: 0; }
 /* Footer sticker (rd-peel). Sits on the wordmark, slightly crooked. */
 .rd-peel-spot { position: absolute; right: clamp(8px, 3vw, 48px); top: clamp(-150px, -9vw, -40px); transform: rotate(-6deg); z-index: 2 }
 @media (max-width: 640px) { .rd-peel-spot { transform: rotate(-6deg) scale(.7); transform-origin: top right; top: -28px; right: 4px } }
+
+/* Nothing decorative (rotated stickers, bleeding visuals) may widen the page on phones. clip, unlike hidden, keeps position: sticky working. */
+html, body { overflow-x: clip }

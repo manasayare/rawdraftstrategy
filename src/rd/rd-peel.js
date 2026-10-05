@@ -19,13 +19,13 @@
     .code button, .again { background:#0b0b0a; color:#ece9e0; border:0; padding:5px 8px; font:500 11px/1 Satoshi, system-ui, sans-serif; letter-spacing:0; cursor:pointer }
     .again { position:absolute; right:-2px; bottom:-30px; background:none; color:#8f8b80; padding:6px 0 }
     .again:hover { color:#ece9e0 }
-    .note { position:absolute; inset:0; cursor:grab; outline:none }
+    .note { position:absolute; inset:0; cursor:grab; outline:none; overflow:hidden }
     .note:focus-visible { outline:2px solid #ff4b23; outline-offset:4px }
     :host([peeled]) .note { pointer-events:none }
     .front, .flap { position:absolute; left:0; top:0; width:${W}px; height:${W}px }
     .flapwrap { position:absolute; inset:0; filter:drop-shadow(-6px -4px 8px rgba(0,0,0,.45)); pointer-events:none }
     .flap { transform-origin:0 0 }
-    .gone { transition:transform .5s cubic-bezier(.5,0,.75,0), opacity .5s; transform:translate(40px,-160px) rotate(24deg); opacity:0 }
+    .gone { transition:transform .5s cubic-bezier(.5,0,.75,0), opacity .5s; transform:translate(-60px,-160px) rotate(-24deg); opacity:0 }
     .hint { position:absolute; right:-4px; bottom:-26px; font:400 11px/1 Satoshi, system-ui, sans-serif; color:#5a5850; opacity:0; transition:opacity .3s }
     :host(:hover) .hint { opacity:1 }
     :host([peeled]) .hint, :host([peeling]) .hint { display:none }

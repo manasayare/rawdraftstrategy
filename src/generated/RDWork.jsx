@@ -16,9 +16,45 @@ class Component extends DCLogic {
     ["budget", "Budget (USD)", ["Under $2,500", "$2,500 to $7,500", "$7,500 to $15,000", "$15,000 to $30,000", "$30,000 or more", "Not approved yet", "No budget yet"]]];
   static FIELDS = [["name", "Name", "text", "name", "Your name", true], ["email", "Work email", "email", "email", "name@company.com", true], ["org", "Organisation", "text", "organization", "Company or team"], ["role", "Your role", "text", "organization-title", "e.g. Head of Product"]];
 
-  state = { v: { name: "", email: "", org: "", role: "", length: "", people: "", when: "", budget: "" }, help: [], topics: [], notes: "", trap: "", status: "idle", bad: {}, w: window.innerWidth };
-  componentDidMount() { this.onR = () => this.setState({ w: window.innerWidth }); window.addEventListener("resize", this.onR); }
-  componentWillUnmount() { window.removeEventListener("resize", this.onR); }
+  // One question per screen. Single choices advance on tap; number keys pick, Enter moves on.
+  static STEPS = [
+    { k: "help", kind: "multi", q: "What do you need help with?", sub: "Pick any that apply." },
+    { k: "topics", kind: "multi", q: "What is the session about?", sub: "The question the room needs to answer." },
+    { k: "length", kind: "one", q: "How long is the session?" },
+    { k: "people", kind: "one", q: "How many people?" },
+    { k: "when", kind: "one", q: "When is it?" },
+    { k: "budget", kind: "one", q: "Is there a budget?", sub: "In USD. A range is enough." },
+    { k: "notes", kind: "text", q: "Anything else I should know?", sub: "A link, a constraint, a date. Optional." },
+    { k: "contact", kind: "contact", q: "Where should I reply?" }];
+
+  state = { v: { name: "", email: "", org: "", role: "", length: "", people: "", when: "", budget: "" }, help: [], topics: [], notes: "", trap: "", status: "idle", bad: {}, w: window.innerWidth, step: -1 };
+  componentDidMount() {
+    this.onR = () => this.setState({ w: window.innerWidth }); window.addEventListener("resize", this.onR);
+    this.onKey = e => this.key(e); window.addEventListener("keydown", this.onKey);
+  }
+  componentWillUnmount() { window.removeEventListener("resize", this.onR); window.removeEventListener("keydown", this.onKey); }
+  componentDidUpdate(pp, ps) {
+    if (ps.step === this.state.step) return;
+    window.scrollTo(0, 0);
+    const st = Component.STEPS[this.state.step];
+    // Focus the field on typing steps, but not on touch screens, where it pops the keyboard over the question.
+    if (st && (st.kind === "text" || st.kind === "contact") && !matchMedia("(pointer: coarse)").matches) setTimeout(() => { const el = document.getElementById(st.kind === "text" ? "rdq-in" : "rdq-name"); el && el.focus(); }, 60);
+  }
+  go(step) { this.setState({ step: Math.max(-1, Math.min(Component.STEPS.length - 1, step)) }); }
+  optsFor(st) { return st.kind === "multi" ? (st.k === "help" ? Component.HELP : Component.TOPICS) : (Component.SELECTS.find(x => x[0] === st.k) || [, , []])[2]; }
+  pick(st, o) {
+    if (st.kind === "multi") return this.toggle(st.k, o);
+    this.set(st.k, this.state.v[st.k] === o ? "" : o);
+    if (this.state.v[st.k] !== o) { clearTimeout(this.adv); this.adv = setTimeout(() => this.go(this.state.step + 1), 220); }
+  }
+  key(e) {
+    const S = this.state, st = Component.STEPS[S.step], tag = (e.target.tagName || "").toLowerCase();
+    if (S.status === "sent" || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (S.step === -1 && e.key === "Enter") { e.preventDefault(); return this.go(0); }
+    if (!st || tag === "input" || tag === "textarea" || tag === "select") return;
+    if ((st.kind === "one" || st.kind === "multi") && /^[1-9]$/.test(e.key)) { const o = this.optsFor(st)[+e.key - 1]; if (o) { e.preventDefault(); this.pick(st, o); } }
+    else if (e.key === "Enter" && tag !== "button") { e.preventDefault(); this.go(S.step + 1); }
+  }
   set(k, val) { this.setState(s => ({ v: Object.assign({}, s.v, { [k]: val }), bad: Object.assign({}, s.bad, { [k]: false }), status: s.status === "error" || s.status === "invalid" ? "idle" : s.status })); }
   toggle(key, x) { this.setState(s => ({ [key]: s[key].includes(x) ? s[key].filter(y => y !== x) : s[key].concat([x]) })); }
 
@@ -27,7 +63,7 @@ class Component extends DCLogic {
     const S = this.state, v = S.v, bad = {};
     if (!v.name.trim()) bad.name = true;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email.trim())) bad.email = true;
-    if (Object.keys(bad).length) { this.setState({ bad, status: "invalid" }); return; }
+    if (Object.keys(bad).length) { this.setState({ bad, status: "invalid" }); const el = document.getElementById(bad.name ? "rdq-name" : "rdq-email"); el && el.focus(); return; }
     this.setState({ status: "sending" });
     const body = Object.assign({}, v, { help: S.help.join("; "), topics: S.topics.join("; "), notes: S.notes, website: S.trap,
       source: [this.props.sourceType, this.props.sourceTitle].filter(Boolean).join(": ") || "direct", page: location.href });
@@ -40,16 +76,26 @@ class Component extends DCLogic {
 
   renderVals() {
     const S = this.state, C = Component, wide = S.w >= 700, first = (S.v.name || "").trim().split(/\s+/)[0];
-    const chip = (key, l) => { const on = S[key].includes(l); return { l, aria: on ? "true" : "false", bg: on ? "rgba(255,75,35,.12)" : "transparent", bd: on ? "#ff4b23" : "#34332e", pick: () => this.toggle(key, l) }; };
+    const N = C.STEPS.length, st = C.STEPS[S.step], sent = S.status === "sent";
     const MSG = { idle: ["", "#8f8b80"], sending: ["Sending…", "#8f8b80"], invalid: ["Add your name and a valid email.", "#ff4b23"], error: ["That didn't go through. Please try again.", "#ff4b23"], offline: ["Enquiries aren't connected yet. Please try again later.", "#ff4b23"] }[S.status] || ["", "#8f8b80"];
+    const isChoice = !!st && (st.kind === "one" || st.kind === "multi");
+    const chosen = o => st.kind === "multi" ? S[st.k].includes(o) : S.v[st.k] === o;
+    const opts = isChoice ? this.optsFor(st).map((o, i) => { const on = chosen(o); return { l: o, key: i < 9 ? String(i + 1) : "", role: st.kind === "multi" ? "checkbox" : "radio", aria: on ? "true" : "false", bg: on ? "rgba(255,75,35,.12)" : "transparent", bd: on ? "#ff4b23" : "#34332e", kbd: on ? "#ff4b23" : "#4a4843", kbg: on ? "#ff4b23" : "transparent", kfg: on ? "#0b0b0a" : "#8f8b80", tick: on ? "✓" : "", pick: () => this.pick(st, o) }; }) : [];
+    const answered = st ? (st.kind === "multi" ? S[st.k].length > 0 : st.kind === "one" ? !!S.v[st.k] : st.kind === "text" ? !!S.notes.trim() : true) : false;
+    const FIELD = C.FIELDS.map(([key, label, type, ac, ph, req]) => ({ key, id: "rdq-" + key, label: label + (req ? "" : " (optional)"), type, ac, ph, v: S.v[key], bad: S.bad[key] ? "true" : "false", bd: S.bad[key] ? "#ff4b23" : "#4a4843", on: e => this.set(key, e.target.value) }));
+    const recap = [["Help", S.help.join(", ")], ["About", S.topics.join(", ")], ["Length", S.v.length], ["People", S.v.people], ["When", S.v.when], ["Budget", S.v.budget]].filter(r => r[1]).map(([k, v]) => ({ k, v }));
     return {
-      isForm: S.status !== "sent", isSent: S.status === "sent", cols: wide ? "minmax(0,1fr) minmax(0,1fr)" : "minmax(0,1fr)",
-      fields: C.FIELDS.map(([key, label, type, ac, ph, req]) => ({ key, label: label + (req ? "" : " (optional)"), type, ac, ph, v: S.v[key], bad: S.bad[key] ? "true" : "false", bd: S.bad[key] ? "#ff4b23" : "#4a4843", on: e => this.set(key, e.target.value) })),
-      groups: [{ q: "What do you need help with?", sub: "Pick any that apply.", opts: C.HELP.map(l => chip("help", l)) }, { q: "What is the session about?", sub: "The question the room needs to answer.", opts: C.TOPICS.map(l => chip("topics", l)) }],
-      selects: C.SELECTS.map(([key, label, opts]) => ({ label: label + " (optional)", v: S.v[key], on: e => this.set(key, e.target.value), opts: [{ v: "", l: "Choose…" }].concat(opts.map(o => ({ v: o, l: o }))) })),
-      notes: S.notes, onNotes: e => this.setState({ notes: e.target.value }), trap: S.trap, onTrap: e => this.setState({ trap: e.target.value }),
+      isIntro: !sent && S.step === -1, isStep: !sent && S.step >= 0, isSent: sent, hasBack: !sent && S.step >= 0, back: () => this.go(S.step - 1),
+      begin: () => this.go(0), count: Math.max(0, S.step + 1) + " / " + N, pct: sent ? "100%" : Math.round((Math.max(0, S.step) / N) * 100) + "%",
+      align: wide ? "center" : "flex-start", btnW: wide ? "auto" : "100%", cols: wide ? "minmax(0,1fr) minmax(0,1fr)" : "minmax(0,1fr)",
+      num: S.step + 1, q: st || {}, hasSub: !!(st && st.sub), isChoice, groupRole: st && st.kind === "multi" ? "group" : "radiogroup", opts,
+      isText: !!st && st.kind === "text", isContact: !!st && st.kind === "contact",
+      showNext: !!st && st.kind !== "contact",
+      nextL: answered ? "Next" : "Skip", nextHint: st && st.kind === "multi" ? "Pick any, then Next." : st && st.kind === "text" ? "Shift + Enter for a new line." : "",
+      next: () => this.go(S.step + 1), onTextKey: e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); this.go(S.step + 1); } },
+      fields: FIELD, notes: S.notes, onNotes: e => this.setState({ notes: e.target.value }), trap: S.trap, onTrap: e => this.setState({ trap: e.target.value }),
       submit: e => this.submit(e), sending: S.status === "sending", sendOp: S.status === "sending" ? ".6" : "1", sendL: S.status === "sending" ? "Sending…" : "Send enquiry", msg: MSG[0], msgC: MSG[1],
-      sentTitle: "Thanks" + (first ? ", " + first : "") + ".", sentCopy: "I'll reply to " + (S.v.email.trim() || "your email") + " within two working days with a suggested format and next steps."
+      sentTitle: "Thanks" + (first ? ", " + first : "") + ".", sentCopy: "I'll reply to " + (S.v.email.trim() || "your email") + " within two working days with a suggested format and next steps.", recap
     };
   }
 }
@@ -58,115 +104,184 @@ Component.displayName = "RDWork";
 Component.prototype.template = function (V) {
   return (
     <>
-      <section data-screen-label="Book a workshop" style={{"fontFamily":"'Satoshi',sans-serif","color":"#ece9e0","padding":"clamp(32px,6vw,80px) clamp(16px,3vw,40px) 0"}}>
-        <div style={{"maxWidth":"820px"}}>
-          {V.isForm ? (
-            <>
-              <div style={{"fontSize":"15px","color":"#8f8b80"}}>
-                {"Book a workshop"}
-              </div>
-              <h1 style={{"margin":"14px 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(40px,6vw,88px)","letterSpacing":"-.04em","lineHeight":".92","textWrap":"balance"}}>
-                {"Tell me about the session."}
-              </h1>
-              <p style={{"margin":"18px 0 0","maxWidth":"48ch","fontSize":"clamp(17px,1.5vw,20px)","lineHeight":"1.5","color":"#c9c5ba"}}>
-                {"A few details are enough. I reply within two working days with a suggested format and next steps."}
-              </p>
-              <form onSubmit={V.submit} noValidate={true} style={{"marginTop":"clamp(32px,4vw,48px)"}}>
-                <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.cols)};gap:18px 24px`)}>
-                  {dcList(V.fields).map((f_0, $i0) => (
-                    <React.Fragment key={$i0}>
-                      <label style={{"display":"block","minWidth":"0"}}>
-                        <span style={{"fontSize":"14px","color":"#8f8b80"}}>
-                          {dcText(f_0?.label)}
-                        </span>
-                        <input type={f_0?.type} name={f_0?.key} autoComplete={f_0?.ac} value={f_0?.v ?? ""} onChange={f_0?.on} placeholder={f_0?.ph} aria-invalid={f_0?.bad} style={dcCss(`display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid ${dcStr(f_0?.bd)};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:19px`)} className="scp-focus-g" />
-                      </label>
-                    </React.Fragment>
-                  ))}
-                </div>
-                {dcList(V.groups).map((g_1, $i1) => (
-                  <React.Fragment key={$i1}>
-                    <fieldset style={{"margin":"clamp(28px,3.5vw,40px) 0 0","padding":"0","border":"0","minWidth":"0"}}>
-                      <legend style={{"padding":"0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(22px,2.2vw,28px)","letterSpacing":"-.015em"}}>
-                        {dcText(g_1?.q)}
-                      </legend>
-                      <div style={{"marginTop":"4px","fontSize":"14px","color":"#8f8b80"}}>
-                        {dcText(g_1?.sub)}
-                      </div>
-                      <div style={{"display":"flex","flexWrap":"wrap","gap":"8px","marginTop":"12px"}}>
-                        {dcList(g_1?.opts).map((o_2, $i2) => (
-                          <React.Fragment key={$i2}>
-                            <button type="button" onClick={o_2?.pick} aria-pressed={o_2?.aria} style={dcCss(`white-space:nowrap;background:${dcStr(o_2?.bg)};color:#ece9e0;border:1px solid ${dcStr(o_2?.bd)};min-height:44px;padding:0 14px;cursor:pointer;font-size:15px`)} className="scp-hover-a">
-                              {dcText(o_2?.l)}
+      <section data-screen-label="Book a workshop" style={{"fontFamily":"'Satoshi',sans-serif","color":"#ece9e0","minHeight":"calc(100svh - 61px)","display":"flex","flexDirection":"column"}}>
+        <div aria-hidden="true" style={{"position":"sticky","top":"60px","zIndex":"5","height":"3px","background":"#1d1c1a"}}>
+          <div style={dcCss(`height:100%;width:${dcStr(V.pct)};background:#ff4b23;transition:width .35s ease`)}></div>
+        </div>
+        <div style={{"flex":"1","display":"flex","flexDirection":"column","padding":"clamp(20px,4vw,48px) clamp(16px,3vw,40px) clamp(32px,6vw,80px)"}}>
+          <div style={{"display":"flex","justifyContent":"space-between","alignItems":"center","minHeight":"44px"}}>
+            {V.hasBack ? (
+              <>
+                <button type="button" onClick={V.back} style={{"background":"none","border":"0","color":"#c9c5ba","minHeight":"44px","padding":"0","cursor":"pointer","fontSize":"16px"}} className="scp-hover-0">
+                  {"← Back"}
+                </button>
+              </>
+            ) : null}
+            <span></span>
+            {V.isStep ? (
+              <>
+                <span style={{"fontSize":"14px","color":"#8f8b80","fontVariantNumeric":"tabular-nums"}}>
+                  {dcText(V.count)}
+                </span>
+              </>
+            ) : null}
+          </div>
+          <div style={dcCss(`flex:1;display:flex;align-items:${dcStr(V.align)};justify-content:center;padding-top:clamp(12px,3vw,24px)`)}>
+            <div style={{"width":"100%","maxWidth":"720px"}}>
+              {V.isIntro ? (
+                <>
+                  <div style={{"fontSize":"15px","color":"#8f8b80"}}>
+                    {"Book a workshop"}
+                  </div>
+                  <h1 style={{"margin":"14px 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(44px,7vw,96px)","letterSpacing":"-.04em","lineHeight":".92","textWrap":"balance"}}>
+                    {"Tell me about the session."}
+                  </h1>
+                  <p style={{"margin":"18px 0 0","maxWidth":"44ch","fontSize":"clamp(17px,1.5vw,20px)","lineHeight":"1.5","color":"#c9c5ba"}}>
+                    {"Eight short questions, about two minutes. I reply within two working days with a suggested format and next steps."}
+                  </p>
+                  <button type="button" onClick={V.begin} style={dcCss(`display:flex;align-items:center;justify-content:space-between;gap:16px;width:${dcStr(V.btnW)};margin-top:32px;background:#ff4b23;color:#0b0b0a;border:0;min-height:58px;padding:0 24px;cursor:pointer;font-size:18px;font-weight:500`)} className="scp-hover-8">
+                    {"Start "}
+                    <span>
+                      {"→"}
+                    </span>
+                  </button>
+                  <p style={{"margin":"14px 0 0","fontSize":"14px","color":"#5a5850"}}>
+                    {"Press Enter to start. Number keys pick answers."}
+                  </p>
+                </>
+              ) : null}
+              {V.isStep ? (
+                <>
+                  <div style={{"fontSize":"15px","color":"#ff4b23"}}>
+                    {dcText(V.num)}
+                    {" →"}
+                  </div>
+                  <h1 id="rdq" style={{"margin":"10px 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(30px,5vw,56px)","letterSpacing":"-.03em","lineHeight":"1.02","textWrap":"balance"}}>
+                    {dcText(V.q?.q)}
+                  </h1>
+                  {V.hasSub ? (
+                    <>
+                      <p style={{"margin":"12px 0 0","fontSize":"17px","lineHeight":"1.45","color":"#8f8b80"}}>
+                        {dcText(V.q?.sub)}
+                      </p>
+                    </>
+                  ) : null}
+                  {V.isChoice ? (
+                    <>
+                      <div role={V.groupRole} aria-labelledby="rdq" style={{"display":"flex","flexDirection":"column","gap":"8px","marginTop":"24px"}}>
+                        {dcList(V.opts).map((o_0, $i0) => (
+                          <React.Fragment key={$i0}>
+                            <button type="button" role={o_0?.role} aria-checked={o_0?.aria} onClick={o_0?.pick} style={dcCss(`display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:${dcStr(o_0?.bg)};color:#ece9e0;border:1px solid ${dcStr(o_0?.bd)};min-height:54px;padding:10px 14px;cursor:pointer;font-size:17px;line-height:1.3`)} className="scp-hover-a">
+                              <span style={dcCss(`flex:none;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border:1px solid ${dcStr(o_0?.kbd)};color:${dcStr(o_0?.kfg)};background:${dcStr(o_0?.kbg)};font-size:13px;font-variant-numeric:tabular-nums`)}>
+                                {dcText(o_0?.key)}
+                              </span>
+                              <span style={{"flex":"1","minWidth":"0"}}>
+                                {dcText(o_0?.l)}
+                              </span>
+                              <span style={{"color":"#ff4b23"}}>
+                                {dcText(o_0?.tick)}
+                              </span>
                             </button>
                           </React.Fragment>
                         ))}
                       </div>
-                    </fieldset>
-                  </React.Fragment>
-                ))}
-                <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.cols)};gap:18px 24px;margin-top:clamp(28px,3.5vw,40px)`)}>
-                  {dcList(V.selects).map((s_3, $i3) => (
-                    <React.Fragment key={$i3}>
-                      <label style={{"display":"block","minWidth":"0"}}>
-                        <span style={{"fontSize":"14px","color":"#8f8b80"}}>
-                          {dcText(s_3?.label)}
-                        </span>
-                        <select value={s_3?.v ?? ""} onChange={s_3?.on} style={{"display":"block","width":"100%","marginTop":"6px","background":"#111110","border":"1px solid #34332e","color":"#ece9e0","minHeight":"46px","padding":"0 10px","fontFamily":"'Satoshi',sans-serif","fontSize":"16px","colorScheme":"dark"}}>
-                          {dcList(s_3?.opts).map((o_4, $i4) => (
-                            <React.Fragment key={$i4}>
-                              <option value={o_4?.v ?? ""}>
-                                {dcText(o_4?.l)}
-                              </option>
+                    </>
+                  ) : null}
+                  {V.isText ? (
+                    <>
+                      <textarea id="rdq-in" value={V.notes ?? ""} onChange={V.onNotes} onKeyDown={V.onTextKey} rows="4" placeholder="Type here, or skip" style={{"display":"block","width":"100%","marginTop":"24px","background":"#111110","border":"1px solid #34332e","outline":"none","color":"#ece9e0","padding":"14px 16px","fontFamily":"'Satoshi',sans-serif","fontSize":"18px","lineHeight":"1.45","resize":"vertical"}} className="scp-focus-g"></textarea>
+                    </>
+                  ) : null}
+                  {V.isContact ? (
+                    <>
+                      <form onSubmit={V.submit} noValidate={true} style={{"marginTop":"20px"}}>
+                        <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.cols)};gap:16px 24px`)}>
+                          {dcList(V.fields).map((f_1, $i1) => (
+                            <React.Fragment key={$i1}>
+                              <label style={{"display":"block","minWidth":"0"}}>
+                                <span style={{"fontSize":"14px","color":"#8f8b80"}}>
+                                  {dcText(f_1?.label)}
+                                </span>
+                                <input id={f_1?.id} type={f_1?.type} name={f_1?.key} autoComplete={f_1?.ac} value={f_1?.v ?? ""} onChange={f_1?.on} placeholder={f_1?.ph} aria-invalid={f_1?.bad} style={dcCss(`display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid ${dcStr(f_1?.bd)};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:20px`)} className="scp-focus-h" />
+                              </label>
                             </React.Fragment>
                           ))}
-                        </select>
-                      </label>
-                    </React.Fragment>
-                  ))}
-                </div>
-                <label style={{"display":"block","marginTop":"clamp(28px,3.5vw,40px)"}}>
-                  <span style={{"fontSize":"14px","color":"#8f8b80"}}>
-                    {"Anything else I should know? A link, a constraint, a date."}
-                  </span>
-                  <textarea value={V.notes ?? ""} onChange={V.onNotes} rows="4" style={{"display":"block","width":"100%","marginTop":"6px","background":"#111110","border":"1px solid #34332e","outline":"none","color":"#ece9e0","padding":"12px 14px","fontFamily":"'Satoshi',sans-serif","fontSize":"17px","lineHeight":"1.45","resize":"vertical"}} className="scp-focus-h"></textarea>
-                </label>
-                <label aria-hidden="true" style={{"position":"absolute","left":"-9999px","width":"1px","height":"1px","overflow":"hidden"}}>
-                  {"Website"}
-                  <input tabIndex="-1" autoComplete="off" value={V.trap ?? ""} onChange={V.onTrap} />
-                </label>
-                <div style={{"display":"flex","flexWrap":"wrap","alignItems":"center","gap":"12px 18px","marginTop":"28px"}}>
-                  <button type="submit" disabled={V.sending} style={dcCss(`white-space:nowrap;background:#ff4b23;color:#0b0b0a;border:0;min-height:56px;padding:0 26px;cursor:pointer;font-size:18px;font-weight:500;opacity:${dcStr(V.sendOp)}`)} className="scp-hover-8">
-                    {dcText(V.sendL)}
-                  </button>
-                  <span role="status" aria-live="polite" style={dcCss(`font-size:15px;color:${dcStr(V.msgC)}`)}>
-                    {dcText(V.msg)}
-                  </span>
-                </div>
-              </form>
-            </>
-          ) : null}
-          {V.isSent ? (
-            <>
-              <div style={{"fontSize":"15px","color":"#ff4b23"}}>
-                {"Enquiry sent"}
-              </div>
-              <h1 style={{"margin":"14px 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(40px,6vw,88px)","letterSpacing":"-.04em","lineHeight":".92","textWrap":"balance"}}>
-                {dcText(V.sentTitle)}
-              </h1>
-              <p style={{"margin":"18px 0 0","maxWidth":"48ch","fontSize":"clamp(17px,1.5vw,20px)","lineHeight":"1.5","color":"#c9c5ba"}}>
-                {dcText(V.sentCopy)}
-              </p>
-              <div style={{"display":"flex","flexWrap":"wrap","gap":"12px 24px","marginTop":"28px","fontSize":"16px"}}>
-                <a href="/library">
-                  {"Browse the Library"}
-                </a>
-                <a href="/builder">
-                  {"Open Builder"}
-                </a>
-              </div>
-            </>
-          ) : null}
+                        </div>
+                        <label aria-hidden="true" style={{"position":"absolute","left":"-9999px","width":"1px","height":"1px","overflow":"hidden"}}>
+                          {"Website"}
+                          <input tabIndex="-1" autoComplete="off" value={V.trap ?? ""} onChange={V.onTrap} />
+                        </label>
+                        <button type="submit" disabled={V.sending} style={dcCss(`display:flex;align-items:center;justify-content:space-between;gap:16px;width:${dcStr(V.btnW)};margin-top:28px;background:#ff4b23;color:#0b0b0a;border:0;min-height:58px;padding:0 24px;cursor:pointer;font-size:18px;font-weight:500;opacity:${dcStr(V.sendOp)}`)} className="scp-hover-8">
+                          {dcText(V.sendL)}
+                          {" "}
+                          <span>
+                            {"→"}
+                          </span>
+                        </button>
+                        <p role="status" aria-live="polite" style={dcCss(`margin:12px 0 0;min-height:22px;font-size:15px;color:${dcStr(V.msgC)}`)}>
+                          {dcText(V.msg)}
+                        </p>
+                      </form>
+                    </>
+                  ) : null}
+                  {V.showNext ? (
+                    <>
+                      <div style={{"display":"flex","flexWrap":"wrap","alignItems":"center","gap":"10px 18px","marginTop":"24px"}}>
+                        <button type="button" onClick={V.next} style={dcCss(`display:flex;align-items:center;justify-content:space-between;gap:16px;width:${dcStr(V.btnW)};background:#ff4b23;color:#0b0b0a;border:0;min-height:54px;padding:0 22px;cursor:pointer;font-size:17px;font-weight:500`)} className="scp-hover-8">
+                          {dcText(V.nextL)}
+                          {" "}
+                          <span>
+                            {"→"}
+                          </span>
+                        </button>
+                        <span style={{"fontSize":"14px","color":"#5a5850"}}>
+                          {dcText(V.nextHint)}
+                        </span>
+                      </div>
+                    </>
+                  ) : null}
+                </>
+              ) : null}
+              {V.isSent ? (
+                <>
+                  <div style={{"fontSize":"15px","color":"#ff4b23"}}>
+                    {"Enquiry sent"}
+                  </div>
+                  <h1 style={{"margin":"14px 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(40px,6vw,88px)","letterSpacing":"-.04em","lineHeight":".92","textWrap":"balance"}}>
+                    {dcText(V.sentTitle)}
+                  </h1>
+                  <p style={{"margin":"18px 0 0","maxWidth":"48ch","fontSize":"clamp(17px,1.5vw,20px)","lineHeight":"1.5","color":"#c9c5ba"}}>
+                    {dcText(V.sentCopy)}
+                  </p>
+                  <div style={{"marginTop":"24px","border":"1px solid #2a2925","padding":"16px 18px","maxWidth":"560px"}}>
+                    <div style={{"fontSize":"12px","letterSpacing":".06em","color":"#8f8b80"}}>
+                      {"WHAT YOU SENT"}
+                    </div>
+                    {dcList(V.recap).map((r_2, $i2) => (
+                      <React.Fragment key={$i2}>
+                        <div style={{"display":"grid","gridTemplateColumns":"110px minmax(0,1fr)","gap":"12px","padding":"8px 0","borderBottom":"1px solid #1d1c1a","fontSize":"15px"}}>
+                          <span style={{"color":"#8f8b80"}}>
+                            {dcText(r_2?.k)}
+                          </span>
+                          <span>
+                            {dcText(r_2?.v)}
+                          </span>
+                        </div>
+                      </React.Fragment>
+                    ))}
+                  </div>
+                  <div style={{"display":"flex","flexWrap":"wrap","gap":"12px 24px","marginTop":"28px","fontSize":"16px"}}>
+                    <a href="/library">
+                      {"Browse the Library"}
+                    </a>
+                    <a href="/builder">
+                      {"Open Builder"}
+                    </a>
+                  </div>
+                </>
+              ) : null}
+            </div>
+          </div>
         </div>
       </section>
     </>
