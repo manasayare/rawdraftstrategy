@@ -10,9 +10,12 @@ import { loadWorkspace, saveWorkspace } from "./storage";
 import { parseStart } from "./time";
 import {
   BLANK_FILTERS, type Brief, type Center, type DragPayload, type Drop, type Item, type LibFilters, type NoteEntry, type NoteType,
-  type Phase, type Proposal, type RunState, type Sheet, type View, type Workshop, type WorkshopContext, type Source, type Session
+  type Phase, type Proposal, type Sheet, type Capture, type CaptureType, type View, type Workshop, type WorkshopContext, type Source, type Session
 } from "./types";
 import { emptyBrief } from "./import/parse";
+import { CAPTURE_TYPES, capture, curId, elapsed, newSession, planOf } from "./run/session";
+import { scriptFor } from "./run/script";
+import { publishPresent } from "./run/present";
 
 export type State = {
   ready: boolean;
@@ -61,10 +64,17 @@ export type State = {
   sharing: boolean;
   shareMsg: string;
   // Run mode
-  run: RunState | null;
-  runType: NoteType;
-  runDraft: string;
-  tick: number;
+  /** Run mode screen: the Ready screen, the live facilitator view, or closed. */
+  runView: "ready" | "live" | null;
+  runOverlay: "agenda" | "help" | "view" | null;
+  readyChecklist: Record<string, boolean>;
+  /** Block whose output to ask for, after it finishes. */
+  outputPrompt: string | null;
+  captureType: CaptureType;
+  captureDraft: string;
+  focusCapture: number;
+  /** Time of the last end-of-activity cue, for a short visual flash. */
+  flash: number;
 };
 
 type Patch = Partial<State> | ((s: State) => Partial<State>);
@@ -72,6 +82,13 @@ export const WIDE = 1100;
 const sig = (s: Pick<State, "items" | "name" | "brief" | "start">) => JSON.stringify([s.items, s.name, s.brief, s.start]);
 
 type Bridge = { pdf(doc: unknown): Promise<void>; docx(doc: unknown): Promise<void>; share(w: unknown, prev?: unknown): Promise<{ id: string; key: string; url: string }>; load(id: string): Promise<Partial<Workshop>> };
+function chime() {
+  try {
+    const A = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext, ctx = new A();
+    [660, 880].forEach((f, i) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine"; o.frequency.value = f; const t = ctx.currentTime + i * 0.22; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.08, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6); o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + 0.65); });
+    setTimeout(() => ctx.close(), 1200);
+  } catch {}
+}
 const bridge = () => (window as unknown as { RDX?: Bridge }).RDX;
 
 export class BuilderStore {
@@ -85,7 +102,6 @@ export class BuilderStore {
   justDragged = false;
   private press: { x: number; y: number; ox: number; oy: number; w: number; payload: DragPayload; started: boolean } | null = null;
   ghost: HTMLElement | null = null;
-  private runTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
     const ws = loadWorkspace(), cur = ws.current ? ws.workshops.find(w => w.id === ws.current) : undefined;
@@ -96,7 +112,7 @@ export class BuilderStore {
       open: null, sel: [], drag: null, drop: null, proposal: null, stress: false, notice: "", live: "", center: "canvas", sheet: null,
       lib: { ...BLANK_FILTERS }, filters: false, libPrev: null, libN: 24, suggestFor: null, pendingAdd: null,
       alts: null, ctx: false, cmp: "90", copied: false, prompted: null, exporting: null, sharing: false, shareMsg: "",
-      run: null, runType: "decision", runDraft: "", tick: 0
+      runView: null, runOverlay: null, readyChecklist: {}, outputPrompt: null, captureType: "decision", captureDraft: "", focusCapture: 0, flash: 0
     };
   }
 
@@ -109,6 +125,8 @@ export class BuilderStore {
     this.listeners.forEach(l => l());
     if (!this.saveQueued) { this.saveQueued = true; queueMicrotask(() => { this.saveQueued = false; this.persist(); }); }
   };
+  /** Re-render without saving (the run clock). */
+  notify() { this.state = { ...this.state }; this.listeners.forEach(l => l()); }
   get wide() { return this.state.w >= WIDE; }
 
   /** Current workshop merged back into the list, with "updated" bumped only when its content changed. */
@@ -122,6 +140,7 @@ export class BuilderStore {
       if (this.sigs[s.wid] !== g) { if (this.sigs[s.wid] != null) this.stamps[s.wid] = Date.now(); this.sigs[s.wid] = g; }
     }
     saveWorkspace({ workshops: this.workshopList(), current: s.wid });
+    if (s.session?.startedAt) publishPresent(s);
   }
 
   // ---- lifecycle ----
@@ -135,7 +154,14 @@ export class BuilderStore {
     window.addEventListener("resize", onResize);
     window.addEventListener("keydown", onKey);
     let poll: ReturnType<typeof setInterval> | null = null;
-    const go = () => { this.set({ ready: true }); this.syncProps(props); this.firstVisit(props); };
+    const go = () => {
+      this.set({ ready: true });
+      this.syncProps(props);
+      this.firstVisit(props);
+      // A reload in the middle of a session goes straight back to it; the clock never stopped.
+      const ss = this.state.session;
+      if (ss?.startedAt && !ss.endedAt && this.state.phase === "bench") this.openRun();
+    };
     if (this.state.ready) go();
     else poll = setInterval(() => { if (enginesReady()) { clearInterval(poll!); go(); } }, 40);
     return () => {
@@ -471,21 +497,35 @@ export class BuilderStore {
 
   // ---- run mode ----
   liveBlocks(s: State = this.state) { return s.items.filter(isLiveBlock); }
-  runElapsed(r: RunState | null = this.state.run) { return r ? r.acc + (r.t0 ? Date.now() - r.t0 : 0) : 0; }
-  private onRunKey = (e: KeyboardEvent) => {
-    if (!this.state.run) return;
-    const tg = (e.target as HTMLElement)?.tagName;
-    if (tg === "TEXTAREA" || tg === "INPUT") { if (e.key === "Escape") (e.target as HTMLElement).blur(); return; }
-    if (e.key === "Escape") { e.stopPropagation(); this.runEnd(); }
-    else if (e.key === " ") { e.preventDefault(); this.runPlay(); }
-    else if (e.key === "ArrowRight") { e.preventDefault(); this.runMove(1); }
-    else if (e.key === "ArrowLeft") { e.preventDefault(); this.runMove(-1); }
-  };
-  runBegin() {
-    if (!this.liveBlocks().length) return;
-    this.runStop();
-    this.set({ run: { i: 0, acc: 0, t0: null, log: {}, extra: {}, done: false } });
-    this.runTimer = setInterval(() => { if (this.state.run?.t0) this.set(s => ({ tick: s.tick + 1 })); }, 250);
+  private runTimer: ReturnType<typeof setInterval> | null = null;
+  private alerted = new Set<string>();
+  /** Updates the session (persisted with the workshop) and, through persist(), the participant screen. */
+  setSession(fn: (ss: Session) => Session) { this.set(s => (s.session ? { session: fn(s.session) } : {})); }
+  private itemOf(id: string) { return this.state.items.find(x => x.id === id); }
+  current() { const ss = this.state.session; return ss ? this.itemOf(curId(ss)) : undefined; }
+
+  /** Opens the run: straight back into a session in progress, otherwise the Ready screen. */
+  openRun() {
+    const ss = this.state.session;
+    if (ss?.startedAt && !ss.endedAt) { this.set({ runView: "live", phase: "bench" }); this.startTicking(); return; }
+    this.set({ runView: "ready", phase: "bench", readyChecklist: ss && !ss.startedAt ? ss.checklist : {} });
+  }
+  startRun() {
+    const s = this.state, now = Date.now();
+    const ss = { ...newSession(s.items, s.session), checklist: s.readyChecklist, startedAt: now, t0: now };
+    ss.started = ss.order.slice(0, 1);
+    this.alerted.clear();
+    this.set({ session: ss, runView: "live", outputPrompt: null });
+    this.startTicking();
+  }
+  private startTicking() {
+    if (this.runTimer) return;
+    this.runTimer = setInterval(() => {
+      const ss = this.state.session;
+      if (!ss || !this.state.runView) return;
+      this.tickAlerts(ss);
+      if (ss.t0) this.notify();
+    }, 250);
     window.addEventListener("keydown", this.onRunKey, true);
   }
   runStop() {
@@ -493,38 +533,99 @@ export class BuilderStore {
     this.runTimer = null;
     window.removeEventListener("keydown", this.onRunKey, true);
   }
-  openRun() { this.runBegin(); }
-  runEnd() { this.runStop(); this.set({ run: null }); }
-  runPlay() {
-    this.set(s => {
-      const r = s.run;
-      if (!r || r.done) return {};
-      return { run: { ...r, ...(r.t0 ? { acc: r.acc + Date.now() - r.t0, t0: null } : { t0: Date.now() }) } };
+  /** Leaves Run mode; a session in progress stays and can be resumed. */
+  exitRun() { this.runStop(); this.set({ runView: null, runOverlay: null }); }
+  runPlay() { this.setSession(ss => (ss.endedAt ? ss : ss.t0 ? { ...ss, acc: elapsed(ss), t0: null } : { ...ss, t0: Date.now(), started: ss.started.includes(curId(ss)) ? ss.started : ss.started.concat([curId(ss)]) })); }
+  /** Adds (or with a negative n, removes) minutes from the current activity. */
+  runAdjust(n: number) {
+    const x = this.current();
+    if (!x) return;
+    this.setSession(ss => ({ ...ss, extra: { ...ss.extra, [x.id]: Math.max(1 - mins(x), (ss.extra[x.id] || 0) + n) } }));
+    if (n > 0) this.alerted.delete(x.id);
+  }
+  runReset() { this.setSession(ss => ({ ...ss, acc: 0, t0: ss.t0 ? Date.now() : null })); this.alerted.delete(curId(this.state.session!)); }
+  /** Moves to block k. Time on the block being left is logged; a running clock keeps running. */
+  runGo(k: number) {
+    this.setSession(ss => {
+      if (k < 0 || k >= ss.order.length) return ss;
+      const cur = curId(ss), el = elapsed(ss), actual = { ...ss.actual };
+      if (el > 0) actual[cur] = el;
+      const nx = ss.order[k], running = !!ss.t0;
+      return { ...ss, i: k, actual, acc: actual[nx] || 0, t0: running ? Date.now() : null, started: running && !ss.started.includes(nx) ? ss.started.concat([nx]) : ss.started, skipped: ss.skipped.filter(z => z !== nx) };
     });
   }
-  /** Moves by d blocks, or to index `to`. Time spent on the block being left is logged. */
-  runMove(d: number, to?: number) {
-    this.set(s => {
-      const r = s.run;
-      if (!r) return {};
-      const L = this.liveBlocks(s), cur = L[r.i], log = { ...r.log }, el = this.runElapsed(r);
-      if (cur && !r.done && el > 0) log[cur.id] = el;
-      const n = to != null ? to : r.done ? L.length - 1 : r.i + d;
-      if (n < 0) return {};
-      if (n >= L.length) return { run: { ...r, log, acc: 0, t0: null, done: true } };
-      const nx = L[n];
-      return { run: { ...r, i: n, log, acc: log[nx.id] || 0, t0: r.t0 || (d > 0 && el > 0) ? Date.now() : null, done: false } };
-    });
+  /** Finishes the current activity and moves to the next one that isn't skipped. Asks for its output after. */
+  runFinish() {
+    const ss = this.state.session;
+    if (!ss) return;
+    const x = this.current();
+    let k = ss.i + 1;
+    while (k < ss.order.length && ss.skipped.includes(ss.order[k])) k++;
+    const sc = x ? scriptFor(x, this.state.brief) : null;
+    const ask = x && sc?.output && !ss.outputs[x.id] && x.role !== "breaks" ? x.id : null;
+    if (k >= ss.order.length) { this.runEnd(); return; }
+    this.runGo(k);
+    if (ask) this.set({ outputPrompt: ask });
   }
-  runAddTime(id: string) { this.set(s => (s.run ? { run: { ...s.run, extra: { ...s.run.extra, [id]: (s.run.extra[id] || 0) + 5 } } } : {})); }
-  setLog(id: string, fn: (log: NoteEntry[]) => NoteEntry[]) {
-    this.set(s => ({ items: s.items.map(x => (x.id === id ? { ...x, cfg: { ...x.cfg, log: fn((x.cfg?.log || []).slice()) } } : x)) }));
+  runBack() { const ss = this.state.session; if (ss && ss.i > 0) this.runGo(ss.i - 1); }
+  runSkip(id: string, on = true) { this.setSession(ss => ({ ...ss, skipped: on ? ss.skipped.concat([id]) : ss.skipped.filter(z => z !== id) })); }
+  /** Puts a backup activity straight after the current one. */
+  runActivateBackup(id: string) {
+    this.setSession(ss => (ss.order.includes(id) ? ss : { ...ss, order: [...ss.order.slice(0, ss.i + 1), id, ...ss.order.slice(ss.i + 1)] }));
+    const x = this.itemOf(id);
+    this.set({ live: (x?.title || "Backup") + " is next" });
   }
-  runApplyTimings() {
-    const lg = this.state.run?.log || {};
-    this.commit(list => list.map(x => (lg[x.id] != null && x.kind === "block" ? { ...x, mins: Math.max(5, Math.round(lg[x.id] / 300000) * 5) } : x)), "Timings updated from the session");
-    this.runEnd();
+  runApply(fn: (ss: Session) => Session) { this.setSession(fn); }
+  /** Ends the workshop and opens Review. */
+  runEnd() {
+    this.setSession(ss => { const el = elapsed(ss), actual = { ...ss.actual }; if (el > 0 && !ss.endedAt) actual[curId(ss)] = el; return { ...ss, actual, t0: null, acc: 0, endedAt: ss.endedAt || Date.now() }; });
+    this.runStop();
+    this.set({ runView: null, runOverlay: null, outputPrompt: null, phase: "review" });
   }
+  addCapture(type: CaptureType, text: string) {
+    const t = text.trim();
+    if (!t) return;
+    this.setSession(ss => capture(ss, type, t, this.current()));
+    this.set({ captureDraft: "" });
+  }
+  updateCapture(id: string, patch: Partial<Capture>) { this.setSession(ss => ({ ...ss, captures: ss.captures.map(c => (c.id === id ? { ...c, ...patch } : c)) })); }
+  removeCapture(id: string) { this.setSession(ss => ({ ...ss, captures: ss.captures.filter(c => c.id !== id) })); }
+  setBlockNote(id: string, text: string) { this.setSession(ss => ({ ...ss, blockNotes: { ...ss.blockNotes, [id]: text } })); }
+  setOutput(id: string, text: string) { this.setSession(ss => ({ ...ss, outputs: { ...ss.outputs, [id]: text } })); }
+  setRunSettings(p: Partial<Session["settings"]>) { this.setSession(ss => ({ ...ss, settings: { ...ss.settings, ...p } })); }
+
+  /** Soft chime and a visual cue when an activity reaches zero; never more than once per activity. */
+  private tickAlerts(ss: Session) {
+    const x = this.current();
+    if (!x || !ss.t0) return;
+    const rem = planOf(ss, x) * 60000 - elapsed(ss);
+    if (rem <= 0 && !this.alerted.has(x.id)) {
+      this.alerted.add(x.id);
+      if (ss.settings.sound === "soft") chime();
+      if (ss.settings.sound !== "silent") { this.set({ flash: Date.now() }); }
+    }
+  }
+  private onRunKey = (e: KeyboardEvent) => {
+    const s = this.state;
+    if (!s.runView || !s.session) return;
+    const tg = (e.target as HTMLElement)?.tagName;
+    if (tg === "TEXTAREA" || tg === "INPUT" || tg === "SELECT") { if (e.key === "Escape") (e.target as HTMLElement).blur(); return; }
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (s.runView === "ready") { if (e.key === "Escape") { e.preventDefault(); this.exitRun(); } return; }
+    const k = e.key;
+    const handled = () => { e.preventDefault(); e.stopPropagation(); };
+    if (k === "Escape") { handled(); if (s.runOverlay) this.set({ runOverlay: null }); else if (s.outputPrompt) this.set({ outputPrompt: null }); return; }
+    if (k === " ") { handled(); this.runPlay(); return; }
+    if (k === "n" || k === "N" || k === "ArrowRight") { handled(); this.runFinish(); return; }
+    if (k === "p" || k === "P" || k === "ArrowLeft") { handled(); this.runBack(); return; }
+    if (k === "=") { handled(); this.runAdjust(1); return; }
+    if (k === "+") { handled(); this.runAdjust(5); return; }
+    if (k === "-" || k === "_") { handled(); this.runAdjust(-1); return; }
+    if (k === "a" || k === "A") { handled(); this.set({ runOverlay: s.runOverlay === "agenda" ? null : "agenda" }); return; }
+    if (k === "?") { handled(); this.set({ runOverlay: s.runOverlay === "help" ? null : "help" }); return; }
+    const ct = CAPTURE_TYPES.find(c => c.hotkey === k.toLowerCase());
+    if (ct) { handled(); this.set(st => ({ captureType: ct.key, focusCapture: st.focusCapture + 1 })); }
+  };
   /** Stats used by the header and checks; recomputed by components from items. */
   engBlocks() { return eng(this.state.items); }
 }

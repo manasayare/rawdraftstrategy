@@ -5,6 +5,7 @@ import type { CSSProperties } from "react";
 import { BIG_GROUPS, C, CUSTOM_PRESETS, MODES } from "../constants";
 import { RDB, RDL } from "../engine";
 import { knownTime } from "../library";
+import { scriptFor } from "../run/script";
 import { copyText } from "../exportDoc";
 import { mins, uid } from "../items";
 import { BLANK_FILTERS, type Item } from "../types";
@@ -37,6 +38,15 @@ export default function BlockDetail({ x }: { x: Item }) {
     fld("output", "Output", DD.output, 1),
     fld("notes", "Facilitator notes", DD.notes.join(" "), 2, "Anything to remember on the day")
   ];
+  const sc = scriptFor(x, b);
+  const script = [
+    fld("open", "Opening prompt", sc.open, 2, "What you say to start it"),
+    fld("questions", "Questions to ask", sc.questions.join("\n"), 2, "One per line"),
+    fld("watch", "Watch for", sc.watch.join("\n"), 2, "What tends to go wrong"),
+    fld("transition", "Transition", "", 1, "How you hand over to the next block"),
+    fld("participant", "Participant screen", sc.participant.join("\n"), 3, "What the room sees. One line each.")
+  ];
+  const liveBlocks = S.items.filter(y => y.zone === "live" && y.kind === "block");
   const showAlts = S.alts === x.id, alts = showAlts ? B.alternatives(b, er) : [];
   const suggest = (dir: "before" | "after") => store.set({ suggestFor: { id: x.id, dir }, open: null, sheet: wide ? null : "lib", lib: { ...BLANK_FILTERS } });
   const lists = ([["Use when", DD.useWhen], ["Avoid when", DD.avoidWhen], ["Watch for", DD.watch]] as [string, string[]][]).filter(l => l[1].length);
@@ -57,7 +67,7 @@ export default function BlockDetail({ x }: { x: Item }) {
     store.commit(its => {
       const [mv] = its.splice(its.findIndex(y => y.id === x.id), 1);
       mv.par = null;
-      if (v === "pre" || v === "after") { mv.zone = v; its.push(mv); return its; }
+      if (v === "pre" || v === "after" || v === "backup") { mv.zone = v; its.push(mv); return its; }
       mv.zone = "live";
       const next = its.filter(y => y.kind === "day")[+v.slice(3)];
       its.splice(next ? its.indexOf(next) : its.filter(y => y.zone === "pre" || y.zone === "live").length, 0, mv);
@@ -99,6 +109,23 @@ export default function BlockDetail({ x }: { x: Item }) {
           {MODES.map(l => <Chip key={l} on={x.cfg.mode === l} onClick={() => store.setCfg(x.id, "mode", x.cfg.mode === l ? "" : l)} style={{ minHeight: 32, padding: "0 9px", fontSize: 13 }}>{l}</Chip>)}
         </div>
       </div>
+      {x.zone === "live" && (
+        <div role="group" aria-label="Priority" style={{ marginTop: 12 }}>
+          <div style={{ fontSize: 12, color: C.mute }}>In the run</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 5 }}>
+            <Chip on={x.priority !== "optional"} onClick={() => store.edit(x.id, { priority: "core" })} style={{ minHeight: 32, padding: "0 9px", fontSize: 13 }}>Core</Chip>
+            <Chip on={x.priority === "optional"} onClick={() => store.edit(x.id, { priority: "optional" })} style={{ minHeight: 32, padding: "0 9px", fontSize: 13 }}>Optional · can skip if late</Chip>
+          </div>
+        </div>
+      )}
+      {x.zone === "backup" && (
+        <label style={{ display: "block", marginTop: 12, fontSize: 12, color: C.mute }}>Backup for
+          <select value={x.backupFor || ""} onChange={e => store.edit(x.id, { backupFor: e.target.value || null })} style={sel}>
+            <option value="">Any point in the workshop</option>
+            {liveBlocks.map(y => <option key={y.id} value={y.id}>{y.title}</option>)}
+          </select>
+        </label>
+      )}
       {(x.cfg.mode === "Small group" || !!x.par) && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 10 }}>
           <label style={{ fontSize: 12, color: C.mute }}>Groups<input type="number" min="1" value={String(x.cfg.groups || "")} onChange={e => store.setCfg(x.id, "groups", e.target.value)} style={{ ...field, display: "block", width: 80, marginTop: 4, minHeight: 34, padding: "0 8px", fontSize: 14, fontFamily: undefined }} /></label>
@@ -112,6 +139,16 @@ export default function BlockDetail({ x }: { x: Item }) {
             style={{ ...field, display: "block", width: "100%", marginTop: 4, padding: "8px 10px", fontFamily: BODY, fontSize: 14, lineHeight: 1.45, resize: "vertical" }} />
         </label>
       ))}
+      <details style={{ marginTop: 14 }}>
+        <summary style={{ cursor: "pointer", fontSize: 13, color: C.soft }}>Facilitator script · what Run mode shows</summary>
+        {script.map(f => (
+          <label key={f.k} style={{ display: "block", marginTop: 10 }}>
+            <span style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 12, color: C.mute }}><span>{f.label}</span><span>{f.src}</span></span>
+            <textarea value={f.v} onChange={e => store.setCfg(x.id, f.k, e.target.value)} rows={f.rows} placeholder={f.ph}
+              style={{ ...field, display: "block", width: "100%", marginTop: 4, padding: "8px 10px", fontFamily: BODY, fontSize: 14, lineHeight: 1.45, resize: "vertical" }} />
+          </label>
+        ))}
+      </details>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 14 }}>
         <label style={{ fontSize: 12, color: C.mute }}>Move to section
           <select value="" onChange={e => toSection(e.target.value)} style={sel}>
@@ -121,7 +158,7 @@ export default function BlockDetail({ x }: { x: Item }) {
         </label>
         <label style={{ fontSize: 12, color: C.mute }}>Move to
           <select value="" onChange={e => toPlace(e.target.value)} style={sel}>
-            <option value="">Choose</option><option value="pre">Pre-work</option><option value="after">After</option>
+            <option value="">Choose</option><option value="pre">Pre-work</option><option value="after">After</option><option value="backup">Backups</option>
             {(dayDivs.length ? [null, ...dayDivs] : [null]).map((_, di) => <option key={di} value={"day" + di}>{dayDivs.length ? "Live, day " + (di + 1) : "Live workshop"}</option>)}
           </select>
         </label>

@@ -40,7 +40,7 @@ export default function Builder(props: BuilderProps) {
         {S.phase === "bench" && (
           <>
             <Header />
-            {S.run && <RunMode />}
+            {S.runView && <RunMode />}
             <Notices />
             <div style={{ display: "grid", gridTemplateColumns: wide ? "minmax(260px,300px) minmax(0,1fr) minmax(280px,330px)" : "minmax(0,1fr)", gap: "20px clamp(16px,2vw,28px)", alignItems: "start", marginTop: 18 }}>
               <LibraryPanel />

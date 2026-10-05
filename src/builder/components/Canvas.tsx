@@ -32,14 +32,15 @@ export default function Canvas() {
   const { S, store, d } = useBuilder();
   const { L, start, total, nDays } = d;
   const view = S.view, dragging = !!S.drag;
-  const side = (key: "pre" | "after", label: string, desc: string, emptyMsg: string): ZoneSpec => {
+  const side = (key: "pre" | "after" | "backup", label: string, desc: string, emptyMsg: string): ZoneSpec => {
     const z = L[key];
-    return { key, label, live: false, meta: z.list.length ? z.list.length + " item" + (z.list.length > 1 ? "s" : "") + " · " + hm(z.dur) + ", not counted in session time" : desc, days: [{ day: null, rows: z.rows, end: z.end, empty: !z.list.length, emptyMsg }] };
+    return { key, label, live: false, meta: z.list.length ? z.list.length + " item" + (z.list.length > 1 ? "s" : "") + " · " + hm(z.dur) + ", " + (key === "backup" ? "not in the timeline" : "not counted in session time") : desc, days: [{ day: null, rows: z.rows, end: z.end, empty: !z.list.length, emptyMsg }] };
   };
   const zones: ZoneSpec[] = [
     side("pre", "PRE-WORK", "Reading, surveys, examples to prepare", "Drag pre-work here."),
     { key: "live", label: "LIVE WORKSHOP", live: true, meta: L.hasBlocks ? hm(total) + (nDays > 1 ? " across " + nDays + " days" : " · " + clock(start) + "–" + clock(start + total)) : "", days: L.days.map(dd => ({ day: dd, rows: dd.rows, end: dd.end, empty: !dd.list.length, emptyMsg: "Drag something here." })) },
-    side("after", "AFTER", "Decision memo, follow-up research, tests", "Drag follow-up here.")
+    side("after", "AFTER", "Decision memo, follow-up research, tests", "Drag follow-up here."),
+    side("backup", "BACKUPS", "Alternatives to swap in during the run if something stalls", "Drag a backup activity here.")
   ];
   const dk = S.drop?.key || "";
   const multiDay = view === "days" && nDays > 1;

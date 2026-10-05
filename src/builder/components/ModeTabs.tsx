@@ -6,7 +6,7 @@ import { useBuilder } from "../ui";
 export default function ModeTabs() {
   const { S, store } = useBuilder();
   const canRun = store.liveBlocks().length > 0, hasSession = !!S.session?.startedAt;
-  const cur = S.phase === "import" ? "import" : S.phase === "review" ? "review" : S.run ? "run" : "build";
+  const cur = S.phase === "import" ? "import" : S.phase === "review" ? "review" : S.runView ? "run" : "build";
   const tabs: [string, string, () => void, boolean, string][] = [
     ["import", "Import", () => store.set({ phase: "import" }), true, "Bring in context"],
     ["build", "Build", () => store.set({ phase: "bench" }), !!S.wid, "Design the workshop"],

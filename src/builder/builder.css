@@ -11,3 +11,5 @@
 .bf-line:focus { border-color: #8f8b80 !important; }
 .bf-line-ink:focus { border-color: #ece9e0 !important; }
 .bf-accent:focus { color: #ff4b23 !important; }
+@keyframes rdflash { 0% { opacity: 1; } 30% { opacity: .25; } 100% { opacity: 1; } }
+.rd-run-btn:focus-visible { outline: 2px solid #ff4b23; outline-offset: 2px; }
