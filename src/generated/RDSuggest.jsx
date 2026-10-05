@@ -76,7 +76,7 @@ Component.prototype.template = function (V) {
                     <span style={{"fontSize":"14px","color":"#8f8b80"}}>
                       {"Name of the resource"}
                     </span>
-                    <input name="resourceTitle" value={V.v?.resourceTitle ?? ""} onChange={V.on?.resourceTitle} placeholder="e.g. Pre-mortem" aria-invalid={V.bad?.resourceTitle} style={dcCss(`display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid ${dcStr(V.bd?.resourceTitle)};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:19px`)} className="scp-focus-f" />
+                    <input name="resourceTitle" value={V.v?.resourceTitle ?? ""} onChange={V.on?.resourceTitle} placeholder="e.g. Pre-mortem" aria-invalid={V.bad?.resourceTitle} style={dcCss(`display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid ${dcStr(V.bd?.resourceTitle)};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:19px`)} className="scp-focus-g" />
                   </label>
                   <label style={{"display":"block","minWidth":"0"}}>
                     <span style={{"fontSize":"14px","color":"#8f8b80"}}>
@@ -97,7 +97,7 @@ Component.prototype.template = function (V) {
                   <span style={{"fontSize":"14px","color":"#8f8b80"}}>
                     {"Link (optional). Where people can find the original."}
                   </span>
-                  <input type="url" name="resourceUrl" value={V.v?.resourceUrl ?? ""} onChange={V.on?.resourceUrl} placeholder="https://" aria-invalid={V.bad?.resourceUrl} style={dcCss(`display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid ${dcStr(V.bd?.resourceUrl)};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:19px`)} className="scp-focus-f" />
+                  <input type="url" name="resourceUrl" value={V.v?.resourceUrl ?? ""} onChange={V.on?.resourceUrl} placeholder="https://" aria-invalid={V.bad?.resourceUrl} style={dcCss(`display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid ${dcStr(V.bd?.resourceUrl)};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:19px`)} className="scp-focus-g" />
                 </label>
                 <label style={{"display":"block","marginTop":"24px"}}>
                   <span style={{"fontSize":"14px","color":"#8f8b80"}}>
@@ -119,19 +119,19 @@ Component.prototype.template = function (V) {
                     <span style={{"fontSize":"14px","color":"#8f8b80"}}>
                       {"Credit as"}
                     </span>
-                    <input name="creditName" autoComplete="name" value={V.v?.creditName ?? ""} onChange={V.on?.creditName} placeholder="Your name or team" aria-invalid={V.bad?.creditName} style={dcCss(`display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid ${dcStr(V.bd?.creditName)};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:19px`)} className="scp-focus-f" />
+                    <input name="creditName" autoComplete="name" value={V.v?.creditName ?? ""} onChange={V.on?.creditName} placeholder="Your name or team" aria-invalid={V.bad?.creditName} style={dcCss(`display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid ${dcStr(V.bd?.creditName)};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:19px`)} className="scp-focus-g" />
                   </label>
                   <label style={{"display":"block","minWidth":"0"}}>
                     <span style={{"fontSize":"14px","color":"#8f8b80"}}>
                       {"Credit link (optional)"}
                     </span>
-                    <input type="url" name="creditUrl" value={V.v?.creditUrl ?? ""} onChange={V.on?.creditUrl} placeholder="Website or LinkedIn" aria-invalid={V.bad?.creditUrl} style={dcCss(`display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid ${dcStr(V.bd?.creditUrl)};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:19px`)} className="scp-focus-f" />
+                    <input type="url" name="creditUrl" value={V.v?.creditUrl ?? ""} onChange={V.on?.creditUrl} placeholder="Website or LinkedIn" aria-invalid={V.bad?.creditUrl} style={dcCss(`display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid ${dcStr(V.bd?.creditUrl)};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:19px`)} className="scp-focus-g" />
                   </label>
                   <label style={{"display":"block","minWidth":"0"}}>
                     <span style={{"fontSize":"14px","color":"#8f8b80"}}>
                       {"Email. Private, only to ask you questions."}
                     </span>
-                    <input type="email" name="email" autoComplete="email" value={V.v?.email ?? ""} onChange={V.on?.email} placeholder="name@company.com" aria-invalid={V.bad?.email} style={dcCss(`display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid ${dcStr(V.bd?.email)};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:19px`)} className="scp-focus-f" />
+                    <input type="email" name="email" autoComplete="email" value={V.v?.email ?? ""} onChange={V.on?.email} placeholder="name@company.com" aria-invalid={V.bad?.email} style={dcCss(`display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid ${dcStr(V.bd?.email)};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:19px`)} className="scp-focus-g" />
                   </label>
                 </div>
                 <div style={{"display":"flex","flexDirection":"column","gap":"10px","marginTop":"24px"}}>

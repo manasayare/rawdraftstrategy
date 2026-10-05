@@ -132,6 +132,22 @@
 </div>
 </sc-if>
 
+<sc-if value="{{ s.isEntries }}" hint-placeholder-val="{{ false }}">
+<p style="margin:10px 0 0;max-width:66ch;font-size:15px;color:#8f8b80">{{ s.credit }}</p>
+<sc-for list="{{ s.egroups }}" as="g" hint-placeholder-count="2">
+<div style="margin-top:22px">
+<sc-if value="{{ g.hasName }}" hint-placeholder-val="{{ false }}"><h3 style="position:sticky;top:61px;z-index:2;margin:0;padding:10px 0;background:#0b0b0a;font-size:13px;letter-spacing:.08em;font-weight:500;color:#ff4b23">{{ g.name }} <span style="color:#5a5850">{{ g.n }}</span></h3></sc-if>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));border-top:1px solid #2a2925;border-left:1px solid #2a2925">
+<sc-for list="{{ g.list }}" as="e" hint-placeholder-count="6"><button onClick="{{ e.pick }}" style="display:flex;flex-direction:column;gap:6px;text-align:left;background:{{ e.bg }};border:0;box-shadow:inset -1px -1px 0 #2a2925;color:#ece9e0;padding:14px 16px 16px;cursor:pointer;min-height:112px" style-hover="background:#121210;color:#ff4b23">
+<span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:19px;line-height:1.1">{{ e.name }}</span>
+<span style="font-size:14px;line-height:1.4;color:#8f8b80">{{ e.short }}</span>
+<span style="margin-top:auto;display:flex;justify-content:space-between;gap:8px;font-size:12px;color:#5a5850"><span>{{ e.meta }}</span><span style="color:#c9c5ba">{{ e.inLib }}</span></span>
+</button></sc-for>
+</div>
+</div>
+</sc-for>
+</sc-if>
+
 <sc-if value="{{ s.isAssets }}" hint-placeholder-val="{{ false }}">
 <div style="margin-top:12px"><sc-for list="{{ s.assets }}" as="a" hint-placeholder-count="2"><div style="border-top:1px solid #1d1c1a;padding:12px 0">
 <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px 24px">
@@ -172,18 +188,41 @@
 </div>
 </div>
 </div>
+<sc-if value="{{ hasEntry }}" hint-placeholder-val="{{ false }}">
+<div data-noprint="1" onClick="{{ closeEntry }}" style="position:fixed;inset:0;z-index:60;background:rgba(5,5,4,.6)"></div>
+<aside data-noprint="1" role="dialog" aria-label="{{ en.name }}" style="position:fixed;top:0;right:0;bottom:0;z-index:61;width:min(460px,100vw);display:flex;flex-direction:column;background:#0f0f0e;border-left:1px solid #2a2925;box-shadow:-24px 0 60px rgba(0,0,0,.5)">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid #2a2925">
+<button onClick="{{ closeEntry }}" style="background:none;border:0;color:#c9c5ba;min-height:40px;padding:0;cursor:pointer;font-size:15px" style-hover="color:#ff4b23">← {{ d.title }}</button>
+<span style="display:flex;gap:4px"><button onClick="{{ prevEntry }}" aria-label="Previous" style="background:none;border:1px solid #2a2925;color:#ece9e0;width:40px;height:40px;cursor:pointer" style-hover="border-color:#ece9e0">↑</button><button onClick="{{ nextEntry }}" aria-label="Next" style="background:none;border:1px solid #2a2925;color:#ece9e0;width:40px;height:40px;cursor:pointer" style-hover="border-color:#ece9e0">↓</button></span>
+</div>
+<div style="flex:1 1 auto;overflow:auto;padding:24px 20px 32px">
+<div style="font-size:13px;letter-spacing:.08em;color:#ff4b23">{{ en.group }}</div>
+<h2 style="margin:8px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,4vw,44px);letter-spacing:-.03em;line-height:1">{{ en.name }}</h2>
+<p style="margin:14px 0 0;font-size:18px;line-height:1.45;color:#c9c5ba">{{ en.short }}</p>
+<div style="display:grid;grid-template-columns:100px minmax(0,1fr);margin-top:22px;border-top:1px solid #2a2925"><sc-for list="{{ en.facts }}" as="f" hint-placeholder-count="3"><span style="padding:10px 12px 10px 0;border-bottom:1px solid #1d1c1a;font-size:14px;color:#8f8b80">{{ f.k }}</span><span style="padding:10px 0;border-bottom:1px solid #1d1c1a;font-size:15px;line-height:1.4">{{ f.v }}</span></sc-for></div>
+<div style="display:flex;flex-direction:column;gap:10px;margin-top:24px">
+<sc-if value="{{ en.hasLib }}" hint-placeholder-val="{{ false }}"><a href="{{ en.libHref }}" style="display:flex;align-items:center;justify-content:space-between;min-height:48px;background:#ff4b23;color:#0b0b0a;padding:0 16px;text-decoration:none;font-size:15px;font-weight:500" style-hover="background:#ece9e0;color:#0b0b0a"><span>Full guide in the Library</span><span>→</span></a><a href="{{ en.addHref }}" style="display:flex;align-items:center;min-height:44px;border:1px solid #4a4843;color:#ece9e0;padding:0 16px;text-decoration:none;font-size:15px" style-hover="border-color:#ece9e0;color:#ece9e0">Add to Builder</a></sc-if>
+<sc-if value="{{ en.hasUrl }}" hint-placeholder-val="{{ false }}"><a href="{{ en.url }}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:space-between;min-height:44px;border:1px solid #4a4843;color:#ece9e0;padding:0 16px;text-decoration:none;font-size:15px" style-hover="border-color:#ece9e0;color:#ece9e0"><span>{{ en.urlLabel }}</span><span>↗</span></a></sc-if>
+</div>
+<p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:#8f8b80">{{ en.rights }}</p>
+</div>
+</aside>
+</sc-if>
 </sc-if>
 </article>
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { ready: !!(window.RD && window.RDL), fv: false, open: {}, step: {}, toc: false, w: window.innerWidth, prompt: {}, copied: null, fmt: null };
+  state = { ready: !!(window.RD && window.RDL), fv: false, open: {}, step: {}, toc: false, w: window.innerWidth, prompt: {}, copied: null, fmt: null, entry: null };
   componentDidMount() {
     this.onResize = () => this.setState({ w: window.innerWidth }); window.addEventListener("resize", this.onResize);
+    this.onKey = e => { if (this.state.entry == null) return; if (e.key === "Escape") this.setState({ entry: null }); if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); this.stepEntry(e.key === "ArrowDown" ? 1 : -1); } };
+    window.addEventListener("keydown", this.onKey);
     if (!this.state.ready) this.poll = setInterval(() => { if (window.RD && window.RDL) { clearInterval(this.poll); this.setState({ ready: true }); } }, 40);
   }
-  componentDidUpdate(pp) { if (pp.rid !== this.props.rid) this.setState({ fv: false, open: {}, step: {}, toc: false }); }
-  componentWillUnmount() { window.removeEventListener("resize", this.onResize); clearInterval(this.poll); }
+  componentDidUpdate(pp) { if (pp.rid !== this.props.rid) this.setState({ fv: false, open: {}, step: {}, toc: false, entry: null }); }
+  stepEntry(dir) { const n = this.nEntries || 0; if (n) this.setState(s => ({ entry: ((s.entry || 0) + dir + n) % n })); }
+  componentWillUnmount() { window.removeEventListener("resize", this.onResize); window.removeEventListener("keydown", this.onKey); clearInterval(this.poll); }
   go(id) { const el = document.getElementById(id); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 76, behavior: "smooth" }); this.setState({ toc: false }); }
   renderVals() {
     const ok = this.state.ready && window.RD && window.RDL, S = this.state;
@@ -306,6 +345,32 @@ class Component extends DCLogic {
       if (ou && it.origin !== "rawdraft") rows.push({ title: so ? so.name : (it.creator || "Original source"), meta: "Original source · External", actions: [ext("View original", ou)], planned: false });
       if (rows.length) secs.push({ id: "resources", title: "Resources", sub: [], kind: "assets", assets: rows.map(x => Object.assign({ isPrompt: false, open: false, p: {}, hasVis: false, vis: "" }, x)), op: true });
     }
+    // A collection's contents, credited, each one opening in the side panel.
+    const ents = (it.entries || []).filter(e => e && e.name);
+    this.nEntries = ents.length;
+    let en = null;
+    if (ents.length) {
+      const norm = x => (x || "").toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "");
+      const lib = new Map(); RD.items.forEach(x => { if (x.type !== "resource" && !lib.has(norm(x.title))) lib.set(norm(x.title), x); });
+      const host = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return ""; } };
+      const by = it.creator || (so && so.name) || "its authors";
+      const egroups = [];
+      ents.forEach((e, i) => {
+        let g = egroups[egroups.length - 1];
+        if (!g || g.name !== (e.group || "").toUpperCase()) egroups.push(g = { name: (e.group || "").toUpperCase(), hasName: !!e.group, list: [] });
+        const m = lib.get(norm(e.name));
+        g.list.push({ name: e.name, short: e.short || "", meta: [e.time, e.people].filter(Boolean).join(" · "), inLib: m ? "In the Library" : "", pick: () => this.setState({ entry: i }), bg: S.entry === i ? "#121210" : "#0b0b0a" });
+        if (S.entry === i) {
+          const url = e.url || it.sourceUrl || (so && so.url) || "";
+          en = { name: e.name, short: e.short || "", group: (e.group || it.title).toUpperCase(), hasLib: !!m, libHref: m ? L.deco(m).href : "", addHref: m ? "#/builder?add=" + m.id : "", hasUrl: !!url, url, urlLabel: "See the original" + (host(url) ? " on " + host(url) : ""),
+            facts: [["Time", e.time], ["People", e.people], ["From", it.title], ["Credit", by]].filter(f => f[1]).map(([k, v]) => ({ k, v })),
+            rights: it.rights || "Summarised with credit. The method belongs to its creators; the full version lives at the source." };
+        }
+      });
+      egroups.forEach(g => (g.n = g.list.length));
+      const src = it.sourceUrl || (so && so.url);
+      sec("inside", "What's inside · " + ents.length + " " + (it.entriesNoun || "items"), [], { kind: "entries", egroups, credit: "By " + by + "." + (src ? " Summarised here with credit; the originals live at " + host(src) + "." : " Summarised here with credit.") + " Open one for details." });
+    }
     const toolL = (it.toolLinks || []).filter(l => l && l.url);
     if (toolL.length) sec("templates", "Ready-made boards", [links("", toolL.map(l => { let h = "link"; try { h = new URL(l.url).hostname.replace(/^www\./, ""); } catch (e) {} return { title: "Open " + (l.label ? l.label + " " : "template ") + "in " + (l.tool || h), href: l.url, tag: l.tool || "External link" }; }))]);
     if (T === "resource") sec("resource", "Details", [pairs("", [["Creator", it.creator], ["Organization", so && so.name], ["Format", it.format], ["Best for", it.recommendedFor], ["Level", it.level], ["Rights", it.rights]]), links("", (it.sourceUrl || (so && so.url)) ? [{ title: "Go to original source", href: it.sourceUrl || so.url, tag: "External link" }] : null)]);
@@ -333,7 +398,7 @@ class Component extends DCLogic {
     shown.forEach(s => {
       const isOpen = S.fv ? true : s.collapsible ? !!S.open[s.id] : true;
       Object.assign(s, { show: isOpen, toggleLabel: isOpen ? "Hide" : "Show", toggle: () => this.setState(st => ({ open: Object.assign({}, st.open, { [s.id]: !st.open[s.id] }) })),
-        isBig: s.kind === "big", isSteps: s.kind === "steps", isAgenda: s.kind === "agenda", isFail: s.kind === "fail", isAssets: s.kind === "assets", isFormats: s.kind === "formats", fmts: s.fmts || [], fmt: s.fmt || { shape: [], fields: [] }, fmtCols: s.fmtCols || "1fr",
+        isBig: s.kind === "big", isSteps: s.kind === "steps", isAgenda: s.kind === "agenda", isFail: s.kind === "fail", isAssets: s.kind === "assets", isEntries: s.kind === "entries", egroups: s.egroups || [], credit: s.credit || "", isFormats: s.kind === "formats", fmts: s.fmts || [], fmt: s.fmt || { shape: [], fields: [] }, fmtCols: s.fmtCols || "1fr",
         steps: s.steps || [], rows: s.rows || [], fails: s.fails || [], assets: s.assets || [], text: s.text || "", hasSay: !!s.hasSay, say: s.say || "" });
       s.sub = (s.sub || []).map(b => Object.assign({ hasH: false, hasText: false, hasItems: false, hasPairs: false, hasLinks: false, items: [], pairs: [], links: [] }, b));
     });
@@ -354,6 +419,7 @@ class Component extends DCLogic {
       doPrint: () => window.print(), builderHref: "#/builder?add=" + it.id, builderLabel: T === "sprint" ? "Adapt in Builder" : T === "workshop" ? "Adapt this workshop" : T === "playbook" ? "Use this playbook" : T === "framework" ? "Build around this" : "Add to Builder", hasHeroVis: S.w >= 900 && d.visual !== "plain_type", heroCols: S.w >= 900 && d.visual !== "plain_type" ? "minmax(0,7fr) minmax(0,4fr)" : "minmax(0,1fr)",
       hasGlance: glance.length > 0, glance,
       tocWide: complex && S.w >= 1100 && toc.length > 3, tocMobile: complex && S.w < 1100 && toc.length > 3, toc, tocOpen: S.toc, tocSign: S.toc ? "−" : "+", toggleToc: () => this.setState(s => ({ toc: !s.toc })),
+      hasEntry: !!en, en: en || { facts: [] }, closeEntry: () => this.setState({ entry: null }), prevEntry: () => this.stepEntry(-1), nextEntry: () => this.stepEntry(1),
       secs: shown, agCols: S.w < 640 ? "52px minmax(0,1fr) 0px" : "70px minmax(0,1fr) 70px",
       ctaBtn: CTA_BTN, cta: CTA[T] || "Working through something like this?"
     };

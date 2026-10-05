@@ -19,11 +19,11 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #ff4b
 .scp-hover-7:hover{border-color:#ff4b23 !important;color:#ece9e0 !important}
 .scp-hover-8:hover{background:#ece9e0 !important}
 .scp-hover-9:hover{background:#121210 !important;color:#ff4b23 !important}
-.scp-hover-a:hover{transform:translateY(-3px) rotate(0deg) !important;border-color:#5a5850 !important;box-shadow:0 10px 24px rgba(0,0,0,.45) !important}
-.scp-focus-b:focus{transform:translateY(-3px) rotate(0deg) !important;border-color:#ece9e0 !important}
-.scp-hover-c:hover{border-color:#ff4b23 !important}
-.scp-hover-d:hover{opacity:1 !important;color:#ece9e0 !important}
-.scp-hover-e:hover{background:#121210 !important}
-.scp-focus-f:focus{border-bottom-color:#ece9e0 !important}
-.scp-hover-g:hover{border-color:#ece9e0 !important}
+.scp-hover-a:hover{border-color:#ece9e0 !important}
+.scp-hover-b:hover{transform:translateY(-3px) rotate(0deg) !important;border-color:#5a5850 !important;box-shadow:0 10px 24px rgba(0,0,0,.45) !important}
+.scp-focus-c:focus{transform:translateY(-3px) rotate(0deg) !important;border-color:#ece9e0 !important}
+.scp-hover-d:hover{border-color:#ff4b23 !important}
+.scp-hover-e:hover{opacity:1 !important;color:#ece9e0 !important}
+.scp-hover-f:hover{background:#121210 !important}
+.scp-focus-g:focus{border-bottom-color:#ece9e0 !important}
 .scp-focus-h:focus{border-color:#8f8b80 !important}

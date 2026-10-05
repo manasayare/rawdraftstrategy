@@ -31,6 +31,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #ff4b
 <script src="rd-cycle.js"></script>
 <script src="rd-cycle-scroll.js"></script>
 <script src="rd-uptime.js"></script>
+<script src="rd-peel.js"></script>
 <script src="rd-ascii.js"></script>
 <script src="rd-structure.js"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&display=swap">
@@ -217,7 +218,10 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #ff4b
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:28px 40px;max-width:880px">
 <sc-for list="{{ footCols }}" as="c" hint-placeholder-count="4"><div><div style="font-size:14px;color:#8f8b80;margin-bottom:10px">{{ c.h }}</div><div style="display:flex;flex-direction:column;gap:2px;font-size:15px"><sc-for list="{{ c.links }}" as="l" hint-placeholder-count="3"><a href="{{ l.href }}" target="{{ l.target }}" style="color:#ece9e0;text-decoration:none;min-height:32px;display:inline-flex;align-items:center" style-hover="color:#ff4b23">{{ l.label }}</a></sc-for></div></div></sc-for>
 </div>
+<div style="position:relative">
 <div style="font-family:'Clash Display',sans-serif;font-weight:600;font-size:clamp(64px,14.5vw,260px);letter-spacing:-.05em;line-height:.8;margin-top:clamp(40px,6vw,96px);white-space:nowrap">Raw Draft<span style="color:#ff4b23">.</span></div>
+<div class="rd-peel-spot"><rd-peel></rd-peel></div>
+</div>
 <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:20px;font-size:13px;color:#8f8b80"><span>change needs structure</span><span>© 2026 Raw Draft Strategy</span></div>
 </footer>
 </div>

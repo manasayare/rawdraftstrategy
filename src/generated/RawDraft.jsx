@@ -1058,11 +1058,16 @@ Component.prototype.template = function (V) {
               </React.Fragment>
             ))}
           </div>
-          <div style={{"fontFamily":"'Clash Display',sans-serif","fontWeight":"600","fontSize":"clamp(64px,14.5vw,260px)","letterSpacing":"-.05em","lineHeight":".8","marginTop":"clamp(40px,6vw,96px)","whiteSpace":"nowrap"}}>
-            {"Raw Draft"}
-            <span style={{"color":"#ff4b23"}}>
-              {"."}
-            </span>
+          <div style={{"position":"relative"}}>
+            <div style={{"fontFamily":"'Clash Display',sans-serif","fontWeight":"600","fontSize":"clamp(64px,14.5vw,260px)","letterSpacing":"-.05em","lineHeight":".8","marginTop":"clamp(40px,6vw,96px)","whiteSpace":"nowrap"}}>
+              {"Raw Draft"}
+              <span style={{"color":"#ff4b23"}}>
+                {"."}
+              </span>
+            </div>
+            <div className="rd-peel-spot">
+              <rd-peel></rd-peel>
+            </div>
           </div>
           <div style={{"display":"flex","justifyContent":"space-between","flexWrap":"wrap","gap":"12px","marginTop":"20px","fontSize":"13px","color":"#8f8b80"}}>
             <span>

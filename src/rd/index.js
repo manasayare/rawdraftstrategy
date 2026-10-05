@@ -18,6 +18,8 @@ export async function loadEngines(after = {}) {
   if (after["rd-cycle-scroll.js"]) after["rd-cycle-scroll.js"]();
   await import("./rd-uptime.js");
   if (after["rd-uptime.js"]) after["rd-uptime.js"]();
+  await import("./rd-peel.js");
+  if (after["rd-peel.js"]) after["rd-peel.js"]();
   await import("./rd-ascii.js");
   if (after["rd-ascii.js"]) after["rd-ascii.js"]();
   await import("./rd-structure.js");

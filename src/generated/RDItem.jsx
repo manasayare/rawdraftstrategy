@@ -6,13 +6,16 @@ import { DCLogic, dcList, dcText, dcStr, dcCss, dcHref, RDNav } from "@/lib/dc";
 
 
 class Component extends DCLogic {
-  state = { ready: !!(window.RD && window.RDL), fv: false, open: {}, step: {}, toc: false, w: window.innerWidth, prompt: {}, copied: null, fmt: null };
+  state = { ready: !!(window.RD && window.RDL), fv: false, open: {}, step: {}, toc: false, w: window.innerWidth, prompt: {}, copied: null, fmt: null, entry: null };
   componentDidMount() {
     this.onResize = () => this.setState({ w: window.innerWidth }); window.addEventListener("resize", this.onResize);
+    this.onKey = e => { if (this.state.entry == null) return; if (e.key === "Escape") this.setState({ entry: null }); if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); this.stepEntry(e.key === "ArrowDown" ? 1 : -1); } };
+    window.addEventListener("keydown", this.onKey);
     if (!this.state.ready) this.poll = setInterval(() => { if (window.RD && window.RDL) { clearInterval(this.poll); this.setState({ ready: true }); } }, 40);
   }
-  componentDidUpdate(pp) { if (pp.rid !== this.props.rid) this.setState({ fv: false, open: {}, step: {}, toc: false }); }
-  componentWillUnmount() { window.removeEventListener("resize", this.onResize); clearInterval(this.poll); }
+  componentDidUpdate(pp) { if (pp.rid !== this.props.rid) this.setState({ fv: false, open: {}, step: {}, toc: false, entry: null }); }
+  stepEntry(dir) { const n = this.nEntries || 0; if (n) this.setState(s => ({ entry: ((s.entry || 0) + dir + n) % n })); }
+  componentWillUnmount() { window.removeEventListener("resize", this.onResize); window.removeEventListener("keydown", this.onKey); clearInterval(this.poll); }
   go(id) { const el = document.getElementById(id); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 76, behavior: "smooth" }); this.setState({ toc: false }); }
   renderVals() {
     const ok = this.state.ready && window.RD && window.RDL, S = this.state;
@@ -135,6 +138,32 @@ class Component extends DCLogic {
       if (ou && it.origin !== "rawdraft") rows.push({ title: so ? so.name : (it.creator || "Original source"), meta: "Original source · External", actions: [ext("View original", ou)], planned: false });
       if (rows.length) secs.push({ id: "resources", title: "Resources", sub: [], kind: "assets", assets: rows.map(x => Object.assign({ isPrompt: false, open: false, p: {}, hasVis: false, vis: "" }, x)), op: true });
     }
+    // A collection's contents, credited, each one opening in the side panel.
+    const ents = (it.entries || []).filter(e => e && e.name);
+    this.nEntries = ents.length;
+    let en = null;
+    if (ents.length) {
+      const norm = x => (x || "").toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "");
+      const lib = new Map(); RD.items.forEach(x => { if (x.type !== "resource" && !lib.has(norm(x.title))) lib.set(norm(x.title), x); });
+      const host = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return ""; } };
+      const by = it.creator || (so && so.name) || "its authors";
+      const egroups = [];
+      ents.forEach((e, i) => {
+        let g = egroups[egroups.length - 1];
+        if (!g || g.name !== (e.group || "").toUpperCase()) egroups.push(g = { name: (e.group || "").toUpperCase(), hasName: !!e.group, list: [] });
+        const m = lib.get(norm(e.name));
+        g.list.push({ name: e.name, short: e.short || "", meta: [e.time, e.people].filter(Boolean).join(" · "), inLib: m ? "In the Library" : "", pick: () => this.setState({ entry: i }), bg: S.entry === i ? "#121210" : "#0b0b0a" });
+        if (S.entry === i) {
+          const url = e.url || it.sourceUrl || (so && so.url) || "";
+          en = { name: e.name, short: e.short || "", group: (e.group || it.title).toUpperCase(), hasLib: !!m, libHref: m ? L.deco(m).href : "", addHref: m ? "#/builder?add=" + m.id : "", hasUrl: !!url, url, urlLabel: "See the original" + (host(url) ? " on " + host(url) : ""),
+            facts: [["Time", e.time], ["People", e.people], ["From", it.title], ["Credit", by]].filter(f => f[1]).map(([k, v]) => ({ k, v })),
+            rights: it.rights || "Summarised with credit. The method belongs to its creators; the full version lives at the source." };
+        }
+      });
+      egroups.forEach(g => (g.n = g.list.length));
+      const src = it.sourceUrl || (so && so.url);
+      sec("inside", "What's inside · " + ents.length + " " + (it.entriesNoun || "items"), [], { kind: "entries", egroups, credit: "By " + by + "." + (src ? " Summarised here with credit; the originals live at " + host(src) + "." : " Summarised here with credit.") + " Open one for details." });
+    }
     const toolL = (it.toolLinks || []).filter(l => l && l.url);
     if (toolL.length) sec("templates", "Ready-made boards", [links("", toolL.map(l => { let h = "link"; try { h = new URL(l.url).hostname.replace(/^www\./, ""); } catch (e) {} return { title: "Open " + (l.label ? l.label + " " : "template ") + "in " + (l.tool || h), href: l.url, tag: l.tool || "External link" }; }))]);
     if (T === "resource") sec("resource", "Details", [pairs("", [["Creator", it.creator], ["Organization", so && so.name], ["Format", it.format], ["Best for", it.recommendedFor], ["Level", it.level], ["Rights", it.rights]]), links("", (it.sourceUrl || (so && so.url)) ? [{ title: "Go to original source", href: it.sourceUrl || so.url, tag: "External link" }] : null)]);
@@ -162,7 +191,7 @@ class Component extends DCLogic {
     shown.forEach(s => {
       const isOpen = S.fv ? true : s.collapsible ? !!S.open[s.id] : true;
       Object.assign(s, { show: isOpen, toggleLabel: isOpen ? "Hide" : "Show", toggle: () => this.setState(st => ({ open: Object.assign({}, st.open, { [s.id]: !st.open[s.id] }) })),
-        isBig: s.kind === "big", isSteps: s.kind === "steps", isAgenda: s.kind === "agenda", isFail: s.kind === "fail", isAssets: s.kind === "assets", isFormats: s.kind === "formats", fmts: s.fmts || [], fmt: s.fmt || { shape: [], fields: [] }, fmtCols: s.fmtCols || "1fr",
+        isBig: s.kind === "big", isSteps: s.kind === "steps", isAgenda: s.kind === "agenda", isFail: s.kind === "fail", isAssets: s.kind === "assets", isEntries: s.kind === "entries", egroups: s.egroups || [], credit: s.credit || "", isFormats: s.kind === "formats", fmts: s.fmts || [], fmt: s.fmt || { shape: [], fields: [] }, fmtCols: s.fmtCols || "1fr",
         steps: s.steps || [], rows: s.rows || [], fails: s.fails || [], assets: s.assets || [], text: s.text || "", hasSay: !!s.hasSay, say: s.say || "" });
       s.sub = (s.sub || []).map(b => Object.assign({ hasH: false, hasText: false, hasItems: false, hasPairs: false, hasLinks: false, items: [], pairs: [], links: [] }, b));
     });
@@ -183,6 +212,7 @@ class Component extends DCLogic {
       doPrint: () => window.print(), builderHref: "#/builder?add=" + it.id, builderLabel: T === "sprint" ? "Adapt in Builder" : T === "workshop" ? "Adapt this workshop" : T === "playbook" ? "Use this playbook" : T === "framework" ? "Build around this" : "Add to Builder", hasHeroVis: S.w >= 900 && d.visual !== "plain_type", heroCols: S.w >= 900 && d.visual !== "plain_type" ? "minmax(0,7fr) minmax(0,4fr)" : "minmax(0,1fr)",
       hasGlance: glance.length > 0, glance,
       tocWide: complex && S.w >= 1100 && toc.length > 3, tocMobile: complex && S.w < 1100 && toc.length > 3, toc, tocOpen: S.toc, tocSign: S.toc ? "−" : "+", toggleToc: () => this.setState(s => ({ toc: !s.toc })),
+      hasEntry: !!en, en: en || { facts: [] }, closeEntry: () => this.setState({ entry: null }), prevEntry: () => this.stepEntry(-1), nextEntry: () => this.stepEntry(1),
       secs: shown, agCols: S.w < 640 ? "52px minmax(0,1fr) 0px" : "70px minmax(0,1fr) 70px",
       ctaBtn: CTA_BTN, cta: CTA[T] || "Working through something like this?"
     };
@@ -666,42 +696,88 @@ Component.prototype.template = function (V) {
                               </div>
                             </>
                           ) : null}
+                          {s_3?.isEntries ? (
+                            <>
+                              <p style={{"margin":"10px 0 0","maxWidth":"66ch","fontSize":"15px","color":"#8f8b80"}}>
+                                {dcText(s_3?.credit)}
+                              </p>
+                              {dcList(s_3?.egroups).map((g_17, $i17) => (
+                                <React.Fragment key={$i17}>
+                                  <div style={{"marginTop":"22px"}}>
+                                    {g_17?.hasName ? (
+                                      <>
+                                        <h3 style={{"position":"sticky","top":"61px","zIndex":"2","margin":"0","padding":"10px 0","background":"#0b0b0a","fontSize":"13px","letterSpacing":".08em","fontWeight":"500","color":"#ff4b23"}}>
+                                          {dcText(g_17?.name)}
+                                          {" "}
+                                          <span style={{"color":"#5a5850"}}>
+                                            {dcText(g_17?.n)}
+                                          </span>
+                                        </h3>
+                                      </>
+                                    ) : null}
+                                    <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fill,minmax(min(100%,220px),1fr))","borderTop":"1px solid #2a2925","borderLeft":"1px solid #2a2925"}}>
+                                      {dcList(g_17?.list).map((e_18, $i18) => (
+                                        <React.Fragment key={$i18}>
+                                          <button onClick={e_18?.pick} style={dcCss(`display:flex;flex-direction:column;gap:6px;text-align:left;background:${dcStr(e_18?.bg)};border:0;box-shadow:inset -1px -1px 0 #2a2925;color:#ece9e0;padding:14px 16px 16px;cursor:pointer;min-height:112px`)} className="scp-hover-9">
+                                            <span style={{"fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"19px","lineHeight":"1.1"}}>
+                                              {dcText(e_18?.name)}
+                                            </span>
+                                            <span style={{"fontSize":"14px","lineHeight":"1.4","color":"#8f8b80"}}>
+                                              {dcText(e_18?.short)}
+                                            </span>
+                                            <span style={{"marginTop":"auto","display":"flex","justifyContent":"space-between","gap":"8px","fontSize":"12px","color":"#5a5850"}}>
+                                              <span>
+                                                {dcText(e_18?.meta)}
+                                              </span>
+                                              <span style={{"color":"#c9c5ba"}}>
+                                                {dcText(e_18?.inLib)}
+                                              </span>
+                                            </span>
+                                          </button>
+                                        </React.Fragment>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </React.Fragment>
+                              ))}
+                            </>
+                          ) : null}
                           {s_3?.isAssets ? (
                             <>
                               <div style={{"marginTop":"12px"}}>
-                                {dcList(s_3?.assets).map((a_17, $i17) => (
-                                  <React.Fragment key={$i17}>
+                                {dcList(s_3?.assets).map((a_19, $i19) => (
+                                  <React.Fragment key={$i19}>
                                     <div style={{"borderTop":"1px solid #1d1c1a","padding":"12px 0"}}>
                                       <div style={{"display":"flex","flexWrap":"wrap","justifyContent":"space-between","alignItems":"center","gap":"6px 24px"}}>
-                                        {a_17?.hasVis ? (
+                                        {a_19?.hasVis ? (
                                           <>
-                                            <rd-visual key={[a_17?.vis, a_17?.title].join("|")} type={a_17?.vis} seed={a_17?.title} style={{"display":"block","width":"56px","height":"34px","flex":"none","border":"1px solid #2a2925"}}></rd-visual>
+                                            <rd-visual key={[a_19?.vis, a_19?.title].join("|")} type={a_19?.vis} seed={a_19?.title} style={{"display":"block","width":"56px","height":"34px","flex":"none","border":"1px solid #2a2925"}}></rd-visual>
                                           </>
                                         ) : null}
                                         <div style={{"flex":"1 1 220px","minWidth":"0"}}>
                                           <div style={{"fontSize":"17px"}}>
-                                            {dcText(a_17?.title)}
+                                            {dcText(a_19?.title)}
                                           </div>
                                           <div style={{"fontSize":"14px","color":"#8f8b80","marginTop":"2px"}}>
-                                            {dcText(a_17?.meta)}
+                                            {dcText(a_19?.meta)}
                                           </div>
                                         </div>
                                         <div style={{"display":"flex","flexWrap":"wrap","gap":"4px 20px","alignItems":"center"}}>
-                                          {dcList(a_17?.actions).map((x_18, $i18) => (
-                                            <React.Fragment key={$i18}>
-                                              <a href={dcHref(x_18?.href)} target={x_18?.target} rel="noopener" style={{"display":"inline-flex","alignItems":"center","minHeight":"44px","fontSize":"15px","fontWeight":"500"}}>
-                                                {dcText(x_18?.label)}
+                                          {dcList(a_19?.actions).map((x_20, $i20) => (
+                                            <React.Fragment key={$i20}>
+                                              <a href={dcHref(x_20?.href)} target={x_20?.target} rel="noopener" style={{"display":"inline-flex","alignItems":"center","minHeight":"44px","fontSize":"15px","fontWeight":"500"}}>
+                                                {dcText(x_20?.label)}
                                               </a>
                                             </React.Fragment>
                                           ))}
-                                          {a_17?.isPrompt ? (
+                                          {a_19?.isPrompt ? (
                                             <>
-                                              <button onClick={a_17?.toggle} aria-expanded={a_17?.openAria} style={{"background":"none","border":"0","color":"#ece9e0","minHeight":"44px","padding":"0","cursor":"pointer","fontSize":"15px","fontWeight":"500","borderBottom":"1px solid #ff4b23"}}>
-                                                {dcText(a_17?.toggleLabel)}
+                                              <button onClick={a_19?.toggle} aria-expanded={a_19?.openAria} style={{"background":"none","border":"0","color":"#ece9e0","minHeight":"44px","padding":"0","cursor":"pointer","fontSize":"15px","fontWeight":"500","borderBottom":"1px solid #ff4b23"}}>
+                                                {dcText(a_19?.toggleLabel)}
                                               </button>
                                             </>
                                           ) : null}
-                                          {a_17?.planned ? (
+                                          {a_19?.planned ? (
                                             <>
                                               <span style={{"fontSize":"14px","color":"#8f8b80"}}>
                                                 {"In preparation"}
@@ -710,7 +786,7 @@ Component.prototype.template = function (V) {
                                           ) : null}
                                         </div>
                                       </div>
-                                      {a_17?.open ? (
+                                      {a_19?.open ? (
                                         <>
                                           <div style={{"margin":"16px 0 8px","display":"grid","gap":"20px","maxWidth":"760px"}}>
                                             <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(min(100%,240px),1fr))","gap":"16px 32px"}}>
@@ -719,7 +795,7 @@ Component.prototype.template = function (V) {
                                                   {"Purpose"}
                                                 </div>
                                                 <div style={{"marginTop":"4px","fontSize":"16px","lineHeight":"1.45"}}>
-                                                  {dcText(a_17?.p?.purpose)}
+                                                  {dcText(a_19?.p?.purpose)}
                                                 </div>
                                               </div>
                                               <div>
@@ -727,7 +803,7 @@ Component.prototype.template = function (V) {
                                                   {"When to use it"}
                                                 </div>
                                                 <div style={{"marginTop":"4px","fontSize":"16px","lineHeight":"1.45"}}>
-                                                  {dcText(a_17?.p?.when)}
+                                                  {dcText(a_19?.p?.when)}
                                                 </div>
                                               </div>
                                             </div>
@@ -736,10 +812,10 @@ Component.prototype.template = function (V) {
                                                 {"What context to provide"}
                                               </div>
                                               <ul style={{"margin":"6px 0 0","paddingLeft":"18px","fontSize":"16px","lineHeight":"1.5"}}>
-                                                {dcList(a_17?.p?.context).map((c_19, $i19) => (
-                                                  <React.Fragment key={$i19}>
+                                                {dcList(a_19?.p?.context).map((c_21, $i21) => (
+                                                  <React.Fragment key={$i21}>
                                                     <li>
-                                                      {dcText(c_19)}
+                                                      {dcText(c_21)}
                                                     </li>
                                                   </React.Fragment>
                                                 ))}
@@ -750,12 +826,12 @@ Component.prototype.template = function (V) {
                                                 <span style={{"fontSize":"14px","color":"#8f8b80"}}>
                                                   {"Prompt"}
                                                 </span>
-                                                <button onClick={a_17?.copy} style={dcCss(`background:${dcStr(a_17?.copyBg)};color:#0b0b0a;border:0;min-height:40px;padding:0 14px;cursor:pointer;font-size:14px;font-weight:500`)}>
-                                                  {dcText(a_17?.copyLabel)}
+                                                <button onClick={a_19?.copy} style={dcCss(`background:${dcStr(a_19?.copyBg)};color:#0b0b0a;border:0;min-height:40px;padding:0 14px;cursor:pointer;font-size:14px;font-weight:500`)}>
+                                                  {dcText(a_19?.copyLabel)}
                                                 </button>
                                               </div>
                                               <pre style={{"margin":"8px 0 0","padding":"16px","background":"#121210","border":"1px solid #2a2925","color":"#ece9e0","fontFamily":"ui-monospace,SFMono-Regular,Menlo,monospace","fontSize":"13.5px","lineHeight":"1.6","whiteSpace":"pre-wrap","overflowWrap":"anywhere"}}>
-                                                {dcText(a_17?.p?.prompt)}
+                                                {dcText(a_19?.p?.prompt)}
                                               </pre>
                                             </div>
                                             <div>
@@ -763,7 +839,7 @@ Component.prototype.template = function (V) {
                                                 {"Expected output"}
                                               </div>
                                               <div style={{"marginTop":"4px","fontSize":"16px","lineHeight":"1.45"}}>
-                                                {dcText(a_17?.p?.output)}
+                                                {dcText(a_19?.p?.output)}
                                               </div>
                                             </div>
                                             <div>
@@ -771,17 +847,17 @@ Component.prototype.template = function (V) {
                                                 {"Check by hand"}
                                               </div>
                                               <ul style={{"margin":"6px 0 0","paddingLeft":"18px","fontSize":"16px","lineHeight":"1.5"}}>
-                                                {dcList(a_17?.p?.verify).map((c_20, $i20) => (
-                                                  <React.Fragment key={$i20}>
+                                                {dcList(a_19?.p?.verify).map((c_22, $i22) => (
+                                                  <React.Fragment key={$i22}>
                                                     <li>
-                                                      {dcText(c_20)}
+                                                      {dcText(c_22)}
                                                     </li>
                                                   </React.Fragment>
                                                 ))}
                                               </ul>
                                             </div>
                                             <div style={{"fontSize":"14px","color":"#8f8b80"}}>
-                                              {dcText(a_17?.p?.author)}
+                                              {dcText(a_19?.p?.author)}
                                               {". Draft, not yet tested in a session. Use with any agent you prefer."}
                                             </div>
                                           </div>
@@ -808,6 +884,82 @@ Component.prototype.template = function (V) {
                 </div>
               </div>
             </div>
+            {V.hasEntry ? (
+              <>
+                <div data-noprint="1" onClick={V.closeEntry} style={{"position":"fixed","inset":"0","zIndex":"60","background":"rgba(5,5,4,.6)"}}></div>
+                <aside data-noprint="1" role="dialog" aria-label={V.en?.name} style={{"position":"fixed","top":"0","right":"0","bottom":"0","zIndex":"61","width":"min(460px,100vw)","display":"flex","flexDirection":"column","background":"#0f0f0e","borderLeft":"1px solid #2a2925","boxShadow":"-24px 0 60px rgba(0,0,0,.5)"}}>
+                  <div style={{"display":"flex","justifyContent":"space-between","alignItems":"center","gap":"12px","padding":"14px 20px","borderBottom":"1px solid #2a2925"}}>
+                    <button onClick={V.closeEntry} style={{"background":"none","border":"0","color":"#c9c5ba","minHeight":"40px","padding":"0","cursor":"pointer","fontSize":"15px"}} className="scp-hover-0">
+                      {"← "}
+                      {dcText(V.d?.title)}
+                    </button>
+                    <span style={{"display":"flex","gap":"4px"}}>
+                      <button onClick={V.prevEntry} aria-label="Previous" style={{"background":"none","border":"1px solid #2a2925","color":"#ece9e0","width":"40px","height":"40px","cursor":"pointer"}} className="scp-hover-a">
+                        {"↑"}
+                      </button>
+                      <button onClick={V.nextEntry} aria-label="Next" style={{"background":"none","border":"1px solid #2a2925","color":"#ece9e0","width":"40px","height":"40px","cursor":"pointer"}} className="scp-hover-a">
+                        {"↓"}
+                      </button>
+                    </span>
+                  </div>
+                  <div style={{"flex":"1 1 auto","overflow":"auto","padding":"24px 20px 32px"}}>
+                    <div style={{"fontSize":"13px","letterSpacing":".08em","color":"#ff4b23"}}>
+                      {dcText(V.en?.group)}
+                    </div>
+                    <h2 style={{"margin":"8px 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(32px,4vw,44px)","letterSpacing":"-.03em","lineHeight":"1"}}>
+                      {dcText(V.en?.name)}
+                    </h2>
+                    <p style={{"margin":"14px 0 0","fontSize":"18px","lineHeight":"1.45","color":"#c9c5ba"}}>
+                      {dcText(V.en?.short)}
+                    </p>
+                    <div style={{"display":"grid","gridTemplateColumns":"100px minmax(0,1fr)","marginTop":"22px","borderTop":"1px solid #2a2925"}}>
+                      {dcList(V.en?.facts).map((f_23, $i23) => (
+                        <React.Fragment key={$i23}>
+                          <span style={{"padding":"10px 12px 10px 0","borderBottom":"1px solid #1d1c1a","fontSize":"14px","color":"#8f8b80"}}>
+                            {dcText(f_23?.k)}
+                          </span>
+                          <span style={{"padding":"10px 0","borderBottom":"1px solid #1d1c1a","fontSize":"15px","lineHeight":"1.4"}}>
+                            {dcText(f_23?.v)}
+                          </span>
+                        </React.Fragment>
+                      ))}
+                    </div>
+                    <div style={{"display":"flex","flexDirection":"column","gap":"10px","marginTop":"24px"}}>
+                      {V.en?.hasLib ? (
+                        <>
+                          <a href={dcHref(V.en?.libHref)} style={{"display":"flex","alignItems":"center","justifyContent":"space-between","minHeight":"48px","background":"#ff4b23","color":"#0b0b0a","padding":"0 16px","textDecoration":"none","fontSize":"15px","fontWeight":"500"}} className="scp-hover-2">
+                            <span>
+                              {"Full guide in the Library"}
+                            </span>
+                            <span>
+                              {"→"}
+                            </span>
+                          </a>
+                          <a href={dcHref(V.en?.addHref)} style={{"display":"flex","alignItems":"center","minHeight":"44px","border":"1px solid #4a4843","color":"#ece9e0","padding":"0 16px","textDecoration":"none","fontSize":"15px"}} className="scp-hover-4">
+                            {"Add to Builder"}
+                          </a>
+                        </>
+                      ) : null}
+                      {V.en?.hasUrl ? (
+                        <>
+                          <a href={dcHref(V.en?.url)} target="_blank" rel="noopener" style={{"display":"flex","alignItems":"center","justifyContent":"space-between","minHeight":"44px","border":"1px solid #4a4843","color":"#ece9e0","padding":"0 16px","textDecoration":"none","fontSize":"15px"}} className="scp-hover-4">
+                            <span>
+                              {dcText(V.en?.urlLabel)}
+                            </span>
+                            <span>
+                              {"↗"}
+                            </span>
+                          </a>
+                        </>
+                      ) : null}
+                    </div>
+                    <p style={{"margin":"24px 0 0","fontSize":"13px","lineHeight":"1.5","color":"#8f8b80"}}>
+                      {dcText(V.en?.rights)}
+                    </p>
+                  </div>
+                </aside>
+              </>
+            ) : null}
           </>
         ) : null}
       </article>

@@ -47,3 +47,9 @@ The Library engines (`window.RD`, `RDL`, `RDB` from `src/rd`) are shared with th
 - A block's links (`cfg.links`, one per line) are recognised by host in `src/builder/tools.ts`: Miro, FigJam/Figma, Mentimeter, Slido, Mural, Google Slides/Forms and others. They show in Block detail, Ready → Boards & links, and as "Open {tool} ↗" in Run. Participant-facing tools (polls, boards) also appear on `/present`.
 - Library records can carry `toolLinks` (Sanity field "Template links"). They show on the item page as "Ready-made boards" and in the builder under every block made from that record.
 - `src/builder/exportBoards.ts`: Slides (.pptx through pptxgenjs, script in speaker notes), Board (.svg, one card per activity in section columns), Miro sticky text, Mentimeter poll questions. Miro has no open import for boards, so the SVG lands there as an image; FigJam and Figma keep it as editable shapes and text.
+
+## Resource collections
+
+- Library records can list what they contain (`entries`, Sanity "What's inside"): name, one line, group, time, people, optional link. The item page shows them as a credited grid; each opens a side panel with credit, a link to the original and, when the Library has a record with the same name, its full guide and "Add to Builder". Arrow keys step through, Esc closes.
+- `scripts/resource-entries.mjs` holds the current contents (Liberating Structures, Gamestorming, LUMA, Design Kit, Strategyzer experiments, Laws of UX, Atlassian plays, d.school, UK Futures Toolkit, Service Design Tools, Nesta DIY). `scripts/apply-resource-entries.mjs` writes them; Studio edits after that are the source of truth.
+- Footer sticker: `project/rd-peel.js`. Instagram handle, code and offer are the `CONFIG` at the top.

@@ -95,7 +95,7 @@
 </sc-if>
 
 <sc-if value="{{ isResults }}" hint-placeholder-val="{{ false }}">
-<div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 20px;margin-top:20px;font-size:15px">
+<div style="position:sticky;top:{{ stickTop }};z-index:5;display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 20px;margin-top:20px;padding:10px 0;background:#0b0b0a;border-bottom:1px solid #2a2925;font-size:15px">
 <span style="color:#ece9e0;font-weight:500">{{ count }} results</span>
 <sc-for list="{{ chips }}" as="c" hint-placeholder-count="2"><button onClick="{{ c.clear }}" style="background:none;border:0;padding:6px 0;color:#ff4b23;cursor:pointer;font-size:15px">{{ c.label }} ×</button></sc-for>
 <button onClick="{{ resetAll }}" style="background:none;border:0;padding:6px 0;color:#8f8b80;cursor:pointer;font-size:15px">Back to library</button>
@@ -103,7 +103,7 @@
 </div>
 <div style="display:flex;gap:40px;align-items:flex-start;margin-top:16px;flex-wrap:wrap">
 <sc-if value="{{ showAside }}" hint-placeholder-val="{{ true }}">
-<aside style="flex:0 0 {{ asideW }};min-width:0">
+<aside style="flex:0 0 {{ asideW }};min-width:0;position:{{ asidePos }};top:{{ asideTop }};max-height:{{ asideMax }};overflow:auto;overscroll-behavior:contain">
 <sc-for list="{{ groups }}" as="g" hint-placeholder-count="8">
 <div style="border-top:1px solid #2a2925">
 <button onClick="{{ g.toggle }}" style="display:flex;justify-content:space-between;gap:12px;width:100%;text-align:left;background:none;border:0;color:#ece9e0;min-height:44px;padding:10px 0;cursor:pointer;font-size:15px;font-weight:500"><span>{{ g.label }}</span><span style="color:{{ g.cc }};font-weight:400">{{ g.current }}</span></button>
@@ -116,16 +116,19 @@
 </sc-if>
 <div style="flex:1 1 480px;min-width:0">
 <sc-for list="{{ rows }}" as="it" hint-placeholder-count="10">
+<div>
+<sc-if value="{{ it.hasHead }}" hint-placeholder-val="{{ false }}"><div style="position:sticky;top:{{ headTop }};z-index:3;display:flex;justify-content:space-between;align-items:baseline;padding:14px 0 8px;background:#0b0b0a;border-bottom:1px solid #ece9e0"><span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:20px">{{ it.head }}</span><span style="font-size:14px;color:#8f8b80">{{ it.headN }}</span></div></sc-if>
 <a href="{{ it.href }}" onMouseEnter="{{ it.hover }}" style="display:grid;grid-template-columns:{{ rowCols }};gap:4px 24px;align-items:baseline;padding:16px 0;border-top:1px solid #2a2925;color:#ece9e0;text-decoration:none;background:{{ it.bg }}" style-hover="color:#ff4b23">
 <span style="font-size:14px;color:{{ it.tFg }}">{{ it.typeLabel }}</span>
 <span><span style="display:block;font-family:'Clash Display',sans-serif;font-weight:500;font-size:22px;line-height:1.15">{{ it.title }}</span><span style="display:block;font-size:15px;color:#8f8b80;margin-top:2px">{{ it.shortDesc }}</span></span>
-<span style="font-size:14px;color:#8f8b80">{{ it.timeLabel }}<br>{{ it.peopleLabel }}</span>
+<span style="font-size:14px;color:#8f8b80">{{ it.m1 }}<br>{{ it.m2 }}</span>
 </a>
+</div>
 </sc-for>
 <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><p style="margin:0;padding:32px 0;border-top:1px solid #2a2925;font-size:18px;color:#8f8b80">Nothing matched. Try fewer words or remove a filter.</p></sc-if>
 </div>
 <sc-if value="{{ showPreview }}" hint-placeholder-val="{{ false }}">
-<aside style="flex:0 0 320px;position:sticky;top:84px;padding:16px 0 16px 24px;border-left:1px solid #2a2925">
+<aside style="flex:0 0 320px;position:sticky;top:{{ asideTop }};padding:16px 0 16px 24px;border-left:1px solid #2a2925">
 <div style="font-size:14px;color:#8f8b80">{{ pv.typeLabel }}</div>
 <h3 style="margin:8px 0 10px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:30px;letter-spacing:-.02em;line-height:1.02">{{ pv.title }}</h3>
 <p style="margin:0;color:#c9c5ba;font-size:16px">{{ pv.shortDesc }}</p>
@@ -155,7 +158,7 @@ class Component extends DCLogic {
     const S = this.state, ok = S.ready && window.RD && window.RDL, narrow = S.w < 900, xwide = S.w >= 1360;
     const empty = { isLanding: true, isResults: false, browseKeys: [], browseOpts: [], startHere: [], arc: [], arc2: [], goals: [], types: [], curated: [], rows: [], chips: [], groups: [], pvFacts: [], pv: {}, rowCols: "1fr" };
     if (!ok) return empty;
-    const L = RDL, all = RD.items, F = S.f;
+    const L = RDL, all = RD.items, F = S.f, ix0 = L.index();
     const test = (it, k, v) => v === "all" ? true : k === "type" ? it.type === v : k === "goal" ? (it.goals || []).includes(v) : k === "practice" ? (it.practices || []).includes(v) : (k === "need" || k === "output" || k === "mode") ? L.inView(k, v, it) : k === "area" ? (it.areas || []).includes(v) : k === "stage" ? it.stage === v : k === "time" ? it.timeKey === v : k === "size" ? (it.sizes || []).includes(v) : k === "format" ? (it.formats || []).includes(v) : k === "level" ? it.level === v : k === "origin" ? it.origin === v : true;
     const pass = (it, skip) => Component.KEYS.every(k => k === skip || test(it, k, F[k]));
     const cnt = (k, v) => all.filter(it => test(it, k, v)).length;
@@ -166,7 +169,11 @@ class Component extends DCLogic {
     list = S.q.trim() ? L.search(S.q, list) : list.sort((a, b) => ORDER.indexOf(a.type) - ORDER.indexOf(b.type) || (a.status === "observed") - (b.status === "observed") || a.title.localeCompare(b.title));
     const rowsD = list.map(L.deco);
     const pvBase = rowsD.find(r => r.id === S.sel) || rowsD[0];
-    const rows = rowsD.map(r => Object.assign(r, { hover: () => xwide && this.state.sel !== r.id && this.setState({ sel: r.id }), bg: xwide && pvBase && r.id === pvBase.id ? "#121210" : "transparent" }));
+    const grouped = !S.q.trim(), nType = {}; rowsD.forEach(r => (nType[r.type] = (nType[r.type] || 0) + 1));
+    const credit = r => { const it = L.get(r.id) || {}, n = (it.entries || []).length; return [it.creator || (ix0.srcBy[it.org] || {}).name || "", [it.format, n ? n + " " + (it.entriesNoun || "items") : ""].filter(Boolean).join(" · ")]; };
+    const rows = rowsD.map((r, i) => Object.assign(r, { hover: () => xwide && this.state.sel !== r.id && this.setState({ sel: r.id }), bg: xwide && pvBase && r.id === pvBase.id ? "#121210" : "transparent",
+      hasHead: grouped && (i === 0 || rowsD[i - 1].type !== r.type), head: (L.TYPE[r.type] || {}).pl || r.type, headN: nType[r.type],
+      m1: r.type === "resource" ? credit(r)[0] : r.timeLabel, m2: r.type === "resource" ? credit(r)[1] : r.peopleLabel }));
     const OPTS = { type: Object.keys(L.TYPE).map(k => [k, L.TYPE[k].pl]), goal: L.GOALS, practice: (RD.practices || []).map(p => [p, p]), need: L.VIEWS.need.map(r => [r[0], r[0]]), output: L.VIEWS.output.map(r => [r[0], r[0]]), mode: L.VIEWS.mode.map(r => [r[0], r[0]]), area: L.AREAS, stage: L.STAGES, time: L.TIMES, size: L.SIZES, format: L.FORMATS, level: L.LEVELS, origin: Object.keys(L.ORIGIN).map(k => [k, L.ORIGIN[k].l]) };
     const LABEL = { need: "What I need now", output: "Output", mode: "Interaction", type: "Type", goal: "Goal", practice: "Practice", area: "Domain", stage: "Session stage", time: "Time", size: "People", format: "Format", level: "Facilitator", origin: "Origin" };
     const valL = (k, v) => (OPTS[k].find(o => o[0] === v) || [, v])[1];
@@ -195,6 +202,7 @@ class Component extends DCLogic {
       count: rows.length, chips, resetAll: () => { this.setState({ q: "", f: this.init({}), sel: null }); if (location.hash !== "#/library") location.hash = "/library"; },
       isNarrow: narrow, toggleFilters: () => this.setState(s => ({ fOpen: !s.fOpen })), filtersLabel: S.fOpen ? "Hide filters" : "Filters",
       showAside: !narrow || S.fOpen, asideW: narrow ? "100%" : "220px", groups,
+      stickTop: "61px", headTop: narrow ? "110px" : "116px", asidePos: narrow ? "static" : "sticky", asideTop: "132px", asideMax: narrow ? "none" : "calc(100vh - 156px)",
       rows, empty: !rows.length, rowCols: S.w < 640 ? "minmax(0,1fr)" : "110px minmax(0,1fr) 120px",
       showPreview: xwide && !!pvBase, pv, pvFacts
     };

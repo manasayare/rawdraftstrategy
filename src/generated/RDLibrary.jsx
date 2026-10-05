@@ -20,7 +20,7 @@ class Component extends DCLogic {
     const S = this.state, ok = S.ready && window.RD && window.RDL, narrow = S.w < 900, xwide = S.w >= 1360;
     const empty = { isLanding: true, isResults: false, browseKeys: [], browseOpts: [], startHere: [], arc: [], arc2: [], goals: [], types: [], curated: [], rows: [], chips: [], groups: [], pvFacts: [], pv: {}, rowCols: "1fr" };
     if (!ok) return empty;
-    const L = RDL, all = RD.items, F = S.f;
+    const L = RDL, all = RD.items, F = S.f, ix0 = L.index();
     const test = (it, k, v) => v === "all" ? true : k === "type" ? it.type === v : k === "goal" ? (it.goals || []).includes(v) : k === "practice" ? (it.practices || []).includes(v) : (k === "need" || k === "output" || k === "mode") ? L.inView(k, v, it) : k === "area" ? (it.areas || []).includes(v) : k === "stage" ? it.stage === v : k === "time" ? it.timeKey === v : k === "size" ? (it.sizes || []).includes(v) : k === "format" ? (it.formats || []).includes(v) : k === "level" ? it.level === v : k === "origin" ? it.origin === v : true;
     const pass = (it, skip) => Component.KEYS.every(k => k === skip || test(it, k, F[k]));
     const cnt = (k, v) => all.filter(it => test(it, k, v)).length;
@@ -31,7 +31,11 @@ class Component extends DCLogic {
     list = S.q.trim() ? L.search(S.q, list) : list.sort((a, b) => ORDER.indexOf(a.type) - ORDER.indexOf(b.type) || (a.status === "observed") - (b.status === "observed") || a.title.localeCompare(b.title));
     const rowsD = list.map(L.deco);
     const pvBase = rowsD.find(r => r.id === S.sel) || rowsD[0];
-    const rows = rowsD.map(r => Object.assign(r, { hover: () => xwide && this.state.sel !== r.id && this.setState({ sel: r.id }), bg: xwide && pvBase && r.id === pvBase.id ? "#121210" : "transparent" }));
+    const grouped = !S.q.trim(), nType = {}; rowsD.forEach(r => (nType[r.type] = (nType[r.type] || 0) + 1));
+    const credit = r => { const it = L.get(r.id) || {}, n = (it.entries || []).length; return [it.creator || (ix0.srcBy[it.org] || {}).name || "", [it.format, n ? n + " " + (it.entriesNoun || "items") : ""].filter(Boolean).join(" · ")]; };
+    const rows = rowsD.map((r, i) => Object.assign(r, { hover: () => xwide && this.state.sel !== r.id && this.setState({ sel: r.id }), bg: xwide && pvBase && r.id === pvBase.id ? "#121210" : "transparent",
+      hasHead: grouped && (i === 0 || rowsD[i - 1].type !== r.type), head: (L.TYPE[r.type] || {}).pl || r.type, headN: nType[r.type],
+      m1: r.type === "resource" ? credit(r)[0] : r.timeLabel, m2: r.type === "resource" ? credit(r)[1] : r.peopleLabel }));
     const OPTS = { type: Object.keys(L.TYPE).map(k => [k, L.TYPE[k].pl]), goal: L.GOALS, practice: (RD.practices || []).map(p => [p, p]), need: L.VIEWS.need.map(r => [r[0], r[0]]), output: L.VIEWS.output.map(r => [r[0], r[0]]), mode: L.VIEWS.mode.map(r => [r[0], r[0]]), area: L.AREAS, stage: L.STAGES, time: L.TIMES, size: L.SIZES, format: L.FORMATS, level: L.LEVELS, origin: Object.keys(L.ORIGIN).map(k => [k, L.ORIGIN[k].l]) };
     const LABEL = { need: "What I need now", output: "Output", mode: "Interaction", type: "Type", goal: "Goal", practice: "Practice", area: "Domain", stage: "Session stage", time: "Time", size: "People", format: "Format", level: "Facilitator", origin: "Origin" };
     const valL = (k, v) => (OPTS[k].find(o => o[0] === v) || [, v])[1];
@@ -60,6 +64,7 @@ class Component extends DCLogic {
       count: rows.length, chips, resetAll: () => { this.setState({ q: "", f: this.init({}), sel: null }); if (location.pathname + location.search !== "/library") RDNav.go("/library"); },
       isNarrow: narrow, toggleFilters: () => this.setState(s => ({ fOpen: !s.fOpen })), filtersLabel: S.fOpen ? "Hide filters" : "Filters",
       showAside: !narrow || S.fOpen, asideW: narrow ? "100%" : "220px", groups,
+      stickTop: "61px", headTop: narrow ? "110px" : "116px", asidePos: narrow ? "static" : "sticky", asideTop: "132px", asideMax: narrow ? "none" : "calc(100vh - 156px)",
       rows, empty: !rows.length, rowCols: S.w < 640 ? "minmax(0,1fr)" : "110px minmax(0,1fr) 120px",
       showPreview: xwide && !!pvBase, pv, pvFacts
     };
@@ -268,7 +273,7 @@ Component.prototype.template = function (V) {
         ) : null}
         {V.isResults ? (
           <>
-            <div style={{"display":"flex","flexWrap":"wrap","alignItems":"baseline","gap":"8px 20px","marginTop":"20px","fontSize":"15px"}}>
+            <div style={dcCss(`position:sticky;top:${dcStr(V.stickTop)};z-index:5;display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 20px;margin-top:20px;padding:10px 0;background:#0b0b0a;border-bottom:1px solid #2a2925;font-size:15px`)}>
               <span style={{"color":"#ece9e0","fontWeight":"500"}}>
                 {dcText(V.count)}
                 {" results"}
@@ -295,7 +300,7 @@ Component.prototype.template = function (V) {
             <div style={{"display":"flex","gap":"40px","alignItems":"flex-start","marginTop":"16px","flexWrap":"wrap"}}>
               {V.showAside ? (
                 <>
-                  <aside style={dcCss(`flex:0 0 ${dcStr(V.asideW)};min-width:0`)}>
+                  <aside style={dcCss(`flex:0 0 ${dcStr(V.asideW)};min-width:0;position:${dcStr(V.asidePos)};top:${dcStr(V.asideTop)};max-height:${dcStr(V.asideMax)};overflow:auto;overscroll-behavior:contain`)}>
                     {dcList(V.groups).map((g_9, $i9) => (
                       <React.Fragment key={$i9}>
                         <div style={{"borderTop":"1px solid #2a2925"}}>
@@ -334,24 +339,38 @@ Component.prototype.template = function (V) {
               <div style={{"flex":"1 1 480px","minWidth":"0"}}>
                 {dcList(V.rows).map((it_11, $i11) => (
                   <React.Fragment key={$i11}>
-                    <a href={dcHref(it_11?.href)} onMouseEnter={it_11?.hover} style={dcCss(`display:grid;grid-template-columns:${dcStr(V.rowCols)};gap:4px 24px;align-items:baseline;padding:16px 0;border-top:1px solid #2a2925;color:#ece9e0;text-decoration:none;background:${dcStr(it_11?.bg)}`)} className="scp-hover-0">
-                      <span style={dcCss(`font-size:14px;color:${dcStr(it_11?.tFg)}`)}>
-                        {dcText(it_11?.typeLabel)}
-                      </span>
-                      <span>
-                        <span style={{"display":"block","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"22px","lineHeight":"1.15"}}>
-                          {dcText(it_11?.title)}
+                    <div>
+                      {it_11?.hasHead ? (
+                        <>
+                          <div style={dcCss(`position:sticky;top:${dcStr(V.headTop)};z-index:3;display:flex;justify-content:space-between;align-items:baseline;padding:14px 0 8px;background:#0b0b0a;border-bottom:1px solid #ece9e0`)}>
+                            <span style={{"fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"20px"}}>
+                              {dcText(it_11?.head)}
+                            </span>
+                            <span style={{"fontSize":"14px","color":"#8f8b80"}}>
+                              {dcText(it_11?.headN)}
+                            </span>
+                          </div>
+                        </>
+                      ) : null}
+                      <a href={dcHref(it_11?.href)} onMouseEnter={it_11?.hover} style={dcCss(`display:grid;grid-template-columns:${dcStr(V.rowCols)};gap:4px 24px;align-items:baseline;padding:16px 0;border-top:1px solid #2a2925;color:#ece9e0;text-decoration:none;background:${dcStr(it_11?.bg)}`)} className="scp-hover-0">
+                        <span style={dcCss(`font-size:14px;color:${dcStr(it_11?.tFg)}`)}>
+                          {dcText(it_11?.typeLabel)}
                         </span>
-                        <span style={{"display":"block","fontSize":"15px","color":"#8f8b80","marginTop":"2px"}}>
-                          {dcText(it_11?.shortDesc)}
+                        <span>
+                          <span style={{"display":"block","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"22px","lineHeight":"1.15"}}>
+                            {dcText(it_11?.title)}
+                          </span>
+                          <span style={{"display":"block","fontSize":"15px","color":"#8f8b80","marginTop":"2px"}}>
+                            {dcText(it_11?.shortDesc)}
+                          </span>
                         </span>
-                      </span>
-                      <span style={{"fontSize":"14px","color":"#8f8b80"}}>
-                        {dcText(it_11?.timeLabel)}
-                        <br />
-                        {dcText(it_11?.peopleLabel)}
-                      </span>
-                    </a>
+                        <span style={{"fontSize":"14px","color":"#8f8b80"}}>
+                          {dcText(it_11?.m1)}
+                          <br />
+                          {dcText(it_11?.m2)}
+                        </span>
+                      </a>
+                    </div>
                   </React.Fragment>
                 ))}
                 {V.empty ? (
@@ -364,7 +383,7 @@ Component.prototype.template = function (V) {
               </div>
               {V.showPreview ? (
                 <>
-                  <aside style={{"flex":"0 0 320px","position":"sticky","top":"84px","padding":"16px 0 16px 24px","borderLeft":"1px solid #2a2925"}}>
+                  <aside style={dcCss(`flex:0 0 320px;position:sticky;top:${dcStr(V.asideTop)};padding:16px 0 16px 24px;border-left:1px solid #2a2925`)}>
                     <div style={{"fontSize":"14px","color":"#8f8b80"}}>
                       {dcText(V.pv?.typeLabel)}
                     </div>
