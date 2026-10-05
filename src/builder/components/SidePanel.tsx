@@ -213,6 +213,10 @@ function ShareExport() {
         <button onClick={() => download(fileName(S.name, ".json"), "application/json", JSON.stringify({ name: S.name, start: S.start, brief: S.brief, items: S.items }, null, 2))} style={small}>.json</button>
       </div>
       <p style={{ margin: "16px 0 0", fontSize: 13, lineHeight: 1.45, color: C.mute }}>Saved in this browser. PDF and Word files download straight away.</p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+        <button onClick={() => store.saveTemplate(S.name)} style={small}>Save as template</button>
+        <button onClick={() => store.duplicateWorkshop()} style={small}>Duplicate</button>
+      </div>
       {methods.length > 0 && (
         <>
           <Kicker style={{ marginTop: 20 }}>METHODS IN THIS WORKSHOP</Kicker>

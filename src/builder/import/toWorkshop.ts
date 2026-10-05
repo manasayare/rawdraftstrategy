@@ -2,32 +2,14 @@
 import { RDB, RDL, libraryItems, type LibItem } from "../engine";
 import { fromEngine, mkLib, mkStruct } from "../items";
 import type { Brief, ContextBrief, Item, Source, SourceType } from "../types";
+export { engineBrief } from "./ingest";
 import type { AgendaMatch, MatchIndex } from "./match";
-import type { KeyFacts } from "./parse";
 
 const POOL = ["activity", "framework", "icebreaker", "energiser", "reflection", "game", "workshop"];
 
 export function libraryIndex(): MatchIndex {
   const items = libraryItems().filter(x => POOL.includes(x.type));
   return { items, search: q => RDL().search(q, items).slice(0, 4) };
-}
-
-/** The structured facts the engine and checks use. */
-export function engineBrief(b: ContextBrief, f: KeyFacts): Brief {
-  const ev = (b.evidence + " " + b.situation).toLowerCase(), evidence: string[] = [];
-  if (/interview|customer research|user research|usability/.test(ev)) evidence.push("Customer research");
-  if (/analytics|churn|data|metric|funnel|nps/.test(ev)) evidence.push("Analytics");
-  if (/market|competitor/.test(ev)) evidence.push("Market research");
-  if (/strategy|okr|plan/.test(ev) && b.evidence) evidence.push("Existing strategy");
-  const out: Brief = { question: (b.problem || b.goal || "").slice(0, 400) };
-  if (f.outcome) out.outcome = f.outcome;
-  if (f.time) out.time = f.time;
-  if (f.people) out.people = f.people;
-  if (f.owner) out.owner = f.owner;
-  if (f.format) out.format = f.format;
-  if (evidence.length) out.evidence = evidence;
-  if (b.constraints) out.notes = b.constraints.slice(0, 400);
-  return out;
 }
 
 /** Reviewed agenda matches → editable blocks. Library titles replace near-duplicates; extra detail is kept. */

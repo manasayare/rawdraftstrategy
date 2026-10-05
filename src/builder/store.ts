@@ -16,6 +16,9 @@ import { emptyBrief } from "./import/parse";
 import { CAPTURE_TYPES, capture, curId, elapsed, newSession, planOf } from "./run/session";
 import { scriptFor } from "./run/script";
 import { publishPresent } from "./run/present";
+import { cleanItems, libId, loadMyLibrary, saveMyLibrary, type MyLibrary, type MyTemplate } from "./mylib";
+import { summaryMarkdown } from "./review";
+import { newSource } from "./import/toWorkshop";
 
 export type State = {
   ready: boolean;
@@ -75,6 +78,10 @@ export type State = {
   focusCapture: number;
   /** Time of the last end-of-activity cue, for a short visual flash. */
   flash: number;
+  mylib: MyLibrary;
+  /** Context sent by a connector, waiting for review on the Import screen. */
+  importSeed: { text: string; sourceType: string; sourceUrl?: string; title?: string; brief?: Record<string, string> } | null;
+  libTab: "raw" | "mine" | "saved" | "recent";
 };
 
 type Patch = Partial<State> | ((s: State) => Partial<State>);
@@ -112,7 +119,7 @@ export class BuilderStore {
       open: null, sel: [], drag: null, drop: null, proposal: null, stress: false, notice: "", live: "", center: "canvas", sheet: null,
       lib: { ...BLANK_FILTERS }, filters: false, libPrev: null, libN: 24, suggestFor: null, pendingAdd: null,
       alts: null, ctx: false, cmp: "90", copied: false, prompted: null, exporting: null, sharing: false, shareMsg: "",
-      runView: null, runOverlay: null, readyChecklist: {}, outputPrompt: null, captureType: "decision", captureDraft: "", focusCapture: 0, flash: 0
+      runView: null, runOverlay: null, readyChecklist: {}, outputPrompt: null, captureType: "decision", captureDraft: "", focusCapture: 0, flash: 0, mylib: loadMyLibrary(), libTab: "raw", importSeed: null
     };
   }
 
@@ -242,8 +249,8 @@ export class BuilderStore {
     this.set({ notice: "Opening shared workshop…" });
     const B = bridge();
     (B ? B.load(id) : Promise.reject(new Error("Couldn't open the shared workshop.")))
-      .then(w => this.newWorkshop(
-        { name: String(w.name || "Shared workshop"), items: Array.isArray(w.items) ? w.items : [], brief: w.brief && typeof w.brief === "object" ? w.brief : {}, start: w.start || "09:30", view: w.view || "timeline", from: id },
+      .then(w => (w as { pendingImport?: State["importSeed"] }).pendingImport ? this.set({ phase: "import", wid: null, notice: "", importSeed: (w as { pendingImport: State["importSeed"] }).pendingImport }) : this.newWorkshop(
+        { name: String(w.name || "Shared workshop"), items: Array.isArray(w.items) ? w.items : [], brief: w.brief && typeof w.brief === "object" ? w.brief : {}, start: w.start || "09:30", view: w.view || "timeline", from: id, context: w.context && typeof w.context === "object" ? w.context : undefined },
         { notice: "Shared workshop opened as your own copy. Changes stay with you." }
       ))
       .catch((e: Error) => {
@@ -259,7 +266,7 @@ export class BuilderStore {
     const items = s.items.map(x => (x.cfg?.log ? { ...x, cfg: { ...x.cfg, log: undefined } } : x));
     this.set({ sharing: true, shareMsg: "" });
     const B = bridge();
-    (B ? B.share({ name: s.name, start: s.start, view: s.view, brief: s.brief, items }, w?.share) : Promise.reject(new Error("Sharing isn't available.")))
+    (B ? B.share({ name: s.name, start: s.start, view: s.view, brief: s.brief, items, context: s.context || undefined }, w?.share) : Promise.reject(new Error("Sharing isn't available.")))
       .then(r => {
         copyText(r.url);
         this.set(st => ({ sharing: false, shareMsg: "Link saved and copied. Anyone with it gets their own copy.", workshops: this.workshopList(st).map(x => (x.id === st.wid ? { ...x, share: { id: r.id, key: r.key }, sharedSig: sig(st) } : x)) }));
@@ -435,6 +442,7 @@ export class BuilderStore {
         label = moving.length > 1 ? moving.length + " blocks moved" : (moving[0].title || "Item") + " moved";
       } else {
         moving = p.kind === "lib" ? expand(RDL().get(p.id)) : [mkStruct(p.t)];
+        if (p.kind === "lib") setTimeout(() => this.addRecent([p.id]), 0);
         label = (p.title || "Block") + " added";
       }
       if (d.type === "par") {
@@ -495,6 +503,43 @@ export class BuilderStore {
     setTimeout(() => this.set({ [key]: key === "copied" ? false : null } as Partial<State>), 1500);
   }
 
+  // ---- reuse and My Library ----
+  setMyLib(fn: (m: MyLibrary) => MyLibrary) { const m = fn(this.state.mylib); saveMyLibrary(m); this.set({ mylib: m }); }
+  /** Saves the open workshop as a personal template. With useActual, durations come from the last run. */
+  saveTemplate(name: string, useActual = false) {
+    const s = this.state, act = useActual && s.session ? s.session.actual : {};
+    const items = cleanItems(s.items).map(x => (act[x.id] != null && x.kind === "block" ? { ...x, mins: Math.max(5, Math.round(act[x.id] / 300000) * 5) } : x));
+    const n = items.filter(x => x.kind === "block" && x.zone === "live").length;
+    const t: MyTemplate = { id: libId("t"), name: name || s.name, d: (s.context?.brief.goal || s.brief.question || n + " blocks").slice(0, 140), items, brief: s.brief, start: s.start, context: s.context || undefined, created: Date.now(), fromRun: !!s.session?.endedAt };
+    this.setMyLib(m => ({ ...m, templates: [t, ...m.templates] }));
+    this.set({ notice: "Saved “" + t.name + "” to My Library as a template." });
+  }
+  openMyTemplate(t: MyTemplate) {
+    this.newWorkshop({ name: t.name, items: cleanItems(t.items).map(x => ({ ...x, id: uid() })), brief: { ...t.brief }, start: t.start, context: t.context }, { notice: t.name + " opened from My Library as a new workshop." });
+  }
+  removeTemplate(id: string) { this.setMyLib(m => ({ ...m, templates: m.templates.filter(t => t.id !== id) })); }
+  saveActivity(x: Item) {
+    this.setMyLib(m => ({ ...m, activities: [{ id: libId("a"), title: x.title || "Activity", mins: mins(x), role: x.role, ref: x.ref, cfg: { ...x.cfg, log: undefined }, created: Date.now() }, ...m.activities.filter(a => a.title !== x.title)] }));
+    this.set({ notice: "“" + x.title + "” saved to My Library." });
+  }
+  removeActivity(id: string) { this.setMyLib(m => ({ ...m, activities: m.activities.filter(a => a.id !== id) })); }
+  toggleSaved(id: string) { this.setMyLib(m => ({ ...m, saved: m.saved.includes(id) ? m.saved.filter(x => x !== id) : [id, ...m.saved] })); }
+  addRecent(ids: string[]) { if (ids.length) this.setMyLib(m => ({ ...m, recent: [...ids, ...m.recent.filter(x => !ids.includes(x))].slice(0, 30) })); }
+  /** A fresh copy of the open workshop, without its run. */
+  duplicateWorkshop() {
+    const s = this.state;
+    this.newWorkshop({ name: s.name + " (copy)", items: cleanItems(s.items).map(x => ({ ...x, id: uid() })), brief: { ...s.brief }, start: s.start, context: s.context || undefined }, { notice: "Duplicated. Adapt it for the next group.", phase: "bench" });
+  }
+  /** A new workshop whose context is what this one left open. */
+  followupWorkshop() {
+    const s = this.state, ss = s.session;
+    if (!ss) return;
+    const open = ss.captures.filter(c => (c.type === "parking" || c.type === "question") && c.status !== "resolved" && c.status !== "action");
+    const brief = { ...emptyBrief(), problem: open.map(c => c.text).join("\n"), decisions: ss.captures.filter(c => c.type === "decision").map(c => c.text).join("\n"), situation: "Follow-up to " + s.name + ".", goal: "Resolve what " + s.name + " left open." };
+    const src = newSource("notes", summaryMarkdown(s.name, s.items, ss, s.context?.brief.goal), "Summary of " + s.name);
+    this.newWorkshop({ name: "Follow-up: " + s.name, items: [], brief: { question: brief.goal, people: s.brief.people, format: s.brief.format }, context: { brief, sources: [src] }, start: s.start }, { notice: "Follow-up workshop created with the open items as its context. The Library suggests methods for it.", phase: "bench" });
+  }
+
   // ---- run mode ----
   liveBlocks(s: State = this.state) { return s.items.filter(isLiveBlock); }
   private runTimer: ReturnType<typeof setInterval> | null = null;
@@ -515,7 +560,7 @@ export class BuilderStore {
     const ss = { ...newSession(s.items, s.session), checklist: s.readyChecklist, startedAt: now, t0: now };
     ss.started = ss.order.slice(0, 1);
     this.alerted.clear();
-    this.set({ session: ss, runView: "live", outputPrompt: null });
+    this.set({ session: ss, runView: "live", outputPrompt: null, notice: "" });
     this.startTicking();
   }
   private startTicking() {
@@ -580,7 +625,7 @@ export class BuilderStore {
   runEnd() {
     this.setSession(ss => { const el = elapsed(ss), actual = { ...ss.actual }; if (el > 0 && !ss.endedAt) actual[curId(ss)] = el; return { ...ss, actual, t0: null, acc: 0, endedAt: ss.endedAt || Date.now() }; });
     this.runStop();
-    this.set({ runView: null, runOverlay: null, outputPrompt: null, phase: "review" });
+    this.set({ runView: null, runOverlay: null, outputPrompt: null, phase: "review", notice: "" });
   }
   addCapture(type: CaptureType, text: string) {
     const t = text.trim();

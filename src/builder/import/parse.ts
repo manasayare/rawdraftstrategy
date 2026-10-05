@@ -258,10 +258,10 @@ function deriveTitle(text: string, b: ContextBrief, f: KeyFacts): string {
 }
 
 /** What is still missing for a good workshop design. */
-export function missingInformation(b: ContextBrief, f: KeyFacts): string[] {
+export function missingInformation(b: ContextBrief, f: KeyFacts, hasAgenda = false): string[] {
   const m: string[] = [];
   if (!b.goal && !b.problem) m.push("What the workshop is for");
-  if (!f.time) m.push("How much time there is");
+  if (!f.time && !hasAgenda) m.push("How much time there is");
   if (!f.people && !b.participants) m.push("Who will be in the room");
   if (!f.owner && /decision|direction|decide/i.test(b.goal + b.problem + b.decisions)) m.push("Who makes the final decision");
   if (!b.output) m.push("What should exist at the end");

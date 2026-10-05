@@ -7,7 +7,7 @@ const MAX = 300_000;
 const hash = (k: string) => createHash("sha256").update(k).digest("hex");
 const newId = () => randomBytes(8).toString("base64url").replace(/[-_]/g, "").slice(0, 10).padEnd(10, "x");
 
-type Snapshot = { name?: unknown; start?: unknown; view?: unknown; brief?: unknown; items?: unknown };
+type Snapshot = { name?: unknown; start?: unknown; view?: unknown; brief?: unknown; items?: unknown; context?: unknown };
 function clean(w: Snapshot) {
   if (!w || typeof w !== "object" || !Array.isArray(w.items) || w.items.length > 500) return null;
   const snap = {
@@ -15,7 +15,8 @@ function clean(w: Snapshot) {
     start: /^\d{2}:\d{2}$/.test(String(w.start)) ? String(w.start) : "09:30",
     view: String(w.view ?? "timeline").slice(0, 20),
     brief: w.brief && typeof w.brief === "object" ? w.brief : {},
-    items: w.items
+    items: w.items,
+    ...(w.context && typeof w.context === "object" ? { context: w.context } : {})
   };
   const data = JSON.stringify(snap);
   return data.length > MAX ? null : { name: snap.name, data };

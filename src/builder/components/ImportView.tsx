@@ -1,7 +1,7 @@
 "use client";
 // Import: bring context in from anywhere (an AI conversation, notes, a brief, an agenda), review what
 // was understood, then create a workshop from it. The context stays attached to the workshop.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BRIEF_QUESTIONS, C } from "../constants";
 import { RDL } from "../engine";
 import { matchAgenda, type AgendaMatch } from "../import/match";
@@ -59,6 +59,20 @@ export default function ImportView() {
   const [err, setErr] = useState("");
   const [review, setReview] = useState<ReviewState | null>(null);
   const fromWorkshop = !!S.wid && S.workshops.some(w => w.id === S.wid);
+
+  // Context sent by a connector arrives here for review, never straight into a workshop.
+  useEffect(() => {
+    const seed = S.importSeed;
+    if (!seed) return;
+    store.set({ importSeed: null });
+    setText(seed.text);
+    const parsed = parseContext(seed.text);
+    const brief = { ...parsed.brief };
+    Object.entries(seed.brief || {}).forEach(([k, v]) => { if (v && k in brief) (brief as Record<string, string>)[k] = v; });
+    if (parsed.agenda.length) { delete parsed.facts.time; delete parsed.facts.minutes; }
+    const src: SourceType = seed.sourceType === "chatgpt" || seed.sourceType === "claude" ? "ai" : seed.sourceType === "agenda" || seed.sourceType === "notes" ? seed.sourceType : "connector";
+    setReview({ parsed, brief, facts: parsed.facts, matches: matchAgenda(parsed.agenda, libraryIndex()), name: seed.title || parsed.title, start: parsed.agenda.find(a => a.start)?.start || "09:30", source: src });
+  }, [S.importSeed]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const read = () => {
     const parsed = parseContext(text);
@@ -136,7 +150,7 @@ function Review({ r, setR, back, text, fromWorkshop }: { r: ReviewState; setR: (
   const hasAgenda = r.matches.some(m => m.kind !== "section" && m.kind !== "day");
   const suggestion = useMemo(() => (hasAgenda ? [] : suggestedItems(b)), [hasAgenda, JSON.stringify(b)]); // eslint-disable-line react-hooks/exhaustive-deps
   const filled = BRIEF_FIELDS.filter(f => r.brief[f.key]), empty = BRIEF_FIELDS.filter(f => !r.brief[f.key]);
-  const missing = missingInformation(r.brief, r.facts);
+  const missing = missingInformation(r.brief, r.facts, r.parsed.agenda.length > 0);
   const linked = r.matches.filter(m => m.kind === "library").length, blocks = r.matches.filter(m => m.kind !== "section" && m.kind !== "day").length;
   const setBrief = (k: keyof ContextBrief, v: string) => setR({ ...r, brief: { ...r.brief, [k]: v } });
   const setMatch = (i: number, m: Partial<AgendaMatch>) => setR({ ...r, matches: r.matches.map((x, j) => (j === i ? { ...x, ...m } : x)) });

@@ -6,6 +6,7 @@ import Header from "./components/Header";
 import Home from "./components/Home";
 import ImportView from "./components/ImportView";
 import ModeTabs from "./components/ModeTabs";
+import ReviewView from "./components/ReviewView";
 import LibraryPanel from "./components/LibraryPanel";
 import RunMode from "./components/RunMode";
 import SidePanel from "./components/SidePanel";
@@ -37,6 +38,7 @@ export default function Builder(props: BuilderProps) {
         {S.phase === "home" && <Home />}
         {(S.phase === "bench" || S.phase === "review" || (S.phase === "import" && !!S.wid)) && <ModeTabs />}
         {S.phase === "import" && <ImportView />}
+        {S.phase === "review" && <><Notices /><ReviewView /></>}
         {S.phase === "bench" && (
           <>
             <Header />

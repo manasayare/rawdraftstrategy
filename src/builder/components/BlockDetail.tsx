@@ -168,6 +168,7 @@ export default function BlockDetail({ x }: { x: Item }) {
         <button onClick={() => suggest("before")} className="bh-ink" style={link}>What comes before?</button>
         <button onClick={() => suggest("after")} className="bh-ink" style={link}>What comes after?</button>
         <button onClick={() => store.commit(its => { const i = its.findIndex(y => y.id === x.id); its.splice(i + 1, 0, { ...its[i], id: uid(), cfg: { ...its[i].cfg } }); return its; }, x.title + " duplicated")} className="bh-ink" style={link}>Duplicate</button>
+        <button onClick={() => store.saveActivity(x)} className="bh-ink" style={link}>Save to My Library</button>
         <button onClick={() => store.remove(x.id, x.title + " deleted", { open: null, sheet: null, notice: x.title + " deleted. " + B.impact(d.eb, { type: "remove", id: x.id }) + " Undo brings it back." })} className="bh-accent" style={link}>Delete</button>
       </div>
       {showAlts && (

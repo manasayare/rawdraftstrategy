@@ -3,7 +3,7 @@
 import type { CSSProperties } from "react";
 import { C, STRUCTS, STRUCT_MINS } from "../constants";
 import { RDB, RDL, type LibItem } from "../engine";
-import { expand, mkStruct } from "../items";
+import { expand, mkStruct, uid } from "../items";
 import { FILTER_ROWS, TYPE_LABELS, knownTime, searchLibrary } from "../library";
 import { contextRecommendations } from "../import/toWorkshop";
 import { BLANK_FILTERS, type LibFilters } from "../types";
@@ -40,7 +40,7 @@ export default function LibraryPanel() {
     return {
       deco, open, isW, n,
       time: isW ? n + " blocks" : knownTime(it) ? B.minsOf(it) + " min" : deco.timeLabel || "",
-      add: () => { store.addEnd(expand(it), it.title); if (!wide) store.set({ sheet: null }); },
+      add: () => { store.addEnd(expand(it), it.title); store.addRecent([it.id]); if (!wide) store.set({ sheet: null }); },
       addL: isW ? "+ Add all " + n + " blocks" : "+ Add",
       down: (e: React.PointerEvent) => store.beginPress(e, { kind: "lib", id: it.id, isBlock: !isW, title: it.title, mins: isW ? n + " blocks" : B.minsOf(it) + " min", label: deco.typeLabel }),
       short: why || it.short || ""
@@ -49,6 +49,7 @@ export default function LibraryPanel() {
   const insertNear = (it: LibItem) => {
     const at = S.items.findIndex(y => y.id === sf!.id) + (S.suggestFor!.dir === "before" ? 0 : 1);
     store.insertItems(expand(RDL().get(it.id)), at, it.title + " added");
+    store.addRecent([it.id]);
   };
 
   return (
@@ -58,6 +59,14 @@ export default function LibraryPanel() {
         {!wide && <button onClick={() => store.set(s => ({ sheet: null, open: wide ? s.open : null }))} aria-label="Close library" style={{ whiteSpace: "nowrap", background: "none", border: "1px solid " + C.line, color: C.ink, minWidth: 40, minHeight: 40, cursor: "pointer" }}>×</button>}
         {wide && <span style={{ fontSize: 13, color: C.mute }}>Drag into the workshop</span>}
       </div>
+      <div role="tablist" aria-label="Library source" style={{ display: "flex", flexWrap: "wrap", gap: "0 14px", marginTop: 8, borderBottom: "1px solid " + C.rule }}>
+        {([["raw", "Raw Draft"], ["mine", "My Library"], ["saved", "Saved"], ["recent", "Recent"]] as const).map(([k, l]) => (
+          <button key={k} role="tab" aria-selected={S.libTab === k} onClick={() => store.set({ libTab: k })} style={{ whiteSpace: "nowrap", background: "none", border: 0, borderBottom: "2px solid " + (S.libTab === k ? C.accent : "transparent"), marginBottom: -1, color: S.libTab === k ? C.ink : C.mute, minHeight: 36, padding: 0, cursor: "pointer", fontSize: 14 }}>
+            {l}{k === "mine" && S.mylib.templates.length + S.mylib.activities.length ? " · " + (S.mylib.templates.length + S.mylib.activities.length) : k === "saved" && S.mylib.saved.length ? " · " + S.mylib.saved.length : ""}
+          </button>
+        ))}
+      </div>
+      {S.libTab !== "raw" ? <MyLibraryTab card={card} /> : <>
       <input aria-label="Search the Library" value={L.q} onChange={e => { const q = e.target.value; store.set(s => ({ lib: { ...s.lib, q }, libN: 24 })); }} placeholder="icebreaker for 12 people" className="bf-line"
         style={{ display: "block", width: "100%", marginTop: 10, background: C.well, border: "1px solid " + C.line, outline: "none", color: C.ink, minHeight: 44, padding: "0 12px", fontFamily: BODY, fontSize: 15 }} />
       {parsed && <div style={{ marginTop: 6, fontSize: 13, color: C.mute }}>Reading as: {parsed}</div>}
@@ -147,7 +156,7 @@ export default function LibraryPanel() {
           return (
             <div key={it.id} onPointerDown={c.down} className="bh-line-mute"
               style={{ touchAction: touch, background: C.card, border: "1px solid " + C.line, padding: "10px 12px", cursor: "grab", userSelect: "none", transform: `rotate(${((it._n || 1) % 3 - 1) * 0.35}deg)`, transition: "border-color .15s" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 12, color: C.mute }}><span>{(c.deco.typeLabel || "").toUpperCase()}</span><span>{c.time}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 12, color: C.mute }}><span>{(c.deco.typeLabel || "").toUpperCase()}</span><span style={{ display: "flex", gap: 8, alignItems: "center" }}>{c.time}<SaveStar id={it.id} /></span></div>
               <button onClick={() => store.set({ libPrev: c.open ? null : it.id })} aria-expanded={c.open ? "true" : "false"} className="bh-accent"
                 style={{ display: "block", width: "100%", textAlign: "left", marginTop: 3, background: "none", border: 0, padding: 0, color: C.ink, cursor: "pointer", fontFamily: DISPLAY, fontWeight: 500, fontSize: 17, lineHeight: 1.1 }}>{it.title}</button>
               <div style={{ ...cardText, display: "-webkit-box", WebkitLineClamp: c.open ? 8 : 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{c.short}</div>
@@ -167,6 +176,68 @@ export default function LibraryPanel() {
       </div>
       {results.length > S.libN && <button onClick={() => store.set(s => ({ libN: s.libN + 24 }))} style={{ whiteSpace: "nowrap", marginTop: 10, width: "100%", background: "none", border: "1px solid " + C.line, color: C.soft, minHeight: 40, cursor: "pointer", fontSize: 14 }}>Show more</button>}
       {!results.length && <p style={{ margin: "8px 0 0", fontSize: 14, lineHeight: 1.45, color: C.mute }}>Nothing matches. Clear a filter, or add a custom block.</p>}
+      </>}
     </aside>
+  );
+}
+
+function SaveStar({ id }: { id: string }) {
+  const { S, store } = useBuilder();
+  const on = S.mylib.saved.includes(id);
+  return <button onClick={e => { e.stopPropagation(); store.toggleSaved(id); }} aria-pressed={on} aria-label={on ? "Remove from Saved" : "Save to My Library"} title={on ? "Saved" : "Save"} className="bh-accent" style={{ background: "none", border: 0, padding: 0, minWidth: 22, minHeight: 22, cursor: "pointer", color: on ? C.accent : C.mute, fontSize: 15, lineHeight: 1 }}>{on ? "★" : "☆"}</button>;
+}
+
+type CardFn = (it: LibItem, why?: string) => { deco: { typeLabel: string }; time: string; add: () => void; addL: string; down: (e: React.PointerEvent) => void; short: string };
+
+/** My Library, Saved and Recent tabs. */
+function MyLibraryTab({ card }: { card: CardFn }) {
+  const { S, store, d } = useBuilder();
+  const m = S.mylib, tab = S.libTab;
+  const libCards = (ids: string[], empty: string) => {
+    const items = ids.map(id => RDL().get(id)).filter((x): x is LibItem => !!x);
+    if (!items.length) return <p style={{ margin: "12px 0 0", fontSize: 14, lineHeight: 1.45, color: C.mute }}>{empty}</p>;
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+        {items.map(it => { const c = card(it); return (
+          <div key={it.id} onPointerDown={c.down} className="bh-line-mute" style={{ background: C.card, border: "1px solid " + C.line, padding: "10px 12px", cursor: "grab", userSelect: "none", touchAction: d.wide ? "none" : "auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 12, color: C.mute }}><span>{(c.deco.typeLabel || "").toUpperCase()}</span><span style={{ display: "flex", gap: 8 }}>{c.time}<SaveStar id={it.id} /></span></div>
+            <div style={{ marginTop: 3, fontFamily: DISPLAY, fontWeight: 500, fontSize: 17, lineHeight: 1.1 }}>{it.title}</div>
+            <div style={{ ...cardText, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{c.short}</div>
+            <button onClick={c.add} className="bh-accent" style={addBtn}>{c.addL}</button>
+          </div>
+        ); })}
+      </div>
+    );
+  };
+  if (tab === "saved") return libCards(m.saved, "Star a Library card to keep it here.");
+  if (tab === "recent") return libCards(m.recent, "Methods you add to workshops show up here.");
+  return (
+    <div style={{ marginTop: 12 }}>
+      <Kicker>TEMPLATES</Kicker>
+      {m.templates.map(t => (
+        <div key={t.id} style={{ padding: "10px 0", borderBottom: "1px solid " + C.hair }}>
+          <div style={{ fontFamily: DISPLAY, fontWeight: 500, fontSize: 17 }}>{t.name}</div>
+          <div style={{ marginTop: 2, fontSize: 12, color: C.mute }}>{t.items.filter(x => x.kind === "block" && x.zone === "live").length} blocks{t.fromRun ? " · proven in a run" : ""}</div>
+          <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
+            <button onClick={() => store.openMyTemplate(t)} className="bh-accent" style={textBtn({ color: C.ink, fontSize: 13, minHeight: 28 })}>Open as new workshop</button>
+            <button onClick={() => store.removeTemplate(t.id)} className="bh-accent" style={textBtn({ color: C.mute, fontSize: 13, minHeight: 28 })}>Remove</button>
+          </div>
+        </div>
+      ))}
+      {!m.templates.length && <p style={{ margin: "6px 0 0", fontSize: 13, color: C.mute }}>Save a workshop as a template from Review, or from the Context panel.</p>}
+      <Kicker style={{ marginTop: 18 }}>MY ACTIVITIES</Kicker>
+      {m.activities.map(a => (
+        <div key={a.id} style={{ background: C.card, border: "1px solid " + C.line, padding: "10px 12px", marginTop: 8 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: C.mute }}><span>{a.ref ? "ADAPTED" : "CUSTOM"}</span><span>{a.mins} min</span></div>
+          <div style={{ marginTop: 3, fontFamily: DISPLAY, fontWeight: 500, fontSize: 17 }}>{a.title}</div>
+          {a.cfg.purpose && <div style={cardText}>{a.cfg.purpose}</div>}
+          <div style={{ display: "flex", gap: 12 }}>
+            <button onClick={() => store.addEnd([{ id: uid(), kind: "block", zone: "live", title: a.title, mins: a.mins, role: a.role || "custom", ref: a.ref, cfg: { ...a.cfg }, custom: !a.ref }], a.title)} className="bh-accent" style={addBtn}>+ Add</button>
+            <button onClick={() => store.removeActivity(a.id)} className="bh-accent" style={{ ...addBtn, color: C.mute }}>Remove</button>
+          </div>
+        </div>
+      ))}
+      {!m.activities.length && <p style={{ margin: "6px 0 0", fontSize: 13, color: C.mute }}>Open any block and choose “Save to My Library” to keep your own version.</p>}
+    </div>
   );
 }
