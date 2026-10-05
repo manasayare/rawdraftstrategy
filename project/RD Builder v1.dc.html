@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<section data-screen-label="Builder" style="padding:clamp(24px,4vw,48px) clamp(16px,3vw,40px) 0;font-family:'Satoshi',sans-serif;color:#ece9e0">
+
+<sc-if value="{{ isStart }}" hint-placeholder-val="{{ true }}">
+<div style="max-width:1100px">
+<div style="font-size:15px;color:#8f8b80">Builder</div>
+<h1 style="margin:16px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(44px,7vw,112px);letter-spacing:-.04em;line-height:.9;max-width:14ch">What are you trying to figure out?</h1>
+<textarea aria-label="Describe what you are trying to figure out" value="{{ text }}" onChange="{{ onText }}" rows="4" placeholder="We need to figure out our positioning with the founding team in half a day." style="display:block;width:100%;margin-top:clamp(24px,3vw,40px);background:#111110;border:1px solid #34332e;outline:none;color:#ece9e0;padding:18px 20px;font-family:'Satoshi',sans-serif;font-size:clamp(18px,1.6vw,22px);line-height:1.45;resize:vertical"></textarea>
+<div style="display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;margin-top:16px">
+<button onClick="{{ submit }}" disabled="{{ busy }}" style="background:#ff4b23;color:#0b0b0a;border:0;min-height:52px;padding:0 24px;cursor:pointer;font-size:17px;font-weight:500">{{ submitLabel }}</button>
+<span style="font-size:15px;color:#8f8b80">No account needed. Everything stays in this browser.</span>
+</div>
+<div style="margin-top:clamp(28px,3vw,40px);font-size:14px;color:#8f8b80">Try one</div>
+<div style="display:flex;flex-direction:column;margin-top:6px;border-top:1px solid #2a2925">
+<sc-for list="{{ examples }}" as="e" hint-placeholder-count="5"><button onClick="{{ e.pick }}" style="text-align:left;background:none;border:0;border-bottom:1px solid #2a2925;color:#c9c5ba;min-height:48px;padding:10px 0;cursor:pointer;font-size:16px" style-hover="color:#ece9e0">“{{ e.t }}”</button></sc-for>
+</div>
+<div style="margin-top:clamp(36px,4vw,56px);background-color:#111110;background-image:linear-gradient(rgba(236,233,224,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(236,233,224,.045) 1px,transparent 1px);background-size:48px 48px;border:1px solid #2a2925;padding:clamp(18px,3vw,40px)">
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:16px">
+<sc-for list="{{ starts }}" as="s" hint-placeholder-count="6"><button onClick="{{ s.pick }}" style="text-align:left;background:#1a1917;border:1px solid #34332e;color:#ece9e0;padding:16px 18px 20px;cursor:pointer;transform:rotate({{ s.rot }});transition:transform .2s,border-color .2s" style-hover="transform:translateY(-3px) rotate(0deg);border-color:#5a5850"><span style="display:block;font-size:13px;color:#8f8b80">{{ s.n }}</span><span style="display:block;margin-top:14px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:22px;line-height:1.05">{{ s.t }}</span><span style="display:block;margin-top:8px;font-size:14px;color:#8f8b80">{{ s.d }}</span></button></sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isBrief }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:{{ briefCols }};gap:28px clamp(24px,4vw,56px);align-items:start">
+<div>
+<div style="font-size:15px;color:#8f8b80">Builder · Brief</div>
+<h1 style="margin:12px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(34px,4.6vw,64px);letter-spacing:-.035em;line-height:.95">{{ askTitle }}</h1>
+<p style="margin:12px 0 0;font-size:16px;color:#8f8b80">{{ askSub }}</p>
+<div role="group" aria-label="{{ askTitle }}" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:20px">
+<sc-for list="{{ askOpts }}" as="o" hint-placeholder-count="6"><button onClick="{{ o.pick }}" aria-pressed="{{ o.aria }}" style="background:{{ o.bg }};color:{{ o.fg }};border:1px solid {{ o.bd }};min-height:48px;padding:0 16px;cursor:pointer;font-size:16px" style-hover="border-color:#ece9e0">{{ o.l }}</button></sc-for>
+</div>
+<input aria-label="Additional context" value="{{ notes }}" onChange="{{ onNotes }}" placeholder="Anything else? For example: CEO can only join the last hour." style="display:block;width:100%;margin-top:20px;background:none;border:0;border-bottom:1px solid #4a4843;outline:none;color:#ece9e0;padding:10px 0;font-size:17px">
+<div style="display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;margin-top:24px">
+<button onClick="{{ build }}" style="background:{{ buildBg }};color:#0b0b0a;border:0;min-height:52px;padding:0 24px;cursor:pointer;font-size:17px;font-weight:500">Build it</button>
+<sc-if value="{{ hasSkip }}" hint-placeholder-val="{{ false }}"><button onClick="{{ skipQ }}" style="background:none;border:0;color:#8f8b80;min-height:44px;cursor:pointer;font-size:15px;border-bottom:1px solid #4a4843;padding:0">Skip this question</button></sc-if>
+<button onClick="{{ restart }}" style="background:none;border:0;color:#8f8b80;min-height:44px;cursor:pointer;font-size:15px;padding:0">Start over</button>
+</div>
+</div>
+<div style="background:#111110;border:1px solid #2a2925;padding:20px 22px">
+<div style="font-size:14px;color:#8f8b80">Brief so far</div>
+<sc-for list="{{ briefRows }}" as="r" hint-placeholder-count="6"><button onClick="{{ r.edit }}" style="display:grid;grid-template-columns:110px minmax(0,1fr);gap:12px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid #1d1c1a;color:#ece9e0;padding:10px 0;cursor:pointer;font-size:15px" style-hover="color:#ff4b23"><span style="color:#8f8b80">{{ r.k }}</span><span style="color:{{ r.c }}">{{ r.v }}</span></button></sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isBench }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px 32px;padding-bottom:16px;border-bottom:1px solid #2a2925">
+<div style="min-width:0">
+<div style="font-size:15px;color:#8f8b80">Recommended · {{ rec.kind }}</div>
+<h1 style="margin:8px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,4vw,56px);letter-spacing:-.035em;line-height:.95">{{ rec.name }}</h1>
+<p style="margin:10px 0 0;max-width:62ch;font-size:16px;color:#c9c5ba">{{ rec.why }}</p>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;font-size:15px">
+<span>{{ totalLabel }}</span>
+<sc-if value="{{ hasRecRef }}" hint-placeholder-val="{{ false }}"><a href="{{ recHref }}">See it in the Library</a></sc-if>
+<button onClick="{{ copyAgenda }}" style="background:none;border:1px solid #4a4843;color:#ece9e0;min-height:44px;padding:0 14px;cursor:pointer;font-size:15px">{{ copyLabel }}</button>
+<button onClick="{{ restart }}" style="background:none;border:0;color:#8f8b80;min-height:44px;cursor:pointer;font-size:15px;padding:0">New build</button>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:{{ benchCols }};gap:24px clamp(20px,2.5vw,36px);align-items:start;margin-top:24px">
+
+<aside aria-label="Brief" style="position:{{ asidePos }};top:84px">
+<div style="font-size:14px;color:#8f8b80">Brief</div>
+<sc-for list="{{ edits }}" as="f" hint-placeholder-count="7"><label style="display:block;padding:10px 0;border-bottom:1px solid #1d1c1a"><span style="display:block;font-size:13px;color:#8f8b80">{{ f.k }}</span>
+<select value="{{ f.v }}" onChange="{{ f.change }}" style="width:100%;margin-top:4px;background:#111110;border:1px solid #2a2925;color:#ece9e0;min-height:40px;padding:0 8px;font-family:'Satoshi',sans-serif;font-size:15px"><sc-for list="{{ f.opts }}" as="o" hint-placeholder-count="5"><option value="{{ o }}">{{ o }}</option></sc-for></select></label></sc-for>
+<p style="margin:12px 0 0;font-size:14px;line-height:1.45;color:#8f8b80">{{ questionText }}</p>
+</aside>
+
+<div style="background-color:#111110;background-image:linear-gradient(rgba(236,233,224,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(236,233,224,.04) 1px,transparent 1px);background-size:40px 40px;border:1px solid #2a2925;padding:clamp(12px,2vw,24px);min-width:0">
+<ol aria-label="Agenda" style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px">
+<sc-for list="{{ blocks }}" as="b" hint-placeholder-count="7">
+<li draggable="true" onDragStart="{{ b.dragStart }}" onDragOver="{{ b.dragOver }}" onDrop="{{ b.drop }}" style="background:{{ b.bg }};border:1px solid {{ b.bd }};border-left:3px solid {{ b.edge }};opacity:{{ b.op }};transition:border-color .2s,background .2s">
+<div style="display:grid;grid-template-columns:{{ rowCols }};gap:6px 14px;align-items:center;padding:12px 14px">
+<span aria-hidden="true" style="color:#5a5850;cursor:grab;font-size:16px;user-select:none">⋮⋮</span>
+<span style="font-size:13px;color:#8f8b80">{{ b.start }}</span>
+<button onClick="{{ b.toggle }}" aria-expanded="{{ b.aria }}" style="text-align:left;background:none;border:0;color:#ece9e0;padding:0;cursor:pointer;min-width:0"><span style="display:block;font-size:12px;color:{{ b.lc }}">{{ b.label }}</span><span style="display:block;margin-top:2px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:19px;line-height:1.1">{{ b.title }}</span></button>
+<span style="display:flex;align-items:center;gap:6px"><button onClick="{{ b.less }}" aria-label="{{ b.lessLabel }}" style="background:none;border:1px solid #34332e;color:#ece9e0;width:30px;height:30px;cursor:pointer">−</button><span style="min-width:44px;text-align:center;font-size:14px">{{ b.mins }} min</span><button onClick="{{ b.more }}" aria-label="{{ b.moreLabel }}" style="background:none;border:1px solid #34332e;color:#ece9e0;width:30px;height:30px;cursor:pointer">+</button></span>
+</div>
+<sc-if value="{{ b.open }}" hint-placeholder-val="{{ false }}">
+<div style="padding:4px 14px 16px 14px;border-top:1px solid #2a2925">
+<div style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:14px">
+<button onClick="{{ b.up }}" style="background:none;border:0;color:#c9c5ba;cursor:pointer;min-height:36px;padding:0">Move up</button>
+<button onClick="{{ b.down }}" style="background:none;border:0;color:#c9c5ba;cursor:pointer;min-height:36px;padding:0">Move down</button>
+<button onClick="{{ b.dup }}" style="background:none;border:0;color:#c9c5ba;cursor:pointer;min-height:36px;padding:0">Duplicate</button>
+<button onClick="{{ b.lock }}" style="background:none;border:0;color:#c9c5ba;cursor:pointer;min-height:36px;padding:0">{{ b.lockLabel }}</button>
+<button onClick="{{ b.replace }}" style="background:none;border:0;color:#ff4b23;cursor:pointer;min-height:36px;padding:0">Replace</button>
+<button onClick="{{ b.remove }}" style="background:none;border:0;color:#c9c5ba;cursor:pointer;min-height:36px;padding:0">Remove</button>
+<sc-if value="{{ b.hasRef }}" hint-placeholder-val="{{ false }}"><a href="{{ b.href }}" style="min-height:36px;display:inline-flex;align-items:center">Open in Library</a></sc-if>
+</div>
+<sc-if value="{{ b.hasDetail }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px 24px;margin-top:10px">
+<sc-for list="{{ b.facts }}" as="f" hint-placeholder-count="3"><div><div style="font-size:13px;color:#8f8b80">{{ f.k }}</div><div style="margin-top:3px;font-size:15px;line-height:1.4">{{ f.v }}</div></div></sc-for>
+</div>
+<sc-if value="{{ b.hasSteps }}" hint-placeholder-val="{{ false }}"><div style="margin-top:12px;font-size:13px;color:#8f8b80">How to run</div><ol style="margin:4px 0 0;padding-left:20px;font-size:15px;line-height:1.5"><sc-for list="{{ b.steps }}" as="s" hint-placeholder-count="3"><li>{{ s }}</li></sc-for></ol></sc-if>
+<sc-if value="{{ b.hasFail }}" hint-placeholder-val="{{ false }}"><div style="margin-top:12px;font-size:13px;color:#8f8b80">Watch for</div><ul style="margin:4px 0 0;padding-left:18px;font-size:15px;line-height:1.5"><sc-for list="{{ b.fails }}" as="s" hint-placeholder-count="2"><li>{{ s }}</li></sc-for></ul></sc-if>
+</sc-if>
+<sc-if value="{{ b.showAlts }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:14px;font-size:13px;color:#8f8b80">Replace {{ b.title }} with</div>
+<sc-for list="{{ b.alts }}" as="a" hint-placeholder-count="3"><button onClick="{{ a.pick }}" style="display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid #2a2925;color:#ece9e0;padding:10px 0;cursor:pointer" style-hover="color:#ff4b23"><span style="display:flex;justify-content:space-between;gap:12px"><span style="font-size:16px;font-weight:500">{{ a.title }}</span><span style="font-size:13px;color:#8f8b80">{{ a.meta }}</span></span><span style="display:block;margin-top:2px;font-size:14px;color:#c9c5ba">{{ a.why }}</span></button></sc-for>
+<sc-if value="{{ b.noAlts }}" hint-placeholder-val="{{ false }}"><p style="margin:6px 0 0;font-size:14px;color:#8f8b80">No close alternatives in the Library yet.</p></sc-if>
+</sc-if>
+</div>
+</sc-if>
+</li>
+</sc-for>
+</ol>
+<button onClick="{{ addBreak }}" style="margin-top:12px;background:none;border:1px dashed #4a4843;color:#8f8b80;width:100%;min-height:44px;cursor:pointer;font-size:15px" style-hover="color:#ece9e0">Add a break</button>
+</div>
+
+<aside aria-label="Builder suggestions" style="min-width:0">
+<sc-if value="{{ hasProposal }}" hint-placeholder-val="{{ false }}">
+<div style="border:1px solid #ff4b23;padding:16px 18px;margin-bottom:20px;background:#140f0d">
+<div style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:20px">{{ proposal.title }}</div>
+<sc-for list="{{ proposal.rows }}" as="c" hint-placeholder-count="3"><div style="padding:10px 0;border-bottom:1px solid #2a2925"><div style="display:flex;justify-content:space-between;gap:10px;font-size:13px"><span style="color:#ff4b23">{{ c.label }}</span><span style="color:#8f8b80">{{ c.savedLabel }}</span></div><div style="margin-top:3px;font-size:15px">{{ c.what }}</div><div style="margin-top:2px;font-size:14px;color:#8f8b80">{{ c.why }}</div></div></sc-for>
+<sc-if value="{{ proposal.empty }}" hint-placeholder-val="{{ false }}"><p style="margin:8px 0 0;font-size:14px;color:#8f8b80">Nothing to change.</p></sc-if>
+<div style="display:flex;gap:12px;margin-top:12px"><button onClick="{{ accept }}" style="background:#ff4b23;color:#0b0b0a;border:0;min-height:44px;padding:0 16px;cursor:pointer;font-size:15px;font-weight:500">Accept</button><button onClick="{{ reject }}" style="background:none;border:1px solid #4a4843;color:#ece9e0;min-height:44px;padding:0 16px;cursor:pointer;font-size:15px">Reject</button></div>
+</div>
+</sc-if>
+<div style="font-size:14px;color:#8f8b80">Observations</div>
+<sc-for list="{{ obs }}" as="o" hint-placeholder-count="3"><div style="padding:12px 0;border-bottom:1px solid #2a2925;border-left:2px solid {{ o.c }};padding-left:12px"><div style="font-size:15px;line-height:1.4">{{ o.t }}</div><div style="margin-top:4px;font-size:14px;color:#8f8b80">{{ o.fix }}</div></div></sc-for>
+<sc-if value="{{ noObs }}" hint-placeholder-val="{{ false }}"><p style="margin:8px 0 0;font-size:15px;color:#8f8b80">Nothing flagged. Run a stress test to check it properly.</p></sc-if>
+<div style="margin-top:24px;font-size:14px;color:#8f8b80">Change it</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
+<sc-for list="{{ cmds }}" as="c" hint-placeholder-count="8"><button onClick="{{ c.run }}" style="background:none;border:1px solid #34332e;color:#ece9e0;min-height:40px;padding:0 12px;cursor:pointer;font-size:14px" style-hover="border-color:#ece9e0">{{ c.l }}</button></sc-for>
+</div>
+<button onClick="{{ runStress }}" style="margin-top:24px;width:100%;background:#ece9e0;color:#0b0b0a;border:0;min-height:48px;cursor:pointer;font-size:16px;font-weight:500">Stress test</button>
+<sc-if value="{{ hasStress }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:12px">
+<sc-for list="{{ stressRows }}" as="s" hint-placeholder-count="6"><div style="display:grid;grid-template-columns:96px minmax(0,1fr);gap:4px 12px;padding:9px 0;border-bottom:1px solid #1d1c1a;font-size:14px"><span style="color:{{ s.c }}">{{ s.k }}</span><span><span style="display:block">{{ s.msg }}</span><sc-if value="{{ s.bad }}" hint-placeholder-val="{{ false }}"><span style="display:block;color:#8f8b80;margin-top:2px">Fix: {{ s.fix }}</span></sc-if></span></div></sc-for>
+</div>
+</sc-if>
+<div style="margin-top:28px;font-size:14px;color:#8f8b80">Working pack</div>
+<sc-for list="{{ packRows }}" as="g" hint-placeholder-count="4"><div style="padding:8px 0;border-bottom:1px solid #1d1c1a;font-size:14px"><span style="color:#ece9e0">{{ g.k }}</span><span style="color:#8f8b80"> · {{ g.v }}</span></div></sc-for>
+<p style="margin:10px 0 0;font-size:13px;color:#8f8b80">Assets are generated from the structure. Download comes with saved projects.</p>
+</aside>
+</div>
+</sc-if>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  load() { try { return JSON.parse(localStorage.getItem("rd-builder") || "null"); } catch (e) { return null; } }
+  state = Object.assign({ step: "start", text: "", brief: {}, blocks: [], open: null, alts: null, proposal: null, stress: false, busy: false, skipped: [], copied: false, ready: !!(window.RDB && window.RD && window.RDL), w: window.innerWidth }, this.load() || {}, { busy: false, copied: false, proposal: null });
+  componentDidMount() {
+    this.onR = () => this.setState({ w: window.innerWidth }); window.addEventListener("resize", this.onR);
+    if (!this.state.ready) this.poll = setInterval(() => { if (window.RDB && window.RD && window.RDL) { clearInterval(this.poll); this.setState({ ready: true }); this.fromLib(); } }, 40); else this.fromLib();
+  }
+  componentWillUnmount() { window.removeEventListener("resize", this.onR); clearInterval(this.poll); }
+  componentDidUpdate() { try { const { step, text, brief, blocks } = this.state; localStorage.setItem("rd-builder", JSON.stringify({ step, text, brief, blocks })); } catch (e) {} }
+  fromLib() { const id = this.props.add; if (!id || this.added === id || !window.RDL) return; this.added = id; const it = RDL.get(id); if (!it) return;
+    const role = it.type === "sprint" || it.type === "workshop" ? null : (({ open: "open", explore: "options", makesense: "sense", create: "options", decide: "decide", commit: "commit", close: "commit", reflect: "commit" })[it.stage] || "options");
+    if (this.state.step === "bench" && role) { const b = RDB.block(role, it.id); this.setState(s => ({ blocks: s.blocks.concat([b]), open: b.id })); return; }
+    this.setState({ step: "start", text: "We want to use " + it.title + " to figure out ", seed: role ? { role, id: it.id } : null }); }
+  Q = [["outcome", "What needs to exist at the end?", "Builder picks the structure from this.", ["Decision", "Direction", "Ideas", "Prototype", "Research evidence", "Plan", "Alignment", "Priorities", "Strategy"]],
+    ["time", "How much time do you have?", "The whole session, not including prep.", ["90 min", "Half day", "1 day", "2 days", "3 to 5 days", "Multiple sessions", "Not sure"]],
+    ["people", "How many people?", "Changes how discussion and synthesis are run.", ["1", "2 to 5", "6 to 10", "11 to 20", "20+"]],
+    ["owner", "Can someone in the room make the final decision?", "Without this, the session ends with a recommendation.", ["Yes", "Joins final part", "No", "Not sure"]],
+    ["who", "Who is in the room?", "Choose all that apply.", ["Founders", "Leadership", "Product", "Design", "Engineering", "Research", "Sales", "Marketing", "Operations", "Customers", "External stakeholders"], true],
+    ["evidence", "What evidence exists already?", "Choose all that apply.", ["Customer research", "Analytics", "Market research", "Internal data", "Existing strategy", "Prototype", "Nothing yet"], true],
+    ["format", "Where will it happen?", "", ["In person", "Remote", "Hybrid", "Not sure"]]];
+  set(k, v) { this.setState(s => ({ brief: Object.assign({}, s.brief, { [k]: v }) })); }
+  doBuild() { const b = this.state.brief; let blocks = RDB.compose(b); const sd = this.state.seed; if (sd && !blocks.some(x => x.ref === sd.id)) { const i = blocks.findIndex(x => x.role === sd.role); const nb = RDB.block(sd.role, sd.id); if (i >= 0) blocks[i] = Object.assign(nb, { mins: blocks[i].mins }); else blocks.splice(blocks.length - 1, 0, nb); }
+    this.setState({ step: "bench", blocks, open: null, stress: false, proposal: null, seed: null }); window.scrollTo(0, 0); }
+  mut(fn) { this.setState(s => ({ blocks: fn(s.blocks.map(x => Object.assign({}, x))), stress: false })); }
+  propose(cmd, avail) { this.setState(s => ({ proposal: RDB.command(cmd, s.brief, s.blocks, avail) })); }
+  renderVals() {
+    const S = this.state;
+    if (!(S.ready && window.RDB && window.RD)) return { isStart: true, isBrief: false, isBench: false, examples: [], starts: [], askOpts: [], briefRows: [], blocks: [], edits: [], obs: [], cmds: [], stressRows: [], packRows: [], rec: {}, proposal: { rows: [] } };
+    const b = S.brief, wide = S.w >= 1100, mid = S.w >= 760, fmt = m => String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
+    const go = async (txt) => { const t = (txt != null ? txt : S.text).trim(); if (!t) return; this.setState({ busy: true, text: t }); const br = await RDB.extractAI(t); this.setState({ busy: false, step: "brief", brief: Object.assign({}, br), skipped: [] }); window.scrollTo(0, 0); };
+    const v = { isStart: S.step === "start", isBrief: S.step === "brief", isBench: S.step === "bench", text: S.text, onText: e => this.setState({ text: e.target.value }), busy: S.busy, submitLabel: S.busy ? "Reading it" : "Continue", submit: () => go(),
+      restart: () => this.setState({ step: "start", text: "", brief: {}, blocks: [], proposal: null, stress: false }),
+      examples: ["We need to figure out our positioning with the founding team in half a day.", "We have a new AI product idea but do not know whether people actually need it.", "Our leadership team cannot agree on the product direction.", "We need to redesign a public service for very different kinds of users.", "We want to explore how our category might change over the next five years."].map(t => ({ t, pick: () => go(t) })),
+      starts: [["Build a Sprint", "Several days, with making and testing.", "We need to run a 2-day sprint to "], ["Build a Workshop", "One session with one clear output.", "We have half a day to "], ["Adapt an existing Sprint", "Start from a Library sprint.", null, "#/sprints"], ["Start from a Playbook", "A curated route for a known situation.", null, "#/library/playbooks"], ["Start from a Method", "Build around something you already use.", null, "#/library/activities"], ["Fix an agenda I already have", "Paste it and describe the goal.", "Here is our current agenda: "]].map(([t, d, pre, href], i) => ({ t, d, n: String(i + 1).padStart(2, "0"), rot: [-.8, .6, -.4, .9, -.6, .5][i] * (mid ? 1 : .3) + "deg", pick: () => href ? (location.hash = href) : this.setState({ text: pre }) })) };
+    if (S.step === "brief") {
+      const missing = this.Q.filter(q => (b[q[0]] == null || (Array.isArray(b[q[0]]) && !b[q[0]].length)) && !S.skipped.includes(q[0]));
+      const q = this.Q.find(x => x[0] === S.ask) || missing[0] || null;
+      const val = q ? b[q[0]] : null;
+      Object.assign(v, { briefCols: wide ? "minmax(0,7fr) minmax(0,4fr)" : "minmax(0,1fr)", askTitle: q ? q[1] : "Ready to build.", askSub: q ? q[2] : "Edit anything on the right, or build now.", hasSkip: !!q,
+        askOpts: q ? q[3].map(o => { const on = q[4] ? (val || []).includes(o) : val === o; return { l: o, aria: on ? "true" : "false", bg: on ? "#ece9e0" : "transparent", fg: on ? "#0b0b0a" : "#ece9e0", bd: on ? "#ece9e0" : "#34332e", pick: () => { if (q[4]) { const cur = (b[q[0]] || []).filter(x => x !== "Nothing yet" || o === "Nothing yet"); this.set(q[0], cur.includes(o) ? cur.filter(x => x !== o) : (o === "Nothing yet" ? ["Nothing yet"] : cur.concat([o]))); } else { this.set(q[0], o); this.setState({ ask: null }); } } }; }) : [],
+        skipQ: () => q && this.setState(s => ({ skipped: s.skipped.concat([q[0]]), ask: null })), notes: b.notes || "", onNotes: e => this.set("notes", e.target.value), build: () => this.doBuild(), buildBg: missing.length > 3 ? "#8f8b80" : "#ff4b23",
+        briefRows: [["Question", b.question, null]].concat(this.Q.map(x => [x[1].replace(/\?.*$/, "").replace(/^(What needs to exist at the end|How much time do you have|How many people|Can someone in the room make the final decision|Who is in the room|What evidence exists already|Where will it happen)$/, m => ({ "What needs to exist at the end": "Outcome", "How much time do you have": "Time", "How many people": "People", "Can someone in the room make the final decision": "Decision owner", "Who is in the room": "In the room", "What evidence exists already": "Evidence", "Where will it happen": "Format" })[m]), Array.isArray(b[x[0]]) ? b[x[0]].join(", ") : b[x[0]], x[0]])).concat(b.notes ? [["Notes", b.notes, null]] : []).map(([k, val2, key]) => ({ k, v: val2 || "Not set", c: val2 ? "#ece9e0" : "#5a5850", edit: () => key && this.setState({ ask: key }) })) });
+    }
+    if (S.step === "bench") {
+      const rec = RDB.recommend(b), blocks = S.blocks, tot = RDB.total(blocks), avail = RDB.MIN[b.time] || 210;
+      let m = 0; const tags = { div: "#8f8b80", conv: "#ece9e0", neutral: "#5a5850" };
+      const rows = blocks.map((x, i) => { const R = RDB.ROLES[x.role], it = x.ref ? RDL.get(x.ref) : null, d = it ? RDL.deco(it) : null, open = S.open === x.id, st = fmt(m); m += x.mins;
+        const facts = it ? [["Purpose", it.purpose || it.short], ["Output", (it.outputs || []).slice(0, 3).join(", ") || R[4].join(", ").toLowerCase()], ["People", d.peopleLabel || it.groupSize], ["Source", d.creatorLabel]].filter(r => r[1]).map(([k, vv]) => ({ k, v: vv })) : [];
+        const alts = open && S.alts === x.id ? RDB.alternatives(b, x).map(a => Object.assign(a, { pick: () => this.mut(bl => { const y = bl.find(z => z.id === x.id); const ni = RDL.get(a.id); y.ref = ni.id; y.title = ni.title; return bl; }) || this.setState({ alts: null }) })) : [];
+        const mv = dir => () => this.mut(bl => { const j = i + dir; if (j < 0 || j >= bl.length) return bl; [bl[i], bl[j]] = [bl[j], bl[i]]; return bl; });
+        return { title: x.title, label: x.label + (x.locked ? " · locked" : ""), lc: x.role === "breaks" ? "#5a5850" : tags[R[5]] === "#ece9e0" ? "#ff4b23" : "#8f8b80", mins: x.mins, start: st, open, aria: open ? "true" : "false", bg: x.role === "breaks" ? "#141413" : "#1a1917", bd: open ? "#5a5850" : "#34332e", edge: R[5] === "conv" ? "#ff4b23" : R[5] === "div" ? "#8f8b80" : "#34332e", op: S.drag === x.id ? ".5" : "1",
+          toggle: () => this.setState({ open: open ? null : x.id, alts: null }), less: () => this.mut(bl => { bl[i].mins = Math.max(5, bl[i].mins - 5); return bl; }), more: () => this.mut(bl => { bl[i].mins += 5; return bl; }), lessLabel: "Shorten " + x.title, moreLabel: "Lengthen " + x.title,
+          up: mv(-1), down: mv(1), dup: () => this.mut(bl => { bl.splice(i + 1, 0, Object.assign({}, bl[i], { id: "b" + Date.now().toString(36) })); return bl; }), remove: () => this.mut(bl => bl.filter(z => z.id !== x.id)), lock: () => this.mut(bl => { bl[i].locked = !bl[i].locked; return bl; }), lockLabel: x.locked ? "Unlock" : "Lock",
+          replace: () => this.setState({ alts: S.alts === x.id ? null : x.id }), showAlts: open && S.alts === x.id, alts, noAlts: open && S.alts === x.id && !alts.length,
+          hasRef: !!it, href: d ? d.href : "", hasDetail: !!it, facts, steps: it && Array.isArray(it.steps) ? it.steps.filter(s2 => typeof s2 === "string").slice(0, 6) : [], hasSteps: !!(it && Array.isArray(it.steps) && it.steps.some(s2 => typeof s2 === "string")), fails: it ? (it.failures || []).slice(0, 3).map(f => typeof f === "string" ? f : f.p) : [], hasFail: !!(it && it.failures && it.failures.length),
+          dragStart: e => { e.dataTransfer.effectAllowed = "move"; this.setState({ drag: x.id }); }, dragOver: e => e.preventDefault(), drop: e => { e.preventDefault(); const from = S.drag; this.setState({ drag: null }); if (!from || from === x.id) return; this.mut(bl => { const fi = bl.findIndex(z => z.id === from); const [mvd] = bl.splice(fi, 1); const ti = bl.findIndex(z => z.id === x.id); bl.splice(ti, 0, mvd); return bl; }); } }; });
+      const opt = q => this.Q.find(x => x[0] === q)[3];
+      const edit = (k, label, onChange) => ({ k: label, v: Array.isArray(b[k]) ? b[k][0] : (b[k] || ""), opts: [""].concat(opt(k)), change: onChange || (e => { const val = e.target.value; const was = b[k]; this.set(k, ["who", "evidence"].includes(k) ? (val ? [val] : []) : val); if (k === "time" && val && val !== was) this.propose("fit", RDB.MIN[val]); if (k === "people" && ["11 to 20", "20+"].includes(val)) this.propose("big"); if (k === "format" && val === "Remote") this.propose("remote"); }) });
+      const obs = RDB.insights(b, blocks).slice(0, 5).map(o => ({ t: o.t, fix: o.fix, c: o.sev === "high" ? "#ff4b23" : "#4a4843" }));
+      const P = S.proposal;
+      Object.assign(v, { rec, hasRecRef: !!rec.ref, recHref: rec.ref ? RDL.deco(RDL.get(rec.ref)).href : "", totalLabel: tot + " min of " + (b.time && b.time !== "Not sure" ? avail + " available" : "planned"), questionText: b.question ? "“" + b.question + "”" : "",
+        benchCols: wide ? "240px minmax(0,1fr) 300px" : "minmax(0,1fr)", asidePos: wide ? "sticky" : "static", rowCols: mid ? "18px 50px minmax(0,1fr) auto" : "18px 44px minmax(0,1fr)",
+        blocks: rows, addBreak: () => this.mut(bl => { bl.splice(Math.max(1, Math.floor(bl.length / 2)), 0, RDB.block("breaks")); return bl; }),
+        edits: [edit("outcome", "Outcome"), edit("time", "Time"), edit("people", "People"), edit("owner", "Decision owner"), edit("format", "Format"), edit("evidence", "Evidence"), edit("who", "In the room")],
+        obs, noObs: !obs.length,
+        cmds: [["Fit to time", "fit"], ["Cut 60 minutes", "cut60"], ["Make this remote", "remote"], ["Adapt for 20 people", "big"], ["Add a decision gate", "decision"], ["Add customer evidence", "evidence"], ["Make it easier to facilitate", "easy"], ["Turn into 2 half-days", "halves"], ["Add a break", "break"]].map(([l, c]) => ({ l, run: () => this.propose(c, avail) })),
+        hasProposal: !!P, proposal: P ? { title: P.title, empty: !P.changes.length, rows: P.changes.map(c => Object.assign({}, c, { savedLabel: c.saved > 0 ? "Saves " + c.saved + " min" : c.saved < 0 ? "Adds " + (-c.saved) + " min" : "" })) } : { rows: [] },
+        accept: () => this.setState(s => ({ blocks: RDB.apply(s.blocks, s.proposal.changes), proposal: null, stress: false })), reject: () => this.setState({ proposal: null }),
+        runStress: () => this.setState({ stress: true }), hasStress: S.stress, stressRows: S.stress ? RDB.stress(b, blocks).sort((a, c) => a.ok - c.ok).map(r => ({ k: r.k, msg: r.msg, fix: r.fix, bad: !r.ok, c: r.ok ? "#8f8b80" : "#ff4b23" })) : [],
+        packRows: RDB.pack(b, blocks).map(([k, list]) => ({ k, v: list.join(", ") })),
+        copyLabel: S.copied ? "Copied" : "Copy agenda", copyAgenda: () => { try { navigator.clipboard.writeText(RDB.agendaText(b, blocks)); } catch (e) {} this.setState({ copied: true }); setTimeout(() => this.setState({ copied: false }), 1500); } });
+    }
+    return v;
+  }
+}
+</script>
+</body>
+</html>

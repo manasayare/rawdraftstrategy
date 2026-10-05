@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap">
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap">
+<style>
+html,body{margin:0;background:#0b0b0a;color:#ece9e0;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#ece9e0}
+a:hover{color:#ff4b23}
+::selection{background:#ff4b23;color:#0b0b0a}
+input,textarea,button{font:inherit}
+input::placeholder{color:#6f6c63}
+@keyframes rdblink{0%,49%{opacity:1}50%,100%{opacity:0}}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #ff4b23;outline-offset:3px}
+@media print{html,body{background:#fff!important}*{color:#000!important;background:transparent!important;border-color:#bbb!important}header,footer,[data-noprint]{display:none!important}body>div>div:first-child{display:none!important}}
+</style>
+<script src="rd-data.js"></script>
+<script src="rd-backlog.js"></script>
+<script src="rd-sprint-formats.js"></script>
+<script src="rd-network.js"></script>
+<script src="rd-builder.js"></script>
+<script src="rd-lib.js"></script>
+<script src="rd-cycle.js"></script>
+<script src="rd-qualify.js"></script>
+<script src="rd-ascii.js"></script>
+<script src="rd-structure.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&display=swap">
+<script src="rd-visual.js"></script>
+</helmet>
+<div style="background:#0b0b0a;color:#ece9e0;min-height:100vh;font-family:'Satoshi',sans-serif;font-size:16px;line-height:1.5">
+
+<div role="status" aria-label="Product status" style="display:flex;flex-wrap:wrap;align-items:center;gap:4px 18px;padding:7px clamp(16px,3vw,40px);border-bottom:1px solid #2a2925;font-size:13px;line-height:1.45;color:#8f8b80">
+<span style="display:inline-flex;align-items:center;gap:8px;color:#ece9e0;white-space:nowrap"><span aria-hidden="true" style="width:7px;height:7px;border-radius:50%;background:#ff4b23;box-shadow:0 0 0 3px rgba(255,75,35,.18)"></span>Public beta</span>
+<span style="display:inline-flex;flex-wrap:wrap;gap:4px 14px"><span><span style="color:#c9c5ba">Live</span> · Builder, Library, Run mode, Agenda PDF</span><span><span style="color:#c9c5ba">Next</span> · Accounts and saving, agent connector</span></span>
+<span style="margin-left:auto;white-space:nowrap">Updated 5 Oct 2026</span>
+</div>
+
+<header style="position:sticky;top:0;z-index:30;background:#0b0b0a;border-bottom:1px solid #2a2925">
+<div style="display:flex;align-items:center;gap:20px;height:60px;padding:0 clamp(16px,3vw,40px)">
+<a href="#/" style="font-family:'Clash Display',sans-serif;font-weight:600;font-size:22px;letter-spacing:-.02em;color:#ece9e0;text-decoration:none;white-space:nowrap;line-height:1">Raw Draft<span style="color:#ff4b23">.</span></a>
+<sc-if value="{{ isWide }}" hint-placeholder-val="{{ true }}">
+<nav style="display:flex;gap:clamp(16px,2.2vw,32px);margin-left:clamp(8px,4vw,64px);font-size:15px;font-weight:500">
+<sc-for list="{{ navLinks }}" as="l" hint-placeholder-count="4"><a href="{{ l.href }}" style="color:{{ l.color }};text-decoration:none;padding:10px 0" style-hover="color:#ff4b23">{{ l.label }}</a></sc-for>
+</nav>
+</sc-if>
+<div style="flex:1"></div>
+<sc-if value="{{ isWide }}" hint-placeholder-val="{{ true }}">
+<button onClick="{{ togglePal }}" style="background:none;border:0;color:#8f8b80;padding:10px 0;cursor:pointer;font-size:15px" style-hover="color:#ece9e0">Search</button>
+<a href="#/work-with-us" style="background:#ff4b23;color:#0b0b0a;padding:10px 14px;text-decoration:none;font-size:15px;font-weight:500;white-space:nowrap" style-hover="background:#ece9e0;color:#0b0b0a">Book a workshop</a>
+</sc-if>
+<sc-if value="{{ isNarrow }}" hint-placeholder-val="{{ false }}"><button onClick="{{ toggleMenu }}" style="background:none;border:0;color:#ece9e0;min-height:44px;padding:0 0 0 12px;cursor:pointer;font-size:16px;font-weight:500">Menu</button></sc-if>
+</div>
+</header>
+
+<sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;z-index:60;background:#0b0b0a;display:flex;flex-direction:column;overflow:auto">
+<div style="display:flex;align-items:center;justify-content:space-between;height:60px;padding:0 16px;border-bottom:1px solid #2a2925;flex:none">
+<a href="#/" style="font-family:'Clash Display',sans-serif;font-weight:600;font-size:22px;color:#ece9e0;text-decoration:none">Raw Draft<span style="color:#ff4b23">.</span></a>
+<button onClick="{{ toggleMenu }}" style="background:none;border:0;color:#ece9e0;min-height:44px;padding:0 0 0 12px;cursor:pointer;font-size:16px;font-weight:500">Close</button>
+</div>
+<nav style="display:flex;flex-direction:column;padding:8px 16px 0">
+<sc-for list="{{ navLinks }}" as="l" hint-placeholder-count="4"><a href="{{ l.href }}" style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(36px,11vw,48px);letter-spacing:-.02em;line-height:1.1;padding:14px 0;border-bottom:1px solid #2a2925;text-decoration:none;color:{{ l.color }}">{{ l.label }}</a></sc-for>
+</nav>
+<div style="display:flex;flex-direction:column;gap:12px;padding:24px 16px 32px">
+<button onClick="{{ menuSearch }}" style="text-align:left;background:none;border:0;border-bottom:1px solid #2a2925;color:#ece9e0;min-height:52px;padding:0;cursor:pointer;font-size:20px">Search</button>
+<a href="#/work-with-us" style="display:flex;align-items:center;justify-content:space-between;min-height:56px;background:#ff4b23;color:#0b0b0a;padding:0 18px;text-decoration:none;font-size:18px;font-weight:500;margin-top:12px">Book a workshop <span>→</span></a>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ palOpen }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closePal }}" style="position:fixed;inset:0;z-index:50;background:rgba(5,5,4,.88);display:flex;justify-content:center;align-items:flex-start;padding:12vh 16px 16px">
+<div onClick="{{ stop }}" style="width:100%;max-width:760px;background:#0b0b0a;border:1px solid #4a4843">
+<div style="display:flex;align-items:center;gap:14px;padding:18px 20px;border-bottom:1px solid #2a2925">
+<input ref="{{ palRef }}" value="{{ palQ }}" onChange="{{ onPalQ }}" onKeyDown="{{ onPalKey }}" placeholder="Search the library" style="flex:1;min-width:0;background:none;border:0;outline:none;color:#ece9e0;font-family:'Clash Display',sans-serif;font-size:24px">
+<span style="font-size:12px;color:#8f8b80">Esc</span>
+</div>
+<div style="max-height:56vh;overflow:auto">
+<sc-for list="{{ palRows }}" as="r" hint-placeholder-count="6">
+<a href="{{ r.href }}" onMouseEnter="{{ r.hover }}" style="display:flex;gap:16px;align-items:baseline;padding:12px 20px;text-decoration:none;color:#ece9e0;background:{{ r.bg }};border-bottom:1px solid #1c1b19">
+<span style="flex:1;min-width:0">{{ r.label }}</span>
+<span style="font-size:13px;color:{{ r.tc }};white-space:nowrap">{{ r.tag }}</span>
+</a>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+<main>
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+
+<section data-screen-label="Home" style="position:relative;overflow:hidden;padding:clamp(28px,5vw,80px) clamp(16px,3vw,40px) clamp(40px,5vw,80px);border-bottom:1px solid #2a2925">
+<rd-structure style="position:absolute;top:0;right:0;bottom:0;width:46%;opacity:.5;pointer-events:none;display:{{ heroVisD }}"></rd-structure>
+<div style="position:relative;max-width:960px">
+<h1 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;letter-spacing:-.035em;line-height:.95;font-size:clamp(44px,7.2vw,118px);letter-spacing:-.04em;line-height:.9;max-width:12ch;text-wrap:balance">Build the workshop you actually need.</h1>
+<p style="margin:clamp(16px,2vw,24px) 0 0;max-width:46ch;font-size:clamp(17px,1.4vw,20px);line-height:1.45;color:#c9c5ba">Describe the problem, the people and the time. Builder uses the Raw Draft Library to create a workshop or Sprint you can edit, run and adapt.</p>
+<form onSubmit="{{ heroGo }}" style="margin-top:clamp(22px,3vw,36px);background:#111110;border:1px solid #4a4843;padding:14px 16px 12px">
+<label for="rd-hero-q" style="display:block;font-size:13px;color:#8f8b80">What are you trying to figure out?</label>
+<textarea id="rd-hero-q" value="{{ heroText }}" onChange="{{ onHeroText }}" onKeyDown="{{ onHeroKey }}" rows="2" placeholder="We need to decide which customer segment to focus on." style="display:block;width:100%;margin-top:6px;background:none;border:0;outline:none;color:#ece9e0;padding:0;font-family:'Satoshi',sans-serif;font-size:clamp(18px,1.6vw,22px);line-height:1.4;resize:none"></textarea>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"><sc-for list="{{ heroStarts }}" as="h" hint-placeholder-count="6"><button type="button" onClick="{{ h.pick }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#c9c5ba;min-height:32px;padding:0 10px;cursor:pointer;font-size:13px" style-hover="border-color:#8f8b80;color:#ece9e0">{{ h.l }}</button></sc-for></div>
+</form>
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;margin-top:16px">
+<button onClick="{{ heroGo }}" style="white-space:nowrap;background:#ff4b23;color:#0b0b0a;border:0;min-height:54px;padding:0 24px;cursor:pointer;font-size:17px;font-weight:500" style-hover="background:#ece9e0">Build a workshop</button>
+<a href="#/work-with-us" style="white-space:nowrap;display:inline-flex;align-items:center;min-height:54px;border:1px solid #4a4843;color:#ece9e0;padding:0 22px;text-decoration:none;font-size:17px" style-hover="border-color:#ece9e0;color:#ece9e0">Book a workshop</a>
+<span style="font-size:14px;color:#8f8b80">Free to start. No account until you want to save.</span>
+</div>
+</div>
+</section>
+
+<section style="padding:clamp(56px,8vw,130px) clamp(16px,3vw,40px);border-bottom:1px solid #2a2925">
+<div style="font-size:13px;letter-spacing:.06em;color:#8f8b80">WHY WORK THIS WAY</div>
+<h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;letter-spacing:-.035em;line-height:.95;margin-top:14px;font-size:clamp(36px,5.2vw,84px);max-width:15ch">A good workshop is not a meeting with sticky notes.</h2>
+<p style="margin:clamp(12px,1.6vw,20px) 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(22px,2.4vw,36px);letter-spacing:-.02em;line-height:1.1;color:#8f8b80;max-width:24ch">It is a deliberately designed path from a question to an outcome.</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:36px clamp(32px,5vw,80px);margin-top:clamp(36px,5vw,64px)">
+<div>
+<div style="font-size:13px;letter-spacing:.06em;color:#8f8b80">HOW HARD WORK USUALLY GETS HANDLED</div>
+<div style="margin-top:12px;border-top:1px solid #2a2925"><div style="padding:12px 0;border-bottom:1px solid #2a2925;font-size:clamp(18px,1.6vw,22px);color:#8f8b80;text-decoration:line-through;text-decoration-color:#5a5850">Another meeting.</div><div style="padding:12px 0;border-bottom:1px solid #2a2925;font-size:clamp(18px,1.6vw,22px);color:#8f8b80;text-decoration:line-through;text-decoration-color:#5a5850">Opinions and slides.</div><div style="padding:12px 0;border-bottom:1px solid #2a2925;font-size:clamp(18px,1.6vw,22px);color:#8f8b80;text-decoration:line-through;text-decoration-color:#5a5850">Open-ended discussion.</div><div style="padding:12px 0;border-bottom:1px solid #2a2925;font-size:clamp(18px,1.6vw,22px);color:#8f8b80;text-decoration:line-through;text-decoration-color:#5a5850">Straight into execution.</div><div style="padding:12px 0;border-bottom:1px solid #2a2925;font-size:clamp(18px,1.6vw,22px);color:#8f8b80;text-decoration:line-through;text-decoration-color:#5a5850">The loudest person decides.</div><div style="padding:12px 0;border-bottom:1px solid #2a2925;font-size:clamp(18px,1.6vw,22px);color:#8f8b80;text-decoration:line-through;text-decoration-color:#5a5850">Weeks of circular debate.</div></div>
+</div>
+<div>
+<div style="font-size:13px;letter-spacing:.06em;color:#8f8b80">WHAT A DESIGNED SESSION DOES</div>
+<div style="position:relative;display:flex;flex-direction:column;gap:12px;margin-top:12px;padding-left:22px"><span aria-hidden="true" style="position:absolute;left:4px;top:14px;bottom:14px;width:1px;background:#ff4b23"></span><div style="position:relative;background:#1a1917;border:1px solid #34332e;padding:14px 16px;transform:rotate(-0.5deg)"><span aria-hidden="true" style="position:absolute;left:-23px;top:20px;width:9px;height:9px;background:#ff4b23"></span><div style="font-size:12px;letter-spacing:.06em;color:#ff4b23">THE QUESTION</div><div style="margin-top:4px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(19px,1.7vw,24px);line-height:1.15">What actually needs to be decided?</div></div><div style="position:relative;background:#1a1917;border:1px solid #34332e;padding:14px 16px;transform:rotate(0.4deg)"><span aria-hidden="true" style="position:absolute;left:-23px;top:20px;width:9px;height:9px;background:#ff4b23"></span><div style="font-size:12px;letter-spacing:.06em;color:#ff4b23">THE ROOM</div><div style="margin-top:4px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(19px,1.7vw,24px);line-height:1.15">Who needs to contribute, and who decides?</div></div><div style="position:relative;background:#1a1917;border:1px solid #34332e;padding:14px 16px;transform:rotate(-0.3deg)"><span aria-hidden="true" style="position:absolute;left:-23px;top:20px;width:9px;height:9px;background:#ff4b23"></span><div style="font-size:12px;letter-spacing:.06em;color:#ff4b23">THE WORK</div><div style="margin-top:4px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(19px,1.7vw,24px);line-height:1.15">Which evidence, exercises and methods get you there?</div></div><div style="position:relative;background:#1a1917;border:1px solid #34332e;padding:14px 16px;transform:rotate(0.5deg)"><span aria-hidden="true" style="position:absolute;left:-23px;top:20px;width:9px;height:9px;background:#ff4b23"></span><div style="font-size:12px;letter-spacing:.06em;color:#ff4b23">THE OUTPUT</div><div style="margin-top:4px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(19px,1.7vw,24px);line-height:1.15">What physically exists at the end?</div></div></div>
+</div>
+</div>
+</section>
+
+<section style="padding:clamp(56px,8vw,130px) clamp(16px,3vw,40px);border-bottom:1px solid #2a2925">
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px 32px"><h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;letter-spacing:-.035em;line-height:.95;font-size:clamp(32px,4vw,64px)">How Builder works</h2><a href="#/builder" style="white-space:nowrap;font-size:16px">Open Builder →</a></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:20px 28px;margin-top:clamp(24px,3vw,40px)"><div style="border-top:2px solid #ece9e0;padding-top:12px"><div style="font-size:13px;color:#ff4b23">01</div><div style="margin-top:6px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(20px,1.8vw,26px);line-height:1.1">Describe the problem.</div><p style="margin:8px 0 0;font-size:15px;line-height:1.5;color:#c9c5ba">Type it the way you would say it, or pick what you need.</p></div><div style="border-top:2px solid #ece9e0;padding-top:12px"><div style="font-size:13px;color:#ff4b23">02</div><div style="margin-top:6px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(20px,1.8vw,26px);line-height:1.1">Builder structures it.</div><p style="margin:8px 0 0;font-size:15px;line-height:1.5;color:#c9c5ba">It works out the outcome, people, time, evidence and who decides.</p></div><div style="border-top:2px solid #ece9e0;padding-top:12px"><div style="font-size:13px;color:#ff4b23">03</div><div style="margin-top:6px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(20px,1.8vw,26px);line-height:1.1">Build the workshop.</div><p style="margin:8px 0 0;font-size:15px;line-height:1.5;color:#c9c5ba">Drag methods from the Library, reorder them, change timing, add your own blocks.</p></div><div style="border-top:2px solid #ece9e0;padding-top:12px"><div style="font-size:13px;color:#ff4b23">04</div><div style="margin-top:6px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(20px,1.8vw,26px);line-height:1.1">Run it.</div><p style="margin:8px 0 0;font-size:15px;line-height:1.5;color:#c9c5ba">Use the agenda, instructions, assets and facilitator notes. A live Run mode is in development.</p></div></div>
+<div role="img" aria-label="Builder preview: Library on the left, a workshop timeline in the middle, Builder suggestions on the right" style="margin-top:clamp(28px,4vw,52px);border:1px solid #2a2925;background-color:#0f0f0e;padding:clamp(12px,1.6vw,20px);display:grid;grid-template-columns:{{ prevCols }};gap:16px">
+<div style="display:{{ prevSide }};flex-direction:column;gap:8px;min-width:0"><div style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:16px">Library</div><div style="border:1px solid #34332e;background:#111110;padding:7px 9px;font-size:13px;color:#c9c5ba">decision making</div><div style="background:#1a1917;border:1px solid #34332e;padding:9px 11px"><div style="display:flex;justify-content:space-between;font-size:11px;color:#8f8b80"><span>DECISION</span><span>15 min</span></div><div style="margin-top:2px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:15px">Note and Vote</div></div><div style="background:#1a1917;border:1px solid #34332e;padding:9px 11px;border-color:#ff4b23;transform:rotate(-2deg) translate(10px,-4px);box-shadow:0 14px 30px rgba(0,0,0,.5)"><div style="display:flex;justify-content:space-between;font-size:11px;color:#8f8b80"><span>DECISION</span><span>30 min</span></div><div style="margin-top:2px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:15px">Decision Matrix</div><div style="margin-top:3px;font-size:11px;color:#ff4b23">Dragging</div></div><div style="background:#1a1917;border:1px solid #34332e;padding:9px 11px"><div style="display:flex;justify-content:space-between;font-size:11px;color:#8f8b80"><span>ACTIVITY</span><span>15 min</span></div><div style="margin-top:2px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:15px">Gallery Walk</div></div><div style="border:1px dashed #5a5850;padding:7px 9px;font-size:13px;color:#ece9e0">+ Custom block</div></div>
+<div style="min-width:0;background-color:#111110;background-image:linear-gradient(rgba(236,233,224,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(236,233,224,.04) 1px,transparent 1px);background-size:32px 32px;border:1px solid #2a2925;padding:12px;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;justify-content:space-between;font-size:12px;color:#8f8b80;padding-bottom:4px"><span>LIVE WORKSHOP</span><span>3h 20m · 09:30–12:50</span></div>
+<div style="display:grid;grid-template-columns:42px minmax(0,1fr);gap:8px;align-items:start"><span style="padding-top:8px;font-size:12px;color:#8f8b80">09:30</span><div style="background:#1a1917;border:1px solid #34332e;min-height:48px;padding:7px 10px;position:relative"><div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#8f8b80"><span>Frame</span><span style="color:#ece9e0">20 min</span></div><div style="margin-top:2px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:15px">Frame the decision</div><div style="position:absolute;left:50%;bottom:3px;width:22px;margin-left:-11px;height:3px;border-top:1px solid #5a5850;border-bottom:1px solid #5a5850"></div></div></div><div style="display:grid;grid-template-columns:42px minmax(0,1fr);gap:8px;align-items:start"><span style="padding-top:8px;font-size:12px;color:#8f8b80">09:50</span><div style="background:#1a1917;border:1px solid #34332e;min-height:56px;padding:7px 10px;position:relative"><div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#8f8b80"><span>Evidence</span><span style="color:#ece9e0">30 min</span></div><div style="margin-top:2px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:15px">Evidence Review</div><div style="position:absolute;left:50%;bottom:3px;width:22px;margin-left:-11px;height:3px;border-top:1px solid #5a5850;border-bottom:1px solid #5a5850"></div></div></div><div style="display:grid;grid-template-columns:42px minmax(0,1fr);gap:8px;align-items:start"><span style="padding-top:8px;font-size:12px;color:#8f8b80">10:20</span><div style="background:#1a1917;border:1px solid #34332e;min-height:64px;padding:7px 10px;position:relative"><div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#8f8b80"><span>Assumptions</span><span style="color:#ece9e0">40 min</span></div><div style="margin-top:2px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:15px">Assumption Mapping</div><div style="margin-top:4px;font-size:11px;color:#c9c5ba">Replace · 3 alternatives</div><div style="position:absolute;left:50%;bottom:3px;width:22px;margin-left:-11px;height:3px;border-top:1px solid #5a5850;border-bottom:1px solid #5a5850"></div></div></div><div style="display:grid;grid-template-columns:42px minmax(0,1fr);gap:8px;align-items:start"><span style="padding-top:8px;font-size:12px;color:#8f8b80">11:00</span><div style="background:#131312;border:1px dashed #34332e;min-height:34px;padding:7px 10px;position:relative"><div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#8f8b80"><span>Break</span><span style="color:#ece9e0">10 min</span></div><div style="margin-top:2px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:15px">Break</div></div></div><div style="display:grid;grid-template-columns:42px minmax(0,1fr);gap:8px;align-items:start"><span style="padding-top:8px;font-size:12px;color:#8f8b80">11:10</span><div style="background:#1a1917;border:1px solid #34332e;min-height:72px;padding:7px 10px;position:relative;border-color:#ece9e0"><div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#8f8b80"><span>Options</span><span style="color:#ece9e0">50 min</span></div><div style="margin-top:2px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:15px">Generate Options</div><div style="margin-top:4px;font-size:11px;color:#c9c5ba">Resized 40 → 50 min</div><div style="position:absolute;left:50%;bottom:3px;width:22px;margin-left:-11px;height:3px;border-top:1px solid #5a5850;border-bottom:1px solid #5a5850"></div></div></div>
+<div style="margin-left:50px;height:34px;border:1px dashed #ff4b23;background:rgba(255,75,35,.08);display:flex;align-items:center;justify-content:center;font-size:12px;color:#ff4b23">Drop Decision Matrix here</div>
+<div style="display:grid;grid-template-columns:42px minmax(0,1fr);gap:8px;align-items:start"><span style="padding-top:8px;font-size:12px;color:#8f8b80">12:00</span><div style="background:#1a1917;border:1px solid #34332e;min-height:52px;padding:7px 10px;position:relative"><div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#8f8b80"><span>Decide</span><span style="color:#ece9e0">30 min</span></div><div style="margin-top:2px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:15px">Decision</div><div style="position:absolute;left:50%;bottom:3px;width:22px;margin-left:-11px;height:3px;border-top:1px solid #5a5850;border-bottom:1px solid #5a5850"></div></div></div><div style="display:grid;grid-template-columns:42px minmax(0,1fr);gap:8px;align-items:start"><span style="padding-top:8px;font-size:12px;color:#8f8b80">12:30</span><div style="background:#1a1917;border:1px solid #34332e;min-height:44px;padding:7px 10px;position:relative"><div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#8f8b80"><span>Next test</span><span style="color:#ece9e0">20 min</span></div><div style="margin-top:2px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:15px">Next Test</div><div style="position:absolute;left:50%;bottom:3px;width:22px;margin-left:-11px;height:3px;border-top:1px solid #5a5850;border-bottom:1px solid #5a5850"></div></div></div>
+</div>
+<div style="display:{{ prevSide }};flex-direction:column;gap:10px;min-width:0"><div style="font-size:11px;letter-spacing:.06em;color:#8f8b80">BUILDER IS WATCHING</div><div style="border:1px dashed #ff4b23;padding:9px 11px;font-size:13px;line-height:1.4"><span style="color:#ff4b23">The CEO joins at 12:00, the moment Decision starts.</span><span style="color:#8f8b80"> Brief them on options first.</span></div><div style="border:1px solid #ff4b23;background:#140f0d;padding:10px 11px"><div style="font-size:11px;letter-spacing:.06em;color:#ff4b23">PROPOSED CHANGE</div><div style="margin-top:4px;font-size:13px;color:#8f8b80;text-decoration:line-through">Evidence Review · 30 min</div><div style="font-size:13px">Evidence Review · 20 min</div><div style="margin-top:4px;font-size:12px;color:#8f8b80">Fits the CEO's hour.</div><div style="display:flex;gap:6px;margin-top:8px"><span style="background:#ff4b23;color:#0b0b0a;padding:4px 9px;font-size:12px">Accept</span><span style="display:inline-block;white-space:nowrap;line-height:1.35;border:1px solid #4a4843;padding:4px 9px;font-size:12px">Reject</span></div></div><div style="border-bottom:1px solid #4a4843;padding:6px 0;font-size:13px;color:#8f8b80">Ask Builder… make it 90 minutes shorter</div></div>
+</div>
+<p style="margin:10px 0 0;font-size:13px;color:#8f8b80">Illustration of the Builder layout. The real thing is one click away.</p>
+</section>
+
+<section style="padding:clamp(56px,8vw,130px) clamp(16px,3vw,40px);border-bottom:1px solid #2a2925">
+<h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;letter-spacing:-.035em;line-height:.95;font-size:clamp(32px,4vw,64px)">Run it yourself, or bring me in.</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:16px;margin-top:clamp(24px,3vw,40px)">
+<div style="display:flex;flex-direction:column;border:1px solid #34332e;padding:clamp(20px,2.6vw,32px);background:#0f0f0e"><div style="font-size:13px;letter-spacing:.06em;color:#8f8b80">DO IT YOURSELF</div><p style="margin:12px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(22px,2vw,30px);letter-spacing:-.015em;line-height:1.15;max-width:24ch">Use Builder and the Library to design and run your own workshop.</p><div style="margin-top:18px;border-top:1px solid #2a2925;flex:1"><div style="padding:10px 0;border-bottom:1px solid #2a2925;font-size:16px">Build from scratch</div><div style="padding:10px 0;border-bottom:1px solid #2a2925;font-size:16px">Start by describing the problem</div><div style="padding:10px 0;border-bottom:1px solid #2a2925;font-size:16px">Start from a template</div><div style="padding:10px 0;border-bottom:1px solid #2a2925;font-size:16px">Drag in methods from the Library</div><div style="padding:10px 0;border-bottom:1px solid #2a2925;font-size:16px">Adapt timing to your day</div><div style="padding:10px 0;border-bottom:1px solid #2a2925;font-size:16px">Export the agenda and notes</div></div><a href="#/builder" style="white-space:nowrap;align-self:flex-start;display:inline-flex;align-items:center;min-height:50px;margin-top:22px;background:#ece9e0;color:#0b0b0a;padding:0 20px;text-decoration:none;font-size:16px;font-weight:500" style-hover="background:#ff4b23;color:#0b0b0a">Open Builder</a></div><div style="display:flex;flex-direction:column;border:1px solid #34332e;padding:clamp(20px,2.6vw,32px);background:#0f0f0e"><div style="font-size:13px;letter-spacing:.06em;color:#8f8b80">BRING ME IN</div><p style="margin:12px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(22px,2vw,30px);letter-spacing:-.015em;line-height:1.15;max-width:24ch">If the question is consequential, complex or hard to facilitate internally, I can design the work and run it with you.</p><div style="margin-top:18px;border-top:1px solid #2a2925;flex:1"><div style="padding:10px 0;border-bottom:1px solid #2a2925;font-size:16px">Workshop and Sprint design</div><div style="padding:10px 0;border-bottom:1px solid #2a2925;font-size:16px">Research and preparation</div><div style="padding:10px 0;border-bottom:1px solid #2a2925;font-size:16px">Facilitation</div><div style="padding:10px 0;border-bottom:1px solid #2a2925;font-size:16px">Synthesis</div><div style="padding:10px 0;border-bottom:1px solid #2a2925;font-size:16px">Decision support</div><div style="padding:10px 0;border-bottom:1px solid #2a2925;font-size:16px">Follow-through</div></div><a href="#/work-with-us" style="white-space:nowrap;align-self:flex-start;display:inline-flex;align-items:center;min-height:50px;margin-top:22px;background:#ff4b23;color:#0b0b0a;padding:0 20px;text-decoration:none;font-size:16px;font-weight:500" style-hover="background:#ece9e0;color:#0b0b0a">Book a workshop</a></div>
+</div>
+<p style="margin:16px 0 0;font-size:15px;color:#8f8b80;max-width:60ch">Everything in Builder and the Library works without hiring Raw Draft.</p>
+</section>
+
+<section style="padding:clamp(56px,8vw,130px) clamp(16px,3vw,40px);border-bottom:1px solid #2a2925">
+<div style="font-size:13px;letter-spacing:.06em;color:#8f8b80">LIBRARY</div>
+<h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;letter-spacing:-.035em;line-height:.95;margin-top:14px;font-size:clamp(32px,4vw,64px);max-width:16ch">The building blocks behind Builder.</h2>
+<div style="display:grid;grid-template-columns:{{ sysCols }};gap:12px;align-items:stretch;margin-top:clamp(24px,3vw,40px)">
+<div style="background:#1a1917;border:1px solid #34332e;padding:16px 18px;transform:rotate(-0.4deg)"><div style="font-size:12px;letter-spacing:.06em;color:#8f8b80">LIBRARY</div><div style="margin-top:6px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(20px,1.8vw,26px);line-height:1.1">Individual building blocks.</div><p style="margin:8px 0 0;font-size:14px;line-height:1.45;color:#c9c5ba">Methods, exercises, frameworks and formats, each with time, people, inputs and outputs.</p></div><div aria-hidden="true" style="display:{{ sysArrow }};align-items:center;justify-content:center;color:#ff4b23;font-size:22px">→</div><div style="background:#1a1917;border:1px solid #34332e;padding:16px 18px;transform:rotate(0.3deg)"><div style="font-size:12px;letter-spacing:.06em;color:#ff4b23">BUILDER</div><div style="margin-top:6px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(20px,1.8vw,26px);line-height:1.1">Combine them into a workshop.</div><p style="margin:8px 0 0;font-size:14px;line-height:1.45;color:#c9c5ba">Builder picks and sequences them. You drag, retime and replace.</p></div><div aria-hidden="true" style="display:{{ sysArrow }};align-items:center;justify-content:center;color:#ff4b23;font-size:22px">→</div><div style="background:#1a1917;border:1px solid #34332e;padding:16px 18px;transform:rotate(-0.2deg)"><div style="font-size:12px;letter-spacing:.06em;color:#8f8b80">WORKSHOP</div><div style="margin-top:6px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(20px,1.8vw,26px);line-height:1.1">Something you can actually run.</div><p style="margin:8px 0 0;font-size:14px;line-height:1.45;color:#c9c5ba">An agenda, instructions, assets and a clear output.</p></div>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:20px"><span style="display:inline-block;white-space:nowrap;line-height:1.35;border:1px solid #34332e;padding:5px 10px;font-size:14px;color:#c9c5ba">Sprints</span><span style="display:inline-block;white-space:nowrap;line-height:1.35;border:1px solid #34332e;padding:5px 10px;font-size:14px;color:#c9c5ba">Workshops</span><span style="display:inline-block;white-space:nowrap;line-height:1.35;border:1px solid #34332e;padding:5px 10px;font-size:14px;color:#c9c5ba">Exercises</span><span style="display:inline-block;white-space:nowrap;line-height:1.35;border:1px solid #34332e;padding:5px 10px;font-size:14px;color:#c9c5ba">Research methods</span><span style="display:inline-block;white-space:nowrap;line-height:1.35;border:1px solid #34332e;padding:5px 10px;font-size:14px;color:#c9c5ba">Facilitation methods</span><span style="display:inline-block;white-space:nowrap;line-height:1.35;border:1px solid #34332e;padding:5px 10px;font-size:14px;color:#c9c5ba">Strategy tools</span><span style="display:inline-block;white-space:nowrap;line-height:1.35;border:1px solid #34332e;padding:5px 10px;font-size:14px;color:#c9c5ba">UX methods</span><span style="display:inline-block;white-space:nowrap;line-height:1.35;border:1px solid #34332e;padding:5px 10px;font-size:14px;color:#c9c5ba">Service design tools</span><span style="display:inline-block;white-space:nowrap;line-height:1.35;border:1px solid #34332e;padding:5px 10px;font-size:14px;color:#c9c5ba">Games</span><span style="display:inline-block;white-space:nowrap;line-height:1.35;border:1px solid #34332e;padding:5px 10px;font-size:14px;color:#c9c5ba">Templates</span><span style="display:inline-block;white-space:nowrap;line-height:1.35;border:1px solid #34332e;padding:5px 10px;font-size:14px;color:#c9c5ba">Boards</span><span style="display:inline-block;white-space:nowrap;line-height:1.35;border:1px solid #34332e;padding:5px 10px;font-size:14px;color:#c9c5ba">Prompts</span></div>
+<a href="#/library" style="white-space:nowrap;display:inline-flex;align-items:center;min-height:48px;margin-top:22px;border:1px solid #4a4843;color:#ece9e0;padding:0 18px;text-decoration:none;font-size:16px" style-hover="border-color:#ece9e0;color:#ece9e0">Browse the Library</a>
+</section>
+
+<section style="padding:clamp(56px,8vw,130px) clamp(16px,3vw,40px);border-bottom:1px solid #2a2925">
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px 32px"><h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;letter-spacing:-.035em;line-height:.95;font-size:clamp(32px,4vw,64px)">Things you can build</h2><a href="#/builder" style="white-space:nowrap;font-size:16px">Or describe your own →</a></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:14px;margin-top:clamp(24px,3vw,40px)">
+<sc-for list="{{ homeTpls }}" as="t" hint-placeholder-count="6"><a href="{{ t.href }}" style="display:flex;flex-direction:column;background:#1a1917;border:1px solid #34332e;padding:16px 18px 18px;color:#ece9e0;text-decoration:none;transform:rotate({{ t.rot }});transition:transform .2s,border-color .2s" style-hover="transform:rotate(0deg) translateY(-2px);border-color:#8f8b80;color:#ece9e0"><span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:22px;line-height:1.08">{{ t.name }}</span><span style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;margin-top:14px;font-size:14px"><span style="color:#8f8b80">Time</span><span>{{ t.time }}</span><span style="color:#8f8b80">People</span><span>{{ t.people }}</span><span style="color:#8f8b80">Output</span><span>{{ t.out }}</span></span><span style="margin-top:16px;font-size:15px;color:#ff4b23">Use template →</span></a></sc-for>
+</div>
+</section>
+
+<section style="padding:clamp(64px,10vw,150px) clamp(16px,3vw,40px);border-bottom:1px solid #2a2925">
+<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px 40px">
+<h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em">Why we work in drafts</h2>
+<p style="margin:0;font-size:17px;color:#8f8b80">Creation · Chaos · Clarity · Cadence</p>
+</div>
+<div style="display:grid;grid-template-columns:{{ cycCols }};gap:24px clamp(24px,4vw,64px);align-items:center;margin-top:clamp(28px,4vw,56px)">
+<div ref="{{ cycHost }}" style="width:100%;height:{{ cycH }};border-top:1px solid #2a2925;border-bottom:1px solid #2a2925"></div>
+<div aria-live="polite" style="min-width:0">
+<div style="font-size:15px;color:#8f8b80">{{ cycNow.label }}</div>
+<div style="margin-top:8px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:{{ cycTitleSize }};letter-spacing:-.04em;line-height:.95;color:#ece9e0">{{ cycNow.title }}</div>
+<div lang="hi" style="margin-top:10px;font-family:'Tiro Devanagari Hindi','Noto Serif Devanagari',serif;font-size:clamp(22px,2vw,30px);line-height:1.2;color:#8f8b80">{{ cycNow.dev }}</div>
+<p style="margin:clamp(14px,2vw,24px) 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(22px,2.2vw,32px);letter-spacing:-.015em;line-height:1.15;max-width:22ch">{{ cycNow.statement }}</p>
+<p style="margin:10px 0 0;font-size:17px;line-height:1.45;color:#c9c5ba;max-width:40ch">{{ cycNow.support }}</p>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:{{ stageCols }};gap:16px 24px;margin-top:clamp(24px,3vw,40px)">
+<sc-for list="{{ stages }}" as="s" hint-placeholder-count="4">
+<button onClick="{{ s.pick }}" style="text-align:left;background:none;border:0;border-top:2px solid {{ s.rule }};padding:12px 0 4px;color:#ece9e0;cursor:pointer;transition:border-color .4s">
+<span style="display:flex;justify-content:space-between;gap:8px;font-size:14px;color:#8f8b80"><span>{{ s.n }}</span><span style="color:#ff4b23">{{ s.loop }}</span></span>
+<span style="display:block;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(20px,2vw,28px);letter-spacing:-.02em;margin-top:4px;color:{{ s.c }};transition:color .4s">{{ s.k }}</span>
+</button>
+</sc-for>
+</div>
+<p style="margin:clamp(28px,4vw,48px) 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(22px,2.4vw,34px);letter-spacing:-.015em;line-height:1.2;max-width:30ch">You make something. Reality pushes back. You structure what survives. Eventually the system can run.</p>
+<div style="display:flex;flex-wrap:wrap;gap:10px 24px;margin-top:16px;font-size:15px"><a href="#/practice" style="color:#ece9e0">What a Raw Draft is</a></div>
+</section>
+<section style="padding:clamp(48px,7vw,110px) clamp(16px,3vw,40px);border-bottom:1px solid #2a2925">
+<div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin-bottom:24px"><h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(28px,3.2vw,48px);letter-spacing:-.03em;max-width:22ch">What this way of working has been used for</h2><a href="#/work" style="font-size:15px;white-space:nowrap">See the work</a></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:16px">
+<sc-for list="{{ homeWork }}" as="w" hint-placeholder-count="3">
+<a href="{{ w.href }}" style="display:flex;flex-direction:column;background:#0f0f0e;border:1px solid #2a2925;color:#ece9e0;text-decoration:none;transition:border-color .2s" style-hover="border-color:#ff4b23;color:#ece9e0">
+<rd-ascii shape="{{ w.shape }}" seed="{{ w.seed }}" style="display:block;position:relative;overflow:hidden;width:100%;aspect-ratio:16/10;border-bottom:1px solid #2a2925"></rd-ascii>
+<span style="display:flex;flex-direction:column;gap:8px;padding:18px 18px 20px;flex:1">
+<span style="font-size:14px;color:#8f8b80">{{ w.meta }}</span>
+<span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(20px,1.8vw,24px);letter-spacing:-.015em;line-height:1.12">{{ w.title }}</span>
+<span style="font-size:15px;color:#8f8b80;line-height:1.45">{{ w.question }}</span>
+<span style="margin-top:auto;padding-top:10px;font-size:15px;color:#ff4b23">Read →</span>
+</span>
+</a>
+</sc-for>
+</div>
+</section>
+
+
+<section style="padding:clamp(64px,10vw,150px) clamp(16px,3vw,40px) 0">
+<h2 style="margin:0;font-family:'Clash Display',sans-serif;font-size:clamp(44px,8vw,132px);font-weight:500;letter-spacing:-.045em;line-height:.9;max-width:12ch">If it matters, <span style="color:#ff4b23">bring me in.</span></h2>
+<p style="margin:clamp(16px,2vw,24px) 0 0;max-width:48ch;font-size:18px;line-height:1.5;color:#c9c5ba">I design and facilitate workshops and Sprints when the question is consequential, complex or hard to run internally.</p>
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;margin-top:24px"><a href="#/work-with-us" style="white-space:nowrap;display:inline-flex;align-items:center;min-height:56px;background:#ff4b23;color:#0b0b0a;padding:0 24px;text-decoration:none;font-size:18px;font-weight:500" style-hover="background:#ece9e0;color:#0b0b0a">Book a workshop</a><span style="font-size:15px;color:#8f8b80">Raw Draft works with a network of advisors and collaborators. <a href="#/network">View network</a></span></div>
+</section>
+</sc-if>
+
+<sc-if value="{{ isSprints }}" hint-placeholder-val="{{ false }}"><dc-import name="RD Sprints" route-key="{{ routeKey }}" hint-size="100%,1200px"></dc-import></sc-if>
+<sc-if value="{{ isLibrary }}" hint-placeholder-val="{{ false }}"><dc-import name="RD Library" q="{{ libQ }}" type="{{ libType }}" goal="{{ libGoal }}" stage="{{ libStage }}" route-key="{{ routeKey }}" hint-size="100%,1200px"></dc-import></sc-if>
+<sc-if value="{{ isItem }}" hint-placeholder-val="{{ false }}"><dc-import name="RD Item" rid="{{ rid }}" hint-size="100%,1400px"></dc-import></sc-if>
+<sc-if value="{{ isBuilder }}" hint-placeholder-val="{{ false }}"><dc-import name="RD Builder" add="{{ builderAdd }}" q="{{ builderQ }}" tpl="{{ builderTpl }}" hint-size="100%,900px"></dc-import></sc-if>
+<sc-if value="{{ isWorkFlow }}" hint-placeholder-val="{{ false }}"><dc-import name="RD Work" source-type="{{ srcType }}" source-title="{{ srcTitle }}" hint-size="100%,900px"></dc-import></sc-if>
+<sc-if value="{{ isPage }}" hint-placeholder-val="{{ false }}"><dc-import name="RD Pages" view="{{ view }}" rid="{{ rid }}" tab="{{ hubTab }}" hint-size="100%,1200px"></dc-import></sc-if>
+</main>
+
+<footer style="border-top:1px solid #2a2925;margin-top:clamp(64px,8vw,120px);padding:clamp(32px,4vw,56px) clamp(16px,3vw,40px) 24px">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:28px 40px;max-width:880px">
+<sc-for list="{{ footCols }}" as="c" hint-placeholder-count="4"><div><div style="font-size:14px;color:#8f8b80;margin-bottom:10px">{{ c.h }}</div><div style="display:flex;flex-direction:column;gap:2px;font-size:15px"><sc-for list="{{ c.links }}" as="l" hint-placeholder-count="3"><a href="{{ l.href }}" target="{{ l.target }}" style="color:#ece9e0;text-decoration:none;min-height:32px;display:inline-flex;align-items:center" style-hover="color:#ff4b23">{{ l.label }}</a></sc-for></div></div></sc-for>
+</div>
+<div style="font-family:'Clash Display',sans-serif;font-weight:600;font-size:clamp(64px,14.5vw,260px);letter-spacing:-.05em;line-height:.8;margin-top:clamp(40px,6vw,96px);white-space:nowrap">Raw Draft<span style="color:#ff4b23">.</span></div>
+<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:20px;font-size:13px;color:#8f8b80"><span>change needs structure</span><span>© 2026 Raw Draft Strategy</span></div>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  static NAV = {
+    build: { label: "Build something", hint: "Product, brand, service, business", lead: "I am building", conn: ["", ", at the", " stage, and next need"], tail: ["", "", ""], steps: [
+      { q: "What are you building?", opts: ["A product", "A brand", "A business", "A service", "An experience", "Something else"] },
+      { q: "Where are you?", opts: ["Idea", "Early definition", "Prototype", "Live", "Scaling", "Rethinking"] },
+      { q: "What needs to exist next?", opts: ["Strategy", "Decision", "Evidence", "Prototype", "Positioning", "MVP", "Experiment", "Roadmap"] }] },
+    understand: { label: "Understand something", hint: "Customers, a market, a system", lead: "I need to understand", conn: ["", ". So far:", ". I need"], tail: ["", "", ""], steps: [
+      { q: "What do you need to understand?", opts: ["Customers", "A market", "A problem", "A system", "A behaviour", "Our own organisation"] },
+      { q: "How much do you already know?", opts: ["Almost nothing", "Hunches", "Some research", "Conflicting evidence"] },
+      { q: "What should exist afterwards?", opts: ["Evidence", "Patterns", "Opportunities", "A shared picture"] }] },
+    decide: { label: "Decide something", hint: "A direction, an investment, a first step", lead: "I need to decide", conn: ["", ". The call sits with", ", by"], tail: ["", "", ""], steps: [
+      { q: "What kind of decision?", opts: ["Product direction", "Where to invest", "What to build first", "How to position", "Whether to continue"] },
+      { q: "Who makes the call?", opts: ["One person", "A leadership team", "A committee", "Honestly, unclear"] },
+      { q: "When does it need to be made?", opts: ["This week", "This month", "This quarter"] }] },
+    change: { label: "Change something", hint: "A service, an experience, a brand", lead: "I need to change", conn: ["", ", because", ". First:"], tail: ["", "", ""], steps: [
+      { q: "What needs to change?", opts: ["A service", "A customer experience", "A brand", "A way of working", "An organisation"] },
+      { q: "Why now?", opts: ["It is broken", "It is outdated", "The strategy changed", "AI changes the economics"] },
+      { q: "What do you need first?", opts: ["Diagnosis", "Redesign", "Roadmap", "A pilot"] }] },
+    explore: { label: "Explore what comes next", hint: "Signals, scenarios, futures", lead: "I am exploring the future of", conn: ["", ", looking", " ahead, for"], tail: ["", "", ""], steps: [
+      { q: "What are you looking ahead at?", opts: ["A category", "A technology", "A market", "Our organisation", "Society"] },
+      { q: "How far ahead?", opts: ["2–3 years", "5 years", "10+ years"] },
+      { q: "What would help most?", opts: ["Signals", "Scenarios", "Implications", "Strategic bets"] }] },
+    run: { label: "Run a session", hint: "A workshop or sprint", lead: "I am running a session to", conn: ["", ", in", ", with"], tail: ["", "", " people"], steps: [
+      { q: "What is the session for?", opts: ["Align a team", "Generate ideas", "Make a decision", "Learn from customers", "Explore futures", "Find AI opportunities"] },
+      { q: "How much time?", opts: ["Ninety minutes", "A half day", "A full day", "Several days"] },
+      { q: "How many people?", opts: ["2–5", "6–10", "11–20", "20+"] }] }
+  };
+  static STAGES = [["Creation", "Something begins to take form."], ["Chaos", "Reality introduces uncertainty."], ["Clarity", "Patterns emerge. Decisions become possible."], ["Cadence", "What survives becomes repeatable."]];
+
+  state = { route: this.parse(), ready: !!(window.RD && window.RDL), w: window.innerWidth, nav: { start: null, answers: [] }, drawn: false, cyc: 0, pal: { open: false, q: "", sel: 0 }, menu: false, heroText: "" };
+  palRef = React.createRef();
+
+  parse() { const h = (location.hash || "#/").slice(1); const [p, qs] = h.split("?"); return { parts: (p || "").split("/").filter(Boolean), params: new URLSearchParams(qs || ""), key: h }; }
+  componentDidMount() {
+    this.onHash = () => { const prev = this.state.route; if ((prev.parts[0] || "") !== "work-with-us") this.lastSrc = this.srcOf(prev.parts); this.setState(s => ({ route: this.parse(), menu: false, pal: Object.assign({}, s.pal, { open: false }) })); window.scrollTo(0, 0); };
+    this.onResize = () => this.setState({ w: window.innerWidth });
+    this.onKey = e => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); this.togglePal(); } else if (e.key === "Escape") this.setState(s => ({ pal: Object.assign({}, s.pal, { open: false }), menu: false })); };
+    window.addEventListener("hashchange", this.onHash); window.addEventListener("resize", this.onResize); window.addEventListener("keydown", this.onKey);
+    this.poll = setInterval(() => { if (window.RD && window.RDL) { clearInterval(this.poll); this.setState({ ready: true }); } }, 40);
+  }
+  componentWillUnmount() { window.removeEventListener("hashchange", this.onHash); window.removeEventListener("resize", this.onResize); window.removeEventListener("keydown", this.onKey); clearInterval(this.poll); this.eng && this.eng.destroy(); }
+  componentDidUpdate(_, ps) { if (this.state.pal.open && !ps.pal.open) setTimeout(() => this.palRef.current && this.palRef.current.focus(), 30); }
+  cycHost = el => {
+    if (el === this.cycEl) return;
+    if (this.eng) { this.eng.destroy(); this.eng = null; }
+    this.cycEl = el;
+    if (!el) return;
+    const start = () => { if (!window.RDCycle) return setTimeout(start, 50); if (this.cycEl === el && !this.eng) this.eng = RDCycle.mount(el, { onStage: (i, ph) => this.setState({ cyc: i, cycPh: ph }) }); };
+    start();
+  };
+  srcOf(p) {
+    const p0 = p[0] || "", get = id => window.RDL && RDL.get(id);
+    if (!p0) return { sourceType: "home", sourceTitle: "Homepage" };
+    if (p0 === "library") { const it = get(p[2] || p[1]); return it ? { sourceType: it.type, sourceTitle: it.title } : { sourceType: "library", sourceTitle: "Library" }; }
+    if (p0 === "work" || p0 === "why-it-works" || p0 === "why") { const w = p[1] && window.RD && RD.work.find(x => x.id === p[1]); return { sourceType: "work", sourceTitle: w ? w.title : "Work" }; }
+    if (p0 === "notes") { const n = p[1] && window.RD && RD.notes.find(x => x.id === p[1]); return { sourceType: "note", sourceTitle: n ? n.title : "Notes" }; }
+    return { sourceType: p0, sourceTitle: p0.charAt(0).toUpperCase() + p0.slice(1) };
+  }
+  togglePal = () => this.setState(s => ({ pal: { open: !s.pal.open, q: "", sel: 0 } }));
+  go(h) { location.hash = h.replace(/^#/, ""); }
+
+  rec(start, a) {
+    const P = (m, k, d) => (m[k] || d).slice();
+    let r;
+    if (start === "build") {
+      r = P({ Strategy: ["foundation-sprint", "product-strategy-sprint", "design-sprint"], Decision: ["decision-sprint", "foundation-sprint", "assumption-mapping-workshop"], Evidence: ["research-sprint", "design-sprint", "assumption-mapping"], Prototype: ["design-sprint", "product-strategy-sprint", "concept-testing"], Positioning: ["positioning-sprint", "gtm-sprint", "brand-strategy-sprint"], MVP: ["foundation-sprint", "product-strategy-sprint", "design-sprint"], Experiment: ["assumption-mapping-workshop", "design-sprint", "attempt-loop"], Roadmap: ["product-strategy-sprint", "decision-sprint", "gtm-sprint"] }, a[2], ["foundation-sprint", "product-strategy-sprint", "design-sprint"]);
+      if (a[0] === "A brand" && a[2] !== "Evidence") r = ["brand-strategy-sprint", "positioning-sprint", "pb-brand-foundation"];
+      if (a[0] === "A service") r.unshift("service-design-sprint");
+      if (a[0] === "An experience") r.unshift("experience-strategy-sprint");
+      if (a[1] === "Rethinking" && !r.includes("decision-sprint")) r[2] = "decision-sprint";
+    } else if (start === "understand") {
+      r = P({ Evidence: ["research-sprint", "assumption-mapping-workshop", "design-sprint"], Patterns: ["research-sprint", "pb-research-decisions", "affinity-mapping"], Opportunities: ["opportunity-sprint", "pb-research-decisions", "foundation-sprint"], "A shared picture": ["customer-journey-workshop", "experience-strategy-sprint", "service-design-sprint"] }, a[2], ["research-sprint", "assumption-mapping-workshop", "design-sprint"]);
+      if (a[0] === "A system") r[2] = "systems-map";
+    } else if (start === "decide") {
+      r = P({ "Product direction": ["decision-sprint", "pb-leadership-agree", "foundation-sprint"], "Where to invest": ["opportunity-sprint", "decision-sprint", "scenario-sprint"], "What to build first": ["product-strategy-sprint", "pb-define-mvp", "design-sprint"], "How to position": ["positioning-sprint", "positioning-workshop", "gtm-sprint"], "Whether to continue": ["decision-sprint", "research-sprint", "attempt-loop"] }, a[0], ["decision-sprint", "decision-workshop", "decision-criteria"]);
+      if (a[1] === "Honestly, unclear") r = ["decision-rights"].concat(r); else if (a[2] === "This week") r = ["decision-workshop"].concat(r);
+    } else if (start === "change") {
+      r = P({ "A service": ["service-design-sprint", "customer-journey-workshop", "design-sprint"], "A customer experience": ["experience-strategy-sprint", "pb-rethink-cx", "service-design-sprint"], "A brand": ["brand-strategy-sprint", "positioning-sprint", "pb-brand-foundation"], "A way of working": ["decision-workshop", "service-blueprint", "decision-sprint"], "An organisation": ["decision-sprint", "stakeholder-mapping", "scenario-sprint"] }, a[0], ["decision-sprint", "service-design-sprint", "design-sprint"]);
+      if (a[1] === "AI changes the economics") r.unshift("ai-product-strategy-sprint");
+    } else if (start === "explore") {
+      r = P({ Signals: ["foresight-sprint", "signal-collection", "futures-thinking-sprint"], Scenarios: ["scenario-sprint", "future-scenarios-workshop", "foresight-sprint"], Implications: ["futures-thinking-sprint", "futures-wheel", "scenario-sprint"], "Strategic bets": ["foresight-sprint", "scenario-sprint", "backcasting"] }, a[2], ["foresight-sprint", "scenario-sprint", "futures-thinking-sprint"]);
+      if (a[0] === "A category") r[2] = "pb-future-category";
+    } else {
+      const long = a[1] === "Several days";
+      const m = { "Align a team": [["decision-workshop", "pb-leadership-agree", "facilitation-principles"], ["decision-sprint", "pb-leadership-agree", "decision-rights"]], "Generate ideas": [["silent-ideation", "crazy-8s", "how-might-we"], ["design-sprint", "lightning-demos", "crazy-8s"]], "Make a decision": [["decision-workshop", "note-and-vote", "decision-criteria"], ["decision-sprint", "decision-workshop", "decision-matrix"]], "Learn from customers": [["customer-journey-workshop", "five-act-interview", "affinity-mapping"], ["research-sprint", "five-act-interview", "affinity-mapping"]], "Explore futures": [["future-scenarios-workshop", "futures-wheel", "signal-collection"], ["foresight-sprint", "scenario-sprint", "horizon-scanning"]], "Find AI opportunities": [["ai-opportunity-workshop", "pb-ai-opportunities", "risk-map"], ["ai-product-strategy-sprint", "ai-opportunity-workshop", "design-sprint"]] };
+      r = (m[a[0]] || m["Make a decision"])[long ? 1 : 0].slice();
+    }
+    return RDL.refs([...new Set(r)].slice(0, 3));
+  }
+
+  palRowsData() {
+    const q = this.state.pal.q.trim();
+    if (!q || !window.RDL || !window.RD) return [["Sprints", "#/sprints"], ["Library", "#/library"], ["Playbooks", "#/library?type=playbook"], ["Futures", "#/futures"], ["Facilitation", "#/facilitation"], ["Practice", "#/practice"], ["Work", "#/work"], ["Notes", "#/notes"], ["Builder", "#/builder"], ["Book a workshop", "#/work-with-us"]].map(([label, href]) => ({ tag: "", label, href }));
+    const ql = q.toLowerCase();
+    const res = RDL.search(q, RD.items).slice(0, 6).map(RDL.deco).map(it => ({ tag: "Library", label: it.title, href: it.href }));
+    RD.work.filter(w => [w.title, w.question, w.descriptor, w.sector].join(" ").toLowerCase().includes(ql)).slice(0, 3).forEach(w => res.push({ tag: "Work", label: w.title, href: "#/work/" + w.id }));
+    RD.notes.filter(n => [n.title, n.dek, n.topic].join(" ").toLowerCase().includes(ql)).slice(0, 3).forEach(n => res.push({ tag: "Notes", label: n.title, href: "#/notes/" + n.id }));
+    res.push({ tag: "", label: "All results for " + q, href: "#/library?q=" + encodeURIComponent(q) });
+    return res;
+  }
+
+  renderVals() {
+    const S = this.state, ready = S.ready && window.RD && window.RDL;
+    const p = S.route.parts, p0 = p[0] || "", wide = S.w >= 760;
+    const workish = ["work", "why-it-works", "why"].includes(p0);
+    const pages = ["futures", "facilitation", "why", "why-it-works", "work", "notes", "about", "practice", "sources", "network"];
+    const cur = workish ? (p[1] ? "why" : "hub") : p0 === "notes" ? (p[1] ? "notes" : "hub") : (p0 === "about" ? "practice" : p0);
+    const slugType = p0 === "library" && p[1] && window.RDL ? RDL.SLUG[p[1]] : null;
+    const libList = (p0 === "library" && (!p[1] || (!!slugType && !p[2]))) || p0 === "resources";
+    const sect = { builder: "builder", practice: "about", network: "about", hub: "work", sprints: "library", library: "library", resources: "library", futures: "library", facilitation: "library", sources: "library", why: "work", notes: "work" }[cur] || "";
+    const mk = (label, href, key) => ({ label, href, color: sect === key ? "#ff4b23" : "#ece9e0" });
+    const navLinks = [mk("Builder", "#/builder", "builder"), mk("Library", "#/library", "library"), mk("Work", "#/work", "work"), mk("About us", "#/about", "about")];
+    const rows = this.palRowsData().map((r, i) => Object.assign(r, { bg: i === S.pal.sel ? "#1a1917" : "transparent", tc: i === S.pal.sel ? "#ff4b23" : "#8f8b80", hover: () => this.setState(s => ({ pal: Object.assign({}, s.pal, { sel: i }) })) }));
+
+    const N = Component.NAV, st = S.nav.start ? N[S.nav.start] : null, ans = S.nav.answers;
+    const done = !!st && ans.length >= st.steps.length;
+    const starts = Object.keys(N).map(k => ({ label: N[k].label, hint: N[k].hint, pick: () => this.setState({ nav: { start: k, answers: [] }, drawn: false }) }));
+    const lc = s => /^[A-Z0-9]{2,}/.test(s) ? s : s.charAt(0).toLowerCase() + s.slice(1);
+    const sentence = st ? [{ t: st.lead + " ", c: "#ece9e0" }].concat(ans.flatMap((a, i) => [{ t: st.conn[i] ? st.conn[i] + " " : "", c: "#ece9e0" }, { t: lc(a) + st.tail[i], c: "#ff4b23" }])) : [];
+    if (st && !done) sentence.push({ t: "…", c: "#5a5850" });
+    const step = st && !done ? st.steps[ans.length] : null;
+    const stepOpts = step ? step.opts.map(o => ({ label: o, pick: () => { const na = ans.concat([o]); this.setState({ nav: { start: S.nav.start, answers: na } }); if (na.length >= st.steps.length) setTimeout(() => this.setState({ drawn: true }), 60); } })) : [];
+    const rec = done && ready ? this.rec(S.nav.start, ans) : [];
+    const LBL = ["Recommended", "Then", "Possibly"];
+    const recSteps = rec.map((r, i) => Object.assign(r, { label: LBL[i], dot: i === 0 ? "#ff4b23" : "#0b0b0a", size: i === 0 ? "clamp(34px,4vw,60px)" : "clamp(24px,2.6vw,36px)", op: S.drawn ? 1 : 0, ty: S.drawn ? "0" : "12px", delay: (0.25 + i * 0.35) + "s" }));
+    const leave = []; rec.slice(0, 2).forEach((r, i) => (r.outputs || []).slice(0, i ? 2 : 3).forEach(o => { if (!leave.includes(o)) leave.push(o); }));
+
+    const CYC = [["Creation", "निर्माण", "Possibility acquires form.", "A difference appears. A direction begins."], ["Chaos", "अराजकता", "The idea meets reality.", "Parts collide, fail and reorganise."], ["Clarity", "स्पष्टता", "Structure begins to hold.", "Smaller parts bind into usable systems."], ["Cadence", "प्रवाह", "The system learns to run.", "It absorbs change without losing itself."]];
+    const ci = S.cyc == null ? 0 : S.cyc, ph = S.cycPh || "", osc = ph === "Chaos ⇄ Clarity", dist = ph === "A new disturbance";
+    const cycNow = ci < 0 ? { label: "01 to 04", title: "From possibility to working system", dev: "निर्माण · अराजकता · स्पष्टता · प्रवाह", statement: "Possibility acquires form, meets reality, starts to hold, then learns to run.", support: "" }
+      : osc ? { label: "02 ⇄ 03. Chaos ⇄ Clarity", title: ci === 2 ? "Clarity" : "Chaos", dev: ci === 2 ? CYC[2][1] : CYC[1][1], statement: "Some parts start to hold while others still break.", support: "Order comes from repeated pressure." }
+      : dist ? { label: "04 to 01. A new condition", title: "Cadence", dev: CYC[3][1], statement: "Something new arrives.", support: "The system adapts, and the next draft begins." }
+      : { label: "0" + (ci + 1) + ". " + CYC[ci][0], title: CYC[ci][0], dev: CYC[ci][1], statement: CYC[ci][2], support: CYC[ci][3] };
+    const cycVals = { cycNow, cycTitleSize: ci < 0 ? "clamp(36px,4vw,60px)" : "clamp(56px,6.4vw,104px)", cycCols: S.w >= 900 ? "minmax(0,7fr) minmax(0,4fr)" : "minmax(0,1fr)", cycH: S.w >= 900 ? "clamp(380px,58vh,620px)" : "48vh", stageCols: S.w >= 720 ? "repeat(4,minmax(0,1fr))" : "repeat(2,minmax(0,1fr))",
+      stages: CYC.map(([k], i) => { const act = ci === i || (osc && (i === 1 || i === 2)); return { n: "0" + (i + 1), k, loop: i === 1 ? "⇄" : "", rule: act ? "#ff4b23" : "#2a2925", c: act || ci < 0 ? "#ece9e0" : "#5a5850", pick: () => { this.eng && this.eng.goTo(i); this.setState({ cyc: i, cycPh: k }); } }; }) };
+
+    return {
+      isWide: wide, isNarrow: !wide, navLinks, menuOpen: S.menu && !wide,
+      menuSearch: () => this.setState({ menu: false, pal: { open: true, q: "", sel: 0 } }),
+      toggleMenu: () => this.setState(s => ({ menu: !s.menu })),
+      togglePal: this.togglePal, palOpen: S.pal.open, palRef: this.palRef, palQ: S.pal.q, palRows: rows,
+      closePal: () => this.setState(s => ({ pal: Object.assign({}, s.pal, { open: false }) })), stop: e => e.stopPropagation(),
+      onPalQ: e => this.setState({ pal: { open: true, q: e.target.value, sel: 0 } }),
+      onPalKey: e => { const n = rows.length; if (e.key === "ArrowDown") { e.preventDefault(); this.setState(s => ({ pal: Object.assign({}, s.pal, { sel: (s.pal.sel + 1) % n }) })); } else if (e.key === "ArrowUp") { e.preventDefault(); this.setState(s => ({ pal: Object.assign({}, s.pal, { sel: (s.pal.sel - 1 + n) % n }) })); } else if (e.key === "Enter" && rows[S.pal.sel]) this.go(rows[S.pal.sel].href); },
+
+      isHome: !p0, isSprints: p0 === "sprints", isLibrary: libList, isItem: p0 === "library" && !libList, isPage: pages.includes(p0), isWorkFlow: p0 === "work-with-us", isBuilder: p0 === "builder", builderAdd: S.route.params.get("add") || "", builderQ: S.route.params.get("q") || "", builderTpl: S.route.params.get("tpl") || "", hubTab: p0 === "notes" ? "notes" : (S.route.params.get("tab") || "work"), srcType: (this.lastSrc || {}).sourceType || "direct", srcTitle: (this.lastSrc || {}).sourceTitle || "",
+      routeKey: S.route.key, rid: p0 === "library" ? (p[2] || p[1] || "") : (p[1] || ""), view: cur, libQ: S.route.params.get("q") || "", libType: p0 === "resources" ? "resource" : (slugType || S.route.params.get("type") || "all"),
+      libGoal: S.route.params.get("goal") || "all", libStage: S.route.params.get("stage") || "all",
+
+      navAtStart: !st, navInFlow: !!st, navInStep: !!st && !done, navDone: done, navProgress: st && !done ? "Step " + (ans.length + 2) + " of 4" : "", starts, sentence,
+      sentSize: done ? "clamp(26px,3.2vw,48px)" : "clamp(32px,4.8vw,76px)", stepQ: step ? step.q : "", stepOpts,
+      navBack: () => this.setState(s => s.nav.answers.length ? { nav: { start: s.nav.start, answers: s.nav.answers.slice(0, -1) }, drawn: false } : { nav: { start: null, answers: [] }, drawn: false }),
+      navReset: () => this.setState({ nav: { start: null, answers: [] }, drawn: false }),
+      recSteps, pathH: S.drawn ? "calc(100% - 40px)" : "0px", recLeave: leave.slice(0, 5), recFirstHref: rec[0] ? rec[0].href : "#/library",
+
+      ...cycVals, cycHost: this.cycHost,
+
+      heroText: S.heroText, onHeroText: e => this.setState({ heroText: e.target.value }), onHeroKey: e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); this.go("#/builder" + (S.heroText.trim() ? "?q=" + encodeURIComponent(S.heroText.trim()) : "")); } },
+      heroGo: e => { e && e.preventDefault && e.preventDefault(); this.go("#/builder" + (S.heroText.trim() ? "?q=" + encodeURIComponent(S.heroText.trim()) : "")); },
+      heroStarts: [["Choose a product direction", "We have several possible product directions and need to choose one."], ["Align a leadership team", "Our leadership team cannot agree on priorities."], ["Make sense of research", "I need to make sense of a set of customer interviews."], ["Explore an opportunity", "We want to explore whether a new opportunity is worth pursuing."], ["Plan a strategy session", "I need to plan a strategy session with our team."], ["Test an idea", "We have an idea and need to find out whether people actually need it."]].map(([l, t]) => ({ l, pick: () => this.setState({ heroText: t }) })),
+      heroVisD: S.w >= 1100 ? "block" : "none", prevCols: S.w >= 900 ? "minmax(0,1fr) minmax(0,2fr) minmax(0,1.1fr)" : "minmax(0,1fr)", prevSide: S.w >= 900 ? "flex" : "none", sysCols: S.w >= 900 ? "minmax(0,1fr) 28px minmax(0,1fr) 28px minmax(0,1fr)" : "minmax(0,1fr)", sysArrow: S.w >= 900 ? "flex" : "none",
+      homeTpls: window.RDB && RDB.TPL ? [0, 1, 2, 3, 4, 5].map(i => { const t = RDB.TPL[i]; const mins = t.seq.filter(x => x[0] !== "§" && x[0] !== "day").reduce((a2, x) => a2 + (x[1] || 0), 0), days = t.seq.filter(x => x[0] === "day").length + 1; return { name: t.name, href: "#/builder?tpl=" + i, rot: [-.5, .4, -.3, .6, -.4, .3][i] + "deg", time: days > 1 ? days + " days" : (mins >= 60 ? Math.floor(mins / 60) + "h" + (mins % 60 ? " " + (mins % 60) + "m" : "") : mins + " min"), people: ["3 to 8", "2 to 6", "4 to 10", "6 to 12", "5 to 8", "6 to 16"][i], out: ["A recorded decision", "A positioning direction and its assumptions", "Patterns and opportunities", "Agreed priorities with owners", "A tested product direction", "Scenarios and strategic implications"][i] }; }) : [],
+      homeSprints: ready ? RDL.refs(["foundation-sprint", "product-strategy-sprint", "ai-product-strategy-sprint", "foresight-sprint"]) : [],
+      homeWork: ready ? RD.work.slice(0, 3).map(RDL.workD) : [],
+      homeNotes: ready ? RD.notes.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3).map(RDL.noteD) : [],
+      footCols: [["About us", [["About us", "#/about"], ["Network", "#/network"], ["Sources", "#/sources"]]], ["Library", [["Builder", "#/builder"], ["Sprints", "#/sprints"], ["Workshops", "#/library/workshops"], ["Frameworks", "#/library/frameworks"], ["Activities", "#/library/activities"], ["Facilitation", "#/facilitation"], ["Futures", "#/futures"]]], ["Work", [["Work", "#/work"], ["Notes", "#/notes"]]], ["Connect", [["Book a workshop", "#/work-with-us"], ["LinkedIn", ready && RD.links && RD.links.linkedin], ["Substack", ready && RD.links && RD.links.substack]]]].map(([h2, ls]) => ({ h: h2, links: ls.filter(l => l[1]).map(([label, href]) => ({ label, href, target: href.startsWith("http") ? "_blank" : "_self" })) }))
+    };
+  }
+}
+</script>
+</body>
+</html>

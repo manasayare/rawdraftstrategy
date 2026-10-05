@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<article data-screen-label="Library item" style="padding:clamp(20px,3vw,36px) clamp(16px,3vw,40px) 0;font-family:'Satoshi',sans-serif;color:#ece9e0">
+<sc-if value="{{ notFound }}" hint-placeholder-val="{{ false }}">
+<div style="padding:80px 0"><p style="font-family:'Clash Display',sans-serif;font-size:48px;margin:0">Not in the library yet.</p><a href="#/library" style="font-size:15px">Back to library</a></div>
+</sc-if>
+<sc-if value="{{ found }}" hint-placeholder-val="{{ true }}">
+
+<div data-noprint="1" style="font-size:15px;color:#8f8b80"><a href="#/library" style="color:#8f8b80;text-decoration:none">Library</a> / <a href="{{ typeHref }}" style="color:#8f8b80;text-decoration:none">{{ typePl }}</a></div>
+
+<header style="padding:clamp(28px,4vw,56px) 0 clamp(24px,3vw,40px);display:grid;grid-template-columns:{{ heroCols }};gap:24px clamp(32px,4vw,64px);align-items:center">
+<div style="min-width:0">
+<div style="font-size:15px;color:#8f8b80">{{ kindLabel }}</div>
+<h1 style="margin:10px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:{{ titleSize }};letter-spacing:-.04em;line-height:.92;max-width:16ch;text-wrap:balance">{{ d.title }}</h1>
+<p style="margin:18px 0 0;max-width:52ch;font-size:clamp(18px,1.6vw,22px);color:#c9c5ba;line-height:1.4">{{ d.shortDesc }}</p>
+<sc-if value="{{ hasNotice }}" hint-placeholder-val="{{ false }}"><p style="margin:16px 0 0;font-size:16px;color:#ff4b23">{{ notice }}</p></sc-if>
+<div data-noprint="1" style="display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;margin-top:28px">
+<a href="{{ builderHref }}" style="display:inline-flex;align-items:center;min-height:46px;border:1px solid #4a4843;color:#ece9e0;padding:0 16px;text-decoration:none;font-size:16px" style-hover="border-color:#ece9e0;color:#ece9e0">{{ builderLabel }}</a>
+<sc-if value="{{ hasRun }}" hint-placeholder-val="{{ false }}"><button onClick="{{ goRun }}" style="background:#ff4b23;color:#0b0b0a;border:0;padding:0 18px;min-height:46px;cursor:pointer;font-size:16px;font-weight:500" style-hover="background:#ece9e0">{{ runLabel }}</button></sc-if>
+<sc-if value="{{ hasFv }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;border:1px solid #4a4843">
+<button onClick="{{ setOverview }}" style="background:{{ ovBg }};color:{{ ovFg }};border:0;padding:0 14px;min-height:44px;cursor:pointer;font-size:15px">Overview</button>
+<button onClick="{{ setFv }}" style="background:{{ fvBg }};color:{{ fvFg }};border:0;padding:0 14px;min-height:44px;cursor:pointer;font-size:15px">Facilitator view</button>
+</div>
+</sc-if>
+<button onClick="{{ doPrint }}" style="background:none;border:0;color:#8f8b80;padding:0;min-height:44px;cursor:pointer;font-size:15px" style-hover="color:#ece9e0">Print</button>
+</div>
+</div>
+<sc-if value="{{ hasHeroVis }}" hint-placeholder-val="{{ false }}"><rd-visual type="{{ d.visual }}" variant="{{ d.visualVariant }}" seed="{{ d.vseed }}" label="{{ d.title }}" style="display:block;width:100%;height:clamp(180px,18vw,260px);border:1px solid #2a2925;background:#0f0f0e"></rd-visual></sc-if>
+</header>
+
+<sc-if value="{{ hasGlance }}" hint-placeholder-val="{{ true }}">
+<section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:20px 32px;padding:24px 0;border-top:1px solid #ece9e0;border-bottom:1px solid #2a2925">
+<sc-for list="{{ glance }}" as="g" hint-placeholder-count="6"><div><div style="font-size:14px;color:#8f8b80">{{ g.k }}</div><div style="margin-top:4px;font-size:17px;line-height:1.3">{{ g.v }}</div></div></sc-for>
+</section>
+</sc-if>
+
+<sc-if value="{{ tocMobile }}" hint-placeholder-val="{{ false }}">
+<div data-noprint="1" style="border-bottom:1px solid #2a2925">
+<button onClick="{{ toggleToc }}" style="display:flex;justify-content:space-between;width:100%;background:none;border:0;color:#ece9e0;min-height:48px;padding:0;cursor:pointer;font-size:16px;font-weight:500"><span>On this page</span><span style="color:#8f8b80">{{ tocSign }}</span></button>
+<sc-if value="{{ tocOpen }}" hint-placeholder-val="{{ false }}"><div style="padding:0 0 12px"><sc-for list="{{ toc }}" as="t" hint-placeholder-count="6"><button onClick="{{ t.go }}" style="display:block;width:100%;text-align:left;background:none;border:0;color:#c9c5ba;min-height:40px;padding:0;cursor:pointer;font-size:16px">{{ t.label }}</button></sc-for></div></sc-if>
+</div>
+</sc-if>
+
+<div style="display:flex;gap:56px;align-items:flex-start">
+<sc-if value="{{ tocWide }}" hint-placeholder-val="{{ false }}">
+<nav data-noprint="1" style="flex:0 0 170px;position:sticky;top:84px;padding-top:28px;display:flex;flex-direction:column;gap:2px">
+<sc-for list="{{ toc }}" as="t" hint-placeholder-count="8"><button onClick="{{ t.go }}" style="text-align:left;background:none;border:0;color:#8f8b80;padding:5px 0;cursor:pointer;font-size:15px" style-hover="color:#ece9e0">{{ t.label }}</button></sc-for>
+</nav>
+</sc-if>
+<div style="flex:1 1 auto;min-width:0;max-width:980px">
+
+<sc-for list="{{ secs }}" as="s" hint-placeholder-count="5">
+<section id="{{ s.id }}" style="padding:clamp(24px,3vw,36px) 0;border-bottom:1px solid #2a2925">
+<div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px">
+<h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(22px,2.2vw,30px);letter-spacing:-.015em;color:{{ s.hc }}">{{ s.title }}</h2>
+<sc-if value="{{ s.collapsible }}" hint-placeholder-val="{{ false }}"><button data-noprint="1" onClick="{{ s.toggle }}" style="background:none;border:0;color:#8f8b80;min-height:40px;cursor:pointer;font-size:15px">{{ s.toggleLabel }}</button></sc-if>
+</div>
+<sc-if value="{{ s.show }}" hint-placeholder-val="{{ true }}">
+
+<sc-if value="{{ s.isBig }}" hint-placeholder-val="{{ false }}"><p style="margin:16px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(28px,4vw,60px);letter-spacing:-.03em;line-height:1;max-width:18ch">{{ s.text }}</p></sc-if>
+
+<sc-for list="{{ s.sub }}" as="b" hint-placeholder-count="1">
+<div style="margin-top:18px">
+<sc-if value="{{ b.hasH }}" hint-placeholder-val="{{ false }}"><h3 style="margin:0 0 6px;font-size:15px;font-weight:500;color:{{ b.hc }}">{{ b.h }}</h3></sc-if>
+<sc-if value="{{ b.hasText }}" hint-placeholder-val="{{ false }}"><p style="margin:0;max-width:66ch;font-size:18px;line-height:1.5">{{ b.text }}</p></sc-if>
+<sc-if value="{{ b.hasItems }}" hint-placeholder-val="{{ false }}"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:0 32px"><sc-for list="{{ b.items }}" as="x" hint-placeholder-count="3"><div style="padding:9px 0;border-top:1px solid #1d1c1a;font-size:17px;line-height:1.4">{{ x }}</div></sc-for></div></sc-if>
+<sc-if value="{{ b.hasPairs }}" hint-placeholder-val="{{ false }}"><div style="display:grid;grid-template-columns:minmax(120px,200px) minmax(0,1fr)"><sc-for list="{{ b.pairs }}" as="p" hint-placeholder-count="3"><span style="padding:9px 16px 9px 0;border-top:1px solid #1d1c1a;font-size:15px;color:#8f8b80">{{ p.k }}</span><span style="padding:9px 0;border-top:1px solid #1d1c1a;font-size:17px;line-height:1.4;color:{{ p.c }}">{{ p.v }}</span></sc-for></div></sc-if>
+<sc-if value="{{ b.hasLinks }}" hint-placeholder-val="{{ false }}"><div><sc-for list="{{ b.links }}" as="r" hint-placeholder-count="2"><a href="{{ r.href }}" style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px;padding:10px 0;border-top:1px solid #1d1c1a;text-decoration:none" style-hover="color:#ff4b23"><span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:20px">{{ r.title }}</span><span style="font-size:14px;color:#8f8b80">{{ r.tag }}</span></a></sc-for></div></sc-if>
+</div>
+</sc-for>
+
+<sc-if value="{{ s.isSteps }}" hint-placeholder-val="{{ false }}">
+<ol style="margin:16px 0 0;padding:0;list-style:none;max-width:72ch"><sc-for list="{{ s.steps }}" as="x" hint-placeholder-count="4"><li style="display:flex;gap:18px;align-items:baseline;padding:12px 0;border-top:1px solid #1d1c1a"><span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:24px;color:#ff4b23;width:30px;flex:none">{{ x.n }}</span><span style="font-size:18px;line-height:1.45">{{ x.t }}</span></li></sc-for></ol>
+<sc-if value="{{ s.hasSay }}" hint-placeholder-val="{{ false }}"><p style="margin:16px 0 0;max-width:66ch;padding-left:16px;border-left:2px solid #ff4b23;font-size:18px;line-height:1.5"><span style="color:#8f8b80">Say: </span>“{{ s.say }}”</p></sc-if>
+</sc-if>
+
+<sc-if value="{{ s.isAgenda }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:12px">
+<sc-for list="{{ s.rows }}" as="a" hint-placeholder-count="6">
+<div>
+<sc-if value="{{ a.hasDay }}" hint-placeholder-val="{{ false }}"><div style="margin-top:20px;padding:8px 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:20px;color:#ff4b23">{{ a.day }}</div></sc-if>
+<div style="display:grid;grid-template-columns:{{ agCols }};gap:4px 20px;align-items:baseline;padding:14px 0;border-top:1px solid #2a2925;opacity:{{ a.op }}">
+<span style="font-size:15px;color:#8f8b80">{{ a.t }}</span>
+<div style="min-width:0">
+<div style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:21px;line-height:1.15">{{ a.name }} <span style="font-family:'Satoshi',sans-serif;font-size:14px;font-weight:400;color:#8f8b80">{{ a.optional }}</span></div>
+<sc-if value="{{ a.hasPurpose }}" hint-placeholder-val="{{ false }}"><div style="font-size:16px;color:#c9c5ba;margin-top:4px">{{ a.purpose }}</div></sc-if>
+<sc-if value="{{ a.hasOutput }}" hint-placeholder-val="{{ false }}"><div style="font-size:15px;color:#8f8b80;margin-top:6px">Output: <span style="color:#ece9e0">{{ a.output }}</span></div></sc-if>
+<sc-if value="{{ a.hasRefs }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:6px"><sc-for list="{{ a.refs }}" as="r" hint-placeholder-count="1"><a href="{{ r.href }}" style="font-size:15px">{{ r.title }}</a></sc-for></div></sc-if>
+<sc-if value="{{ a.hasDetail }}" hint-placeholder-val="{{ false }}"><button data-noprint="1" onClick="{{ a.toggle }}" style="margin-top:6px;background:none;border:0;padding:4px 0;color:#ff4b23;cursor:pointer;font-size:15px">{{ a.toggleLabel }}</button></sc-if>
+<sc-if value="{{ a.open }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:8px;display:grid;grid-template-columns:minmax(110px,170px) minmax(0,1fr)"><sc-for list="{{ a.detail }}" as="p" hint-placeholder-count="3"><span style="padding:8px 16px 8px 0;border-top:1px solid #1d1c1a;font-size:14px;color:#8f8b80">{{ p.k }}</span><span style="padding:8px 0;border-top:1px solid #1d1c1a;font-size:16px;line-height:1.45">{{ p.v }}</span></sc-for></div>
+</sc-if>
+</div>
+<span style="font-size:15px;color:#8f8b80;text-align:right">{{ a.dur }}</span>
+</div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ s.isFail }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:12px"><sc-for list="{{ s.fails }}" as="f" hint-placeholder-count="2"><div style="padding:14px 0;border-top:1px solid #1d1c1a;max-width:72ch"><div style="font-size:18px;font-weight:500">{{ f.p }}</div><sc-if value="{{ f.hasWhy }}" hint-placeholder-val="{{ false }}"><div style="font-size:16px;color:#8f8b80;margin-top:6px">Why it happens: {{ f.why }}</div><div style="font-size:16px;margin-top:4px">What to do: {{ f.what }}</div></sc-if></div></sc-for></div>
+</sc-if>
+
+<sc-if value="{{ s.isFormats }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:16px">
+<div role="tablist" aria-label="Formats" style="display:flex;flex-wrap:wrap;gap:4px 24px;border-bottom:1px solid #2a2925">
+<sc-for list="{{ s.fmts }}" as="x" hint-placeholder-count="3"><button role="tab" aria-selected="{{ x.aria }}" onClick="{{ x.pick }}" style="background:none;border:0;border-bottom:2px solid {{ x.rule }};margin-bottom:-1px;color:{{ x.c }};min-height:48px;padding:0;cursor:pointer;font-size:16px;font-weight:500;text-align:left" style-hover="color:#ece9e0">{{ x.name }}</button></sc-for>
+</div>
+<div style="display:grid;grid-template-columns:{{ s.fmtCols }};gap:20px clamp(24px,3vw,48px);padding-top:20px">
+<div style="min-width:0">
+<rd-visual type="sprint_format" variant="{{ s.fmt.vis }}" label="{{ s.fmt.daysLabel }}" seed="{{ s.fmt.id }}" style="display:block;width:100%;height:110px;border:1px solid #2a2925;background:#0f0f0e"></rd-visual>
+<div style="margin-top:10px;font-size:14px;color:#8f8b80">{{ s.fmt.meta }}</div>
+<sc-if value="{{ s.fmt.hasIntro }}" hint-placeholder-val="{{ false }}"><p style="margin:8px 0 0;font-size:16px;line-height:1.5;color:#c9c5ba">{{ s.fmt.intro }}</p></sc-if>
+<sc-if value="{{ s.fmt.hasUrl }}" hint-placeholder-val="{{ false }}"><a href="{{ s.fmt.url }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;min-height:44px;font-size:15px">View the original format</a></sc-if>
+</div>
+<div style="min-width:0">
+<sc-if value="{{ s.fmt.hasShape }}" hint-placeholder-val="{{ false }}"><div style="border-top:1px solid #ece9e0"><sc-for list="{{ s.fmt.shape }}" as="r" hint-placeholder-count="4"><div style="display:grid;grid-template-columns:minmax(80px,140px) minmax(0,1fr);gap:4px 16px;padding:10px 0;border-bottom:1px solid #1d1c1a;font-size:16px"><span style="color:#8f8b80">{{ r.k }}</span><span>{{ r.v }}</span></div></sc-for></div></sc-if>
+<sc-for list="{{ s.fmt.fields }}" as="fl" hint-placeholder-count="2"><div style="margin-top:18px"><div style="font-size:14px;color:#8f8b80">{{ fl.k }}</div><ul style="margin:6px 0 0;padding-left:18px;font-size:16px;line-height:1.5"><sc-for list="{{ fl.items }}" as="i" hint-placeholder-count="3"><li>{{ i }}</li></sc-for></ul></div></sc-for>
+</div>
+</div>
+<p style="margin:16px 0 0;font-size:14px;color:#8f8b80">Same sprint, different delivery. The method stays the same; the calendar, preparation and between-session work change.</p>
+</div>
+</sc-if>
+
+<sc-if value="{{ s.isAssets }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:12px"><sc-for list="{{ s.assets }}" as="a" hint-placeholder-count="2"><div style="border-top:1px solid #1d1c1a;padding:12px 0">
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px 24px">
+<sc-if value="{{ a.hasVis }}" hint-placeholder-val="{{ false }}"><rd-visual type="{{ a.vis }}" seed="{{ a.title }}" style="display:block;width:56px;height:34px;flex:none;border:1px solid #2a2925"></rd-visual></sc-if>
+<div style="flex:1 1 220px;min-width:0"><div style="font-size:17px">{{ a.title }}</div><div style="font-size:14px;color:#8f8b80;margin-top:2px">{{ a.meta }}</div></div>
+<div style="display:flex;flex-wrap:wrap;gap:4px 20px;align-items:center">
+<sc-for list="{{ a.actions }}" as="x" hint-placeholder-count="1"><a href="{{ x.href }}" target="{{ x.target }}" rel="noopener" style="display:inline-flex;align-items:center;min-height:44px;font-size:15px;font-weight:500">{{ x.label }}</a></sc-for>
+<sc-if value="{{ a.isPrompt }}" hint-placeholder-val="{{ false }}"><button onClick="{{ a.toggle }}" aria-expanded="{{ a.openAria }}" style="background:none;border:0;color:#ece9e0;min-height:44px;padding:0;cursor:pointer;font-size:15px;font-weight:500;border-bottom:1px solid #ff4b23">{{ a.toggleLabel }}</button></sc-if>
+<sc-if value="{{ a.planned }}" hint-placeholder-val="{{ false }}"><span style="font-size:14px;color:#8f8b80">In preparation</span></sc-if>
+</div>
+</div>
+<sc-if value="{{ a.open }}" hint-placeholder-val="{{ false }}">
+<div style="margin:16px 0 8px;display:grid;gap:20px;max-width:760px">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:16px 32px">
+<div><div style="font-size:14px;color:#8f8b80">Purpose</div><div style="margin-top:4px;font-size:16px;line-height:1.45">{{ a.p.purpose }}</div></div>
+<div><div style="font-size:14px;color:#8f8b80">When to use it</div><div style="margin-top:4px;font-size:16px;line-height:1.45">{{ a.p.when }}</div></div>
+</div>
+<div><div style="font-size:14px;color:#8f8b80">What context to provide</div><ul style="margin:6px 0 0;padding-left:18px;font-size:16px;line-height:1.5"><sc-for list="{{ a.p.context }}" as="c" hint-placeholder-count="3"><li>{{ c }}</li></sc-for></ul></div>
+<div>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><span style="font-size:14px;color:#8f8b80">Prompt</span><button onClick="{{ a.copy }}" style="background:{{ a.copyBg }};color:#0b0b0a;border:0;min-height:40px;padding:0 14px;cursor:pointer;font-size:14px;font-weight:500">{{ a.copyLabel }}</button></div>
+<pre style="margin:8px 0 0;padding:16px;background:#121210;border:1px solid #2a2925;color:#ece9e0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13.5px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere">{{ a.p.prompt }}</pre>
+</div>
+<div><div style="font-size:14px;color:#8f8b80">Expected output</div><div style="margin-top:4px;font-size:16px;line-height:1.45">{{ a.p.output }}</div></div>
+<div><div style="font-size:14px;color:#8f8b80">Check by hand</div><ul style="margin:6px 0 0;padding-left:18px;font-size:16px;line-height:1.5"><sc-for list="{{ a.p.verify }}" as="c" hint-placeholder-count="2"><li>{{ c }}</li></sc-for></ul></div>
+<div style="font-size:14px;color:#8f8b80">{{ a.p.author }}. Draft, not yet tested in a session. Use with any agent you prefer.</div>
+</div>
+</sc-if>
+</div></sc-for></div>
+</sc-if>
+
+</sc-if>
+</section>
+</sc-for>
+
+<div data-noprint="1" style="padding:clamp(32px,4vw,56px) 0 0">
+<p style="margin:0 0 18px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(26px,3.2vw,44px);letter-spacing:-.03em;line-height:1">{{ cta }}</p>
+<a href="#/work-with-us" style="display:inline-block;background:#ff4b23;color:#0b0b0a;padding:12px 18px;text-decoration:none;font-weight:500" style-hover="background:#ece9e0;color:#0b0b0a">{{ ctaBtn }}</a>
+</div>
+</div>
+</div>
+</sc-if>
+</article>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { ready: !!(window.RD && window.RDL), fv: false, open: {}, step: {}, toc: false, w: window.innerWidth, prompt: {}, copied: null, fmt: null };
+  componentDidMount() {
+    this.onResize = () => this.setState({ w: window.innerWidth }); window.addEventListener("resize", this.onResize);
+    if (!this.state.ready) this.poll = setInterval(() => { if (window.RD && window.RDL) { clearInterval(this.poll); this.setState({ ready: true }); } }, 40);
+  }
+  componentDidUpdate(pp) { if (pp.rid !== this.props.rid) this.setState({ fv: false, open: {}, step: {}, toc: false }); }
+  componentWillUnmount() { window.removeEventListener("resize", this.onResize); clearInterval(this.poll); }
+  go(id) { const el = document.getElementById(id); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 76, behavior: "smooth" }); this.setState({ toc: false }); }
+  renderVals() {
+    const ok = this.state.ready && window.RD && window.RDL, S = this.state;
+    const it = ok ? RDL.get(this.props.rid) : null;
+    if (!it) return { notFound: ok, found: false, d: {}, glance: [], toc: [], secs: [] };
+    const L = RDL, ix = L.index(), d = L.deco(it), so = ix.srcBy[it.org], T = it.type;
+    const num = i => String(i + 1).padStart(2, "0");
+    const OPS = ["sprint", "workshop", "playbook", "game"].includes(T), ACT = ["activity", "icebreaker", "energiser", "reflection"].includes(T);
+    const obs = it.status === "observed" || it.undocumented;
+    const uniq = a => [...new Set(a.filter(Boolean))];
+    const B = { h: (h, hc) => ({ h, hc: hc || "#8f8b80" }) };
+    const items = (h, arr, hc) => arr && arr.length ? Object.assign(B.h(h, hc), { hasH: !!h, hasItems: true, items: arr }) : null;
+    const text = (h, t) => t ? Object.assign(B.h(h), { hasH: !!h, hasText: true, text: t }) : null;
+    const pairs = (h, arr) => { const p = (arr || []).filter(x => x && x[1]).map(([k, v]) => ({ k, v: Array.isArray(v) ? v.join(", ") : v, c: /^(Required)$/.test(v) ? "#ff4b23" : "#ece9e0" })); return p.length ? Object.assign(B.h(h), { hasH: !!h, hasPairs: true, pairs: p }) : null; };
+    const links = (h, arr) => arr && arr.length ? Object.assign(B.h(h), { hasH: !!h, hasLinks: true, links: arr }) : null;
+    const secs = [];
+    const sec = (id, title, sub, o) => { o = o || {}; sub = (sub || []).filter(Boolean); if (!sub.length && !o.kind && !o.text) return; secs.push(Object.assign({ id, title, sub, op: o.op !== false, collapsible: !!o.collapse, hc: "#ece9e0" }, o)); };
+    const tag = arr => arr.map(r => Object.assign(r, { tag: r.tag || r.typeLabel }));
+
+    if (obs) sec("overview", "Source", [text("", "Detailed methodology not yet documented in this library. View the original source.")]);
+    if (it.question) sec("overview", "The question", [], { kind: "big", text: it.question, op: false });
+    if (T === "framework") { if (it.principle || it.short) sec("overview", "Principle", [], { kind: "big", text: it.principle || it.short, op: false }); }
+    if (T === "methodology") sec("overview", "What it is", [text("", it.short), items("What it is good for", it.goodFor), items("Core principles", it.principles)], { op: false });
+    if (T === "playbook") sec("overview", "Situation", [text("", it.situation), pairs("", [["Expected outcome", it.outcome], ["Total time", it.time], ["Participants", it.participants || it.groupSize]])], { op: false });
+    if (ACT && it.purpose) sec("purpose", "Purpose", [text("", it.purpose)], { op: false });
+    if (T === "framework") sec("explains", "What it helps explain", [text("", it.explains)], { op: false });
+    sec("when", OPS ? "When to use it" : "Use it when", [items("", it.useWhen), items(OPS ? "Do not use it when" : "Avoid it when", it.avoidWhen, "#ff4b23")], { op: false });
+
+    // Before
+    const pr = it.prereqs || {}, tl = it.tools || {};
+    const prepare = [
+      pairs("Prerequisites", [["Decision owner", pr.decider], ["Existing research", pr.research], ["Customer access", pr.customers]]),
+      it.before && it.before.length ? Object.assign(B.h("Before you start"), { hasH: true, hasPairs: true, pairs: it.before.map(([k, v]) => ({ k, v, c: "#ece9e0" })) }) : items("Before you start", it.beforeYouStart),
+      items("Participants", pr.roles || (OPS ? [it.participants, it.groupSize ? "Group size: " + it.groupSize : null].filter(Boolean) : null)),
+      items("What comes into the room", it.inputs), items("Pre-work", pr.prework),
+      pairs("Tools and materials", [["Physical", tl.physical], ["Digital", tl.digital], ["Special materials", tl.special]]),
+      items(ACT || T === "framework" ? "Materials" : "", ACT ? it.materials : null), text("Space", pr.space)
+    ];
+    if (T !== "methodology" && T !== "resource") sec("prepare", OPS ? "Before" : "Materials", prepare.filter(Boolean).length > 1 || OPS ? prepare : prepare);
+
+    // Run
+    const runId = "run";
+    let runLabel = "";
+    if (it.agenda && it.agenda.length) {
+      let lastDay = null;
+      const rows = it.agenda.map((a, i) => { const open = S.fv || !!S.step[i]; const r = a.ref ? L.deco(L.get(a.ref)) : null; const det = a.detail || {};
+        const row = { t: a.t || "", name: a.name, dur: a.mins ? a.mins + " min" : "", purpose: a.purpose || "", hasPurpose: !!a.purpose, output: a.output || "", hasOutput: !!a.output, refs: r ? [r] : [], hasRefs: !!r, optional: "", op: a.purpose ? 1 : 0.55,
+          day: a.day || "", hasDay: !!a.day && a.day !== lastDay, hasDetail: !!a.detail, open: open && !!a.detail, toggleLabel: open ? "Hide instructions" : "Instructions",
+          toggle: () => this.setState(s => ({ step: Object.assign({}, s.step, { [i]: !s.step[i] }) })),
+          detail: [["Facilitator", det.facilitator], ["Participants", det.participants], ["Say", det.say ? "“" + det.say + "”" : null], ["Materials", (det.materials || []).join(", ")], ["Watch for", det.watch], ["Close the step", det.close]].filter(x => x[1]).map(([k, v]) => ({ k, v })) };
+        lastDay = a.day; return row; });
+      secs.push({ id: runId, title: "Agenda", sub: [], kind: "agenda", rows, op: true }); runLabel = "Run this";
+    } else if (T === "playbook" && it.sequence) {
+      const rows = it.sequence.map(([name, ref, does, output, skip, stage], i) => { const r = ref ? L.deco(L.get(ref)) : null; return { t: stage || num(i), name, dur: "", purpose: does, hasPurpose: !!does, output, hasOutput: !!output, refs: r ? [r] : [], hasRefs: !!r, optional: skip ? "Optional" : "", op: 1, hasDay: false, hasDetail: false, open: false, detail: [] }; });
+      secs.push({ id: runId, title: "Sequence", sub: [items("", it.skip ? ["Can be skipped: " + it.skip] : null)].filter(Boolean), kind: "agenda", rows, op: true }); runLabel = "See the sequence";
+    } else if (T === "sprint" && it.steps && it.steps.length && typeof it.steps[0] === "object") {
+      const rows = it.steps.map((s, i) => ({ t: num(i), name: s.name, dur: "", purpose: s.purpose, hasPurpose: !!s.purpose, output: s.artifact, hasOutput: !!s.artifact, refs: L.refs(s.methods), hasRefs: !!(s.methods && s.methods.length), optional: "", op: 1, hasDay: false, hasDetail: false, open: false, detail: [] }));
+      secs.push({ id: runId, title: "How it works", sub: [], kind: "agenda", rows, op: true }); runLabel = "See how it works";
+    } else if (T === "methodology" && it.flow) {
+      secs.push({ id: runId, title: "How work typically flows", sub: [], kind: "steps", steps: it.flow.map((t, i) => ({ n: num(i), t })), op: true });
+    } else if (it.steps && it.steps.length && typeof it.steps[0] === "string") {
+      secs.push({ id: runId, title: T === "framework" ? "How it works" : "How to run it", sub: [], kind: "steps", steps: it.steps.map((t, i) => ({ n: num(i), t })), say: it.say || "", hasSay: !!it.say, op: true }); runLabel = T === "framework" ? "" : "Run this";
+    }
+    if (it.phases) sec("phases", "The cycle", it.phases.map(p => Object.assign(items(p.k.charAt(0) + p.k.slice(1).toLowerCase(), p.e, "#ff4b23"), {})).concat([text("Each attempt ends in", (it.decision || []).join(", "))]));
+    if (it.principlesRef) sec("principles", "Principles", [pairs("", (RD.principles || []).map(([t, dd]) => [t, dd]))]);
+    if (it.game) sec("game", it.gameKind === "Simulation" ? "Simulation structure" : "Game structure", [pairs("", it.game), items("Debrief", it.debrief, "#ff4b23"), it.template ? text("", "This is the structure. A complete game will be published when tested.") : null]);
+    if (T === "methodology") sec("methods", "Common methods within it", [links("", tag(L.refs(it.uses))), links("Workshops that use it", tag(L.refs(ix.byMethodology[it.id]))), pairs("Tools and materials", [["Special materials", (it.tools || {}).special]]), links("Learning resources", tag(L.refs(it.resources)))]);
+    if (T === "framework") { sec("model", "Visual model", [text("", it.model)]); sec("example", "Example", [text("", it.example)]); sec("apply", "How to apply it", [text("", it.apply)]); }
+    sec("outputs", "What you leave with", [items("", it.outputs)]);
+    {
+      const nm = s => String(s).toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, ""), me = [nm(it.title), nm(String(it.title).split(" (")[0].split(" / ")[0])];
+      const find = t => RD.items.find(x => nm(x.title) === nm(t) || nm(String(x.title).split(" (")[0].split(" / ")[0]) === nm(t));
+      (RD.comparisons || []).forEach((c, ci) => { const mine = me.includes(nm(c.a)) ? "a" : me.includes(nm(c.b)) ? "b" : null; if (!mine) return;
+        const other = mine === "a" ? c.b : c.a, o = find(other);
+        sec("compare" + ci, "Not to be confused with " + other, [items(it.title, mine === "a" ? c.pa : c.pb), items(other, mine === "a" ? c.pb : c.pa), o ? links("", tag(L.refs([o.id]))) : null]); });
+      if (T === "sprint" || T === "workshop") { const c = (RD.comparisons || []).find(x => nm(x.a) === "workshop" && nm(x.b) === "sprint"); if (c) sec("compare-type", T === "sprint" ? "A sprint, not a workshop" : "A workshop, not a sprint", [items("Workshop", c.pa), items("Sprint", c.pb)]); }
+    }
+    if (T === "sprint" && window.RD_SPRINT) {
+      const SP = window.RD_SPRINT, key = it.title.replace(/ Sprint$/i, "").toLowerCase(), first = key.split(" ")[0];
+      const hit = f => f.name.toLowerCase().includes(key) || f.fields.some(x => /best for|use for|good candidates|useful for|use when/i.test(x.k) && x.items.some(i => i.toLowerCase().includes(key) || (first.length > 4 && i.toLowerCase().includes(first))));
+      let fs = SP.formats.filter(f => ["Sprint format", "Calendar shape", "Raw Draft default", "Context"].includes(f.group) && hit(f));
+      if (it.origin !== "external" || !fs.length) ["two-day-intensive-follow-up", "distributed-sprint", "executive-sprint"].forEach(id => { const f = SP.formats.find(x => x.id === id); if (f && !fs.includes(f)) fs.push(f); });
+      fs = fs.slice(0, 5);
+      if (fs.length) { const cur = fs.find(f => f.id === S.fmt) || fs[0];
+        const fmt = Object.assign({}, cur, { daysLabel: String(cur.days || (cur.vis === "intensive" ? 2 : 3)), meta: [cur.group, cur.origin === "external" ? "External format, credited to its creators" : "Raw Draft format", cur.days ? cur.days + (cur.days === 1 ? " day" : " days") : ""].filter(Boolean).join(" · "), hasIntro: !!cur.intro, hasShape: cur.shape.length > 0, url: cur.urls[0] || "", hasUrl: !!cur.urls[0], fields: cur.fields.slice(0, 5) });
+        secs.push({ id: "formats", title: "Choose a format", sub: [], kind: "formats", op: true, fmt, fmtCols: S.w >= 900 ? "minmax(0,4fr) minmax(0,7fr)" : "minmax(0,1fr)",
+          fmts: fs.map(f => ({ name: f.name.replace(/ Format$/, ""), aria: f === cur ? "true" : "false", rule: f === cur ? "#ff4b23" : "transparent", c: f === cur ? "#ece9e0" : "#8f8b80", pick: () => this.setState({ fmt: f.id }) })) }); }
+      const nm2 = s => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
+      const cmp = SP.compare.filter(p => p.some(x => nm2(x) === nm2(it.title))).map(p => p.find(x => nm2(x) !== nm2(it.title))).map(t => RD.items.find(x => nm2(x.title) === nm2(t))).filter(Boolean);
+      const seqs = SP.sequences.filter(q => q.steps.some(x => nm2(x).includes(nm2(it.title))));
+      sec("sprint-context", "Where it fits", [cmp.length ? links("Often compared with", tag(L.refs(cmp.map(x => x.id)))) : null].concat(seqs.map(q => items(q.name, q.steps))));
+    }
+    if (it.blueprint && it.blueprint.length) sec("known", "What is known so far", it.blueprint.map(b => b.items ? items(b.h, b.items) : text(b.h, b.text)).filter(Boolean).concat([text("", "Compiled from public sources during Raw Draft's research. Not a full guide yet.")]));
+    sec("notes", "Facilitator notes", [items("", it.facilitatorNotes || it.notes)], { collapse: true });
+    const fails = it.failuresX ? it.failuresX.map(f => ({ p: f.p, why: f.why, what: f.what, hasWhy: true })) : (it.failures || it.limitations || []).map(p => ({ p, hasWhy: false }));
+    if (fails.length) secs.push({ id: "failures", title: T === "framework" || T === "methodology" ? "Limitations" : ACT ? "Watch for" : "Common failure modes", sub: [], kind: "fail", fails, collapse: true, op: true });
+    sec("adapt", "Adaptations", [it.variations ? pairs("", it.variations) : items("", it.adaptations)], { collapse: true });
+    const af = it.afterSession || {};
+    sec("after", "After", [items("Document", af.document), items("Within 24 hours", af.h24), items("Within a week", af.week), items("Test", af.test), links("What typically comes next", tag(L.refs(af.next)))]);
+    {
+      const rows = [], ext = (label, href) => href ? { label, href, target: "_blank" } : null;
+      (it.assets || []).forEach(a => {
+        const mode = a.mode || "rawdraft", live = a.status === "available";
+        const actions = mode === "board" ? [live && ext("Open board", a.viewUrl), live && ext("Duplicate board", a.duplicateUrl)] : [live && a.downloadUrl ? { label: "Download", href: a.downloadUrl, target: "_self" } : null];
+        const acts = actions.filter(Boolean);
+        rows.push({ hasVis: true, vis: mode === "board" ? "sticky_scatter" : /deck|card/i.test(a.format) ? "cards_deck" : "doc_page", title: a.title, meta: mode === "board" ? (a.platform || a.format) + " board · Raw Draft" : a.format + " · Raw Draft", actions: acts, planned: !acts.length });
+      });
+      (RD.prompts || []).filter(p => p.related.includes(it.id)).forEach(p => {
+        const open = !!S.prompt[p.id], copied = S.copied === p.id;
+        rows.push({ hasVis: true, vis: "prompt_text", title: p.title, meta: "Prompt · " + p.author, actions: [], planned: false, isPrompt: true, p, open, openAria: open ? "true" : "false", toggleLabel: open ? "Hide prompt" : "View prompt",
+          toggle: () => this.setState(st => ({ prompt: Object.assign({}, st.prompt, { [p.id]: !st.prompt[p.id] }) })),
+          copy: () => { try { navigator.clipboard.writeText(p.prompt); } catch (e) {} this.setState({ copied: p.id }); clearTimeout(this.cpT); this.cpT = setTimeout(() => this.setState({ copied: null }), 1600); },
+          copyLabel: copied ? "Copied" : "Copy prompt", copyBg: copied ? "#ece9e0" : "#ff4b23" });
+      });
+      if (T !== "resource" && T !== "methodology") L.refs(uniq((it.resources || []).concat(ix.supportedBy[it.id] || []))).filter(r => r.type === "resource").slice(0, 3).forEach(r => {
+        const raw = L.get(r.id) || {}, fmt = (raw.format || "").toLowerCase(), role = /course|training|certif/.test(fmt) ? "Training" : /template|board|canvas/.test(fmt) ? "Template" : "Deeper reading";
+        rows.push({ title: r.title, meta: role + " · " + (raw.creator || (ix.srcBy[raw.org] || {}).name || "External"), actions: [{ label: "Details", href: r.href, target: "_self" }, ext("View original", raw.sourceUrl)].filter(Boolean), planned: false });
+      });
+      const ou = it.sourceUrl || (so && so.url);
+      if (ou && it.origin !== "rawdraft") rows.push({ title: so ? so.name : (it.creator || "Original source"), meta: "Original source · External", actions: [ext("View original", ou)], planned: false });
+      if (rows.length) secs.push({ id: "resources", title: "Resources", sub: [], kind: "assets", assets: rows.map(x => Object.assign({ isPrompt: false, open: false, p: {}, hasVis: false, vis: "" }, x)), op: true });
+    }
+    if (T === "resource") sec("resource", "Details", [pairs("", [["Creator", it.creator], ["Organization", so && so.name], ["Format", it.format], ["Best for", it.recommendedFor], ["Level", it.level], ["Rights", it.rights]]), links("", (it.sourceUrl || (so && so.url)) ? [{ title: "Go to original source", href: it.sourceUrl || so.url, tag: "External link" }] : null)]);
+
+    // Related
+    const rel = [];
+    const R2 = (h, arr) => arr && arr.length && rel.push(links(h, tag(arr)));
+    if (window.RDN && (T === "sprint" || T === "workshop")) R2("People who can join", RDN.people.filter(x => !x.placeholder && ((x.relatedSprints || []).includes(it.id) || (x.relatedMethods || []).includes(it.id))).map(x => ({ title: x.name, href: "#/network", tag: x.role })));
+    R2("Used in work", L.works(ix.inWork[it.id]).map(w => ({ title: w.title, href: w.href, tag: w.type })));
+    R2("Related notes", L.notesOf(ix.inNotes[it.id]).map(n => ({ title: n.title, href: n.href, tag: n.dateLabel })));
+    if (T === "sprint") R2("Methods used", L.refs(uniq((it.steps || []).flatMap(s => (s && s.methods) || []).concat((it.agenda || []).map(a => a.ref)))));
+    if (T === "sprint") R2("Related sprints", [].concat(L.refs(it.before).map(r => Object.assign(r, { tag: "Before" })), L.refs(it.after && Array.isArray(it.after) ? it.after : []).map(r => Object.assign(r, { tag: "After" })), L.refs(it.alternative).map(r => Object.assign(r, { tag: "Alternative" }))));
+    if (it.methodology) R2("Methodology", L.refs([it.methodology]));
+    if (T !== "methodology" && it.uses && it.uses.length) R2(T === "framework" ? "Built from" : "Methods used", L.refs(it.uses));
+    if (T === "playbook") R2("Related sprints", L.refs(it.sprints));
+    if (T !== "sprint" && T !== "resource") R2("Used in", L.refs(ix.usedIn[it.id]));
+    R2("Appears in playbooks", L.refs((ix.inPlaybook[it.id] || []).filter(x => x !== it.id)));
+    R2("Related", L.refs(it.related));
+    if (rel.length) secs.push({ id: "related", title: "Related", sub: rel, op: false });
+    const url = it.sourceUrl || (so && so.url) || null;
+    sec("source", "Source", [pairs("", [["Origin", d.oLabel + ". " + d.oDesc], ["Status", d.sLabel + ". " + d.sDesc], ["Creator", it.creator || "Not recorded"], ["Organization", so ? so.name : "Not recorded"], ["Source link", url || "Not recorded"], ["Attribution", it.attribution], ["Licence", it.rights || "Not specified"], ["Reproduction", it.origin === "rawdraft" ? "Raw Draft material" : "Summarised and linked. Not reproduced."], ["Last verified", it.lastVerified || "Not yet verified"]])], { collapse: true, op: false });
+
+    // Collapse + facilitator view
+    const shown = secs.filter(s => !S.fv || s.op);
+    shown.forEach(s => {
+      const isOpen = S.fv ? true : s.collapsible ? !!S.open[s.id] : true;
+      Object.assign(s, { show: isOpen, toggleLabel: isOpen ? "Hide" : "Show", toggle: () => this.setState(st => ({ open: Object.assign({}, st.open, { [s.id]: !st.open[s.id] }) })),
+        isBig: s.kind === "big", isSteps: s.kind === "steps", isAgenda: s.kind === "agenda", isFail: s.kind === "fail", isAssets: s.kind === "assets", isFormats: s.kind === "formats", fmts: s.fmts || [], fmt: s.fmt || { shape: [], fields: [] }, fmtCols: s.fmtCols || "1fr",
+        steps: s.steps || [], rows: s.rows || [], fails: s.fails || [], assets: s.assets || [], text: s.text || "", hasSay: !!s.hasSay, say: s.say || "" });
+      s.sub = (s.sub || []).map(b => Object.assign({ hasH: false, hasText: false, hasItems: false, hasPairs: false, hasLinks: false, items: [], pairs: [], links: [] }, b));
+    });
+    const complex = OPS || T === "methodology";
+    const toc = shown.map(s => ({ label: s.title, go: () => this.go(s.id) }));
+    const glance = [["Time", d.timeLabel || it.time], ["People", d.peopleLabel], ["Facilitator", d.levelLabel], ["Format", d.deliveryLabel], ["Stage", d.stageLabel], ["Energy", it.energy], ["Vulnerability", it.vulnerability], ["Remote", it.remote], ["Movement", it.movement], ["Familiarity", it.familiarity], ["Output", (it.outputs || []).slice(0, 2).join(", ")]].filter(r => r[1] && r[1] !== "Variable" || (r[0] === "Time" && r[1])).map(([k, v]) => ({ k, v }));
+    const hasRun = !!runLabel && secs.some(s => s.id === runId);
+    const notice = obs ? "" : it.summaryOnly ? "Summarised for reference. See the original source for the method." : it.incomplete ? "In development. The full method will be published once tested." : it.template ? "Structure only. No complete version is published yet." : it.status === "draft" ? "Draft. Still being tested." : "";
+    const CTA_BTN = { sprint: "Run this with us", workshop: "Run this with us" }[T] || "Book a workshop";
+    const CTA = { sprint: "Want to run this together?", playbook: "Need this adapted to your situation?", workshop: "Want to run this together?" };
+    const fvOn = S.fv;
+    return {
+      notFound: false, found: true, d, kindLabel: T === "playbook" ? "Suggested playbook" : d.typeLabel + (it.methodology ? " · " + (L.get(it.methodology) || {}).title : ""), typePl: L.TYPE[T].pl, typeHref: "#/library/" + L.TYPE[T].slug,
+      titleSize: it.title.length > 26 ? "clamp(40px,6vw,96px)" : "clamp(48px,8vw,132px)",
+      hasNotice: !!notice, notice, hasRun, runLabel, goRun: () => this.go(runId), hasFv: !!(it.agenda && it.agenda.length),
+      setOverview: () => this.setState({ fv: false }), setFv: () => this.setState({ fv: true }),
+      ovBg: fvOn ? "transparent" : "#ece9e0", ovFg: fvOn ? "#ece9e0" : "#0b0b0a", fvBg: fvOn ? "#ece9e0" : "transparent", fvFg: fvOn ? "#0b0b0a" : "#ece9e0",
+      doPrint: () => window.print(), builderHref: "#/builder?add=" + it.id, builderLabel: T === "sprint" ? "Adapt in Builder" : T === "workshop" ? "Adapt this workshop" : T === "playbook" ? "Use this playbook" : T === "framework" ? "Build around this" : "Add to Builder", hasHeroVis: S.w >= 900 && d.visual !== "plain_type", heroCols: S.w >= 900 && d.visual !== "plain_type" ? "minmax(0,7fr) minmax(0,4fr)" : "minmax(0,1fr)",
+      hasGlance: glance.length > 0, glance,
+      tocWide: complex && S.w >= 1100 && toc.length > 3, tocMobile: complex && S.w < 1100 && toc.length > 3, toc, tocOpen: S.toc, tocSign: S.toc ? "−" : "+", toggleToc: () => this.setState(s => ({ toc: !s.toc })),
+      secs: shown, agCols: S.w < 640 ? "52px minmax(0,1fr) 0px" : "70px minmax(0,1fr) 70px",
+      ctaBtn: CTA_BTN, cta: CTA[T] || "Working through something like this?"
+    };
+  }
+}
+</script>
+</body>
+</html>

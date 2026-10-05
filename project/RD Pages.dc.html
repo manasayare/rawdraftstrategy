@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="padding:clamp(28px,4vw,56px) clamp(16px,3vw,40px) 0;font-family:'Satoshi',sans-serif;color:#ece9e0">
+
+<sc-if value="{{ isHub }}" hint-placeholder-val="{{ false }}">
+<section data-screen-label="Work">
+<h1 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(52px,8.6vw,140px);letter-spacing:-.04em;line-height:.86">Work</h1>
+<p style="margin:20px 0 0;max-width:48ch;font-size:19px;color:#c9c5ba">What we have worked on, and what we are thinking about.</p>
+<div role="tablist" aria-label="Work and notes" style="display:flex;gap:clamp(24px,4vw,48px);margin-top:clamp(32px,5vw,64px);border-bottom:1px solid #2a2925">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3"><button role="tab" aria-selected="{{ t.aria }}" onClick="{{ t.pick }}" style="display:flex;align-items:baseline;gap:8px;background:none;border:0;border-bottom:2px solid {{ t.rule }};margin-bottom:-1px;color:{{ t.c }};min-height:52px;padding:0;cursor:pointer;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(22px,2.4vw,32px);letter-spacing:-.02em" style-hover="color:#ece9e0">{{ t.label }}<span style="font-family:'Satoshi',sans-serif;font-weight:400;font-size:14px;color:#8f8b80;letter-spacing:0">{{ t.n }}</span></button></sc-for>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:12px 28px;align-items:flex-end;margin-top:24px">
+<input type="search" placeholder="Search work and notes" aria-label="Search work and notes" value="{{ hq }}" onChange="{{ onHq }}" style="flex:1 1 280px;min-width:0;background:none;border:0;border-bottom:1px solid #ece9e0;outline:none;color:#ece9e0;font-family:'Satoshi',sans-serif;font-size:20px;padding:10px 0">
+<sc-if value="{{ fBtn }}" hint-placeholder-val="{{ false }}"><button onClick="{{ toggleF }}" aria-expanded="{{ fAria }}" style="background:none;border:0;border-bottom:1px solid #4a4843;color:#ece9e0;min-height:44px;padding:0;cursor:pointer;font-size:16px">{{ fLabel }}</button></sc-if>
+</div>
+<sc-if value="{{ showF }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;gap:4px;margin-top:16px">
+<sc-for list="{{ fGroups }}" as="g" hint-placeholder-count="2"><div style="display:flex;flex-wrap:wrap;gap:0 20px;align-items:baseline"><span style="flex:0 0 64px;font-size:14px;color:#8f8b80">{{ g.k }}</span><sc-for list="{{ g.opts }}" as="o" hint-placeholder-count="4"><button onClick="{{ o.pick }}" aria-pressed="{{ o.aria }}" style="background:none;border:0;border-bottom:1px solid {{ o.rule }};color:{{ o.c }};min-height:40px;padding:0;cursor:pointer;font-size:15px" style-hover="color:#ece9e0">{{ o.label }}</button></sc-for></div></sc-for>
+</div>
+</sc-if>
+<div style="margin-top:clamp(24px,3vw,40px);border-top:1px solid #ece9e0">
+<sc-for list="{{ results }}" as="r" hint-placeholder-count="6">
+<a href="{{ r.href }}" style="display:grid;grid-template-columns:{{ rowCols }};gap:8px clamp(20px,3vw,40px);align-items:baseline;padding:22px 0;border-bottom:1px solid #2a2925;color:#ece9e0;text-decoration:none" style-hover="color:#ff4b23">
+<span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(24px,2.4vw,34px);letter-spacing:-.02em;line-height:1.05;text-wrap:balance">{{ r.title }}</span>
+<span style="font-size:17px;line-height:1.4;color:#c9c5ba">{{ r.desc }}</span>
+<span style="font-size:14px;line-height:1.5;color:#8f8b80">{{ r.meta }}</span>
+</a>
+</sc-for>
+<sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}"><div style="padding:32px 0;font-size:17px;color:#c9c5ba">Nothing matches that yet. <button onClick="{{ clearAll }}" style="background:none;border:0;color:#ece9e0;border-bottom:1px solid #ff4b23;padding:0;cursor:pointer;font-size:17px">Clear search and filters</button></div></sc-if>
+</div>
+<p style="margin:16px 0 0;font-size:14px;color:#8f8b80">Work entries are anonymised placeholders until real project notes are published.</p>
+</section>
+</sc-if>
+
+<sc-if value="{{ isWork }}" hint-placeholder-val="{{ false }}">
+<article data-screen-label="Work entry">
+<a href="#/work" style="font-size:15px;color:#8f8b80;text-decoration:none">Work</a>
+<div style="max-width:1100px;margin-top:clamp(32px,5vw,72px)">
+<div style="font-size:15px;color:#8f8b80">{{ w.meta }}</div>
+<h1 style="margin:12px 0 0;font-family:'Clash Display',sans-serif;font-size:clamp(48px,7.4vw,120px);font-weight:500;letter-spacing:-.04em;line-height:.9">{{ w.title }}</h1>
+<p style="margin:18px 0 0;font-size:clamp(18px,1.6vw,22px);color:#c9c5ba">{{ w.descriptor }}</p>
+<sc-if value="{{ w.isDemo }}" hint-placeholder-val="{{ false }}"><p style="margin:24px 0 0;font-size:14px;color:#ff4b23">Demo entry. Placeholder content for layout.</p></sc-if>
+</div>
+<p style="margin:clamp(48px,7vw,110px) 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(34px,5vw,80px);letter-spacing:-.035em;line-height:.98;max-width:18ch;color:#ff4b23">{{ w.question }}</p>
+<sc-for list="{{ wSecs }}" as="s" hint-placeholder-count="2">
+<section style="display:flex;flex-wrap:wrap;gap:12px 40px;padding:28px 0;border-top:1px solid #2a2925;max-width:1100px">
+<h2 style="flex:0 0 200px;margin:0;font-size:15px;font-weight:500;color:#8f8b80">{{ s.k }}</h2>
+<div style="flex:1 1 480px;max-width:66ch;font-size:19px;line-height:1.6">{{ s.v }}</div>
+</section>
+</sc-for>
+<sc-if value="{{ hasArtifacts }}" hint-placeholder-val="{{ false }}">
+<section style="padding:clamp(32px,5vw,72px) 0;border-top:1px solid #2a2925">
+<h2 style="margin:0 0 24px;font-size:15px;font-weight:500;color:#8f8b80">Artifacts</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:40px 32px">
+<sc-for list="{{ artifacts }}" as="a" hint-placeholder-count="2">
+<figure style="margin:0;grid-column:{{ a.span }}">
+<div style="aspect-ratio:{{ a.ratio }};background:repeating-linear-gradient(135deg,#121210 0 14px,#0f0f0d 14px 28px);border:1px solid #2a2925;display:flex;align-items:flex-end;padding:16px"><span style="font-size:13px;color:#5a5850">{{ a.kind }} image</span></div>
+<figcaption style="margin-top:12px;max-width:60ch"><span style="font-weight:500">{{ a.kind }}.</span> <span style="color:#8f8b80">{{ a.caption }}</span></figcaption>
+</figure>
+</sc-for>
+</div>
+</section>
+</sc-if>
+<sc-for list="{{ wSecs2 }}" as="s" hint-placeholder-count="1">
+<section style="display:flex;flex-wrap:wrap;gap:12px 40px;padding:28px 0;border-top:1px solid #2a2925;max-width:1100px">
+<h2 style="flex:0 0 200px;margin:0;font-size:15px;font-weight:500;color:#8f8b80">{{ s.k }}</h2>
+<div style="flex:1 1 480px;max-width:66ch;font-size:19px;line-height:1.6">{{ s.v }}</div>
+</section>
+</sc-for>
+<sc-for list="{{ wRel }}" as="g" hint-placeholder-count="3">
+<section style="display:flex;flex-wrap:wrap;gap:8px 40px;padding:20px 0;border-top:1px solid #2a2925">
+<h2 style="flex:0 0 200px;margin:0;font-size:15px;font-weight:500;color:#8f8b80">{{ g.k }}</h2>
+<div style="flex:1 1 480px;display:flex;flex-direction:column;gap:6px"><sc-for list="{{ g.items }}" as="r" hint-placeholder-count="2"><a href="{{ r.href }}" style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:22px;text-decoration:none" style-hover="color:#ff4b23">{{ r.title }}</a></sc-for></div>
+</section>
+</sc-for>
+<div style="padding:clamp(40px,5vw,72px) 0 0;border-top:1px solid #ece9e0">
+<p style="margin:0 0 20px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(26px,3.2vw,48px);letter-spacing:-.03em">Have something similar to figure out?</p>
+<a href="#/work-with-us" style="display:inline-block;background:#ff4b23;color:#0b0b0a;padding:14px 20px;text-decoration:none;font-weight:500" style-hover="background:#ece9e0;color:#0b0b0a">Book a workshop</a>
+</div>
+</article>
+</sc-if>
+
+<sc-if value="{{ isNote }}" hint-placeholder-val="{{ false }}">
+<article data-screen-label="Note" style="max-width:720px;margin:0 auto">
+<a href="#/notes" style="font-size:15px;color:#8f8b80;text-decoration:none">Work / Notes</a>
+<h1 style="margin:clamp(36px,5vw,72px) 0 0;font-family:'Clash Display',sans-serif;font-size:clamp(40px,6vw,80px);font-weight:500;letter-spacing:-.04em;line-height:.95">{{ nt.title }}</h1>
+<p style="margin:20px 0 0;font-size:24px;line-height:1.3;color:#c9c5ba">{{ nt.dek }}</p>
+<p style="margin:20px 0 48px;font-size:15px;color:#8f8b80">{{ nt.dateLabel }} · {{ nt.topic }}</p>
+<sc-for list="{{ ntBody }}" as="b" hint-placeholder-count="2"><p style="margin:0 0 1.2em;font-size:20px;line-height:1.65;text-wrap:pretty">{{ b }}</p></sc-for>
+<sc-if value="{{ nt.isDraft }}" hint-placeholder-val="{{ false }}"><p style="margin:24px 0 0;font-size:14px;color:#ff4b23">Draft placeholder.</p></sc-if>
+<sc-if value="{{ hasSources }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:48px;padding-top:16px;border-top:1px solid #2a2925"><h2 style="margin:0 0 8px;font-size:15px;font-weight:500;color:#8f8b80">Sources</h2>
+<sc-for list="{{ ntSources }}" as="s" hint-placeholder-count="1"><p style="margin:6px 0;font-size:15px"><a href="{{ s.url }}" target="_blank" rel="noopener">{{ s.title }}</a> <span style="color:#8f8b80">{{ s.publisher }}</span></p></sc-for></div>
+</sc-if>
+<sc-for list="{{ ntRel }}" as="g" hint-placeholder-count="2">
+<div style="margin-top:40px;padding-top:16px;border-top:1px solid #2a2925"><h2 style="margin:0 0 8px;font-size:15px;font-weight:500;color:#8f8b80">{{ g.k }}</h2>
+<sc-for list="{{ g.items }}" as="r" hint-placeholder-count="2"><a href="{{ r.href }}" style="display:block;padding:8px 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:22px;text-decoration:none" style-hover="color:#ff4b23">{{ r.title }}</a></sc-for></div>
+</sc-for>
+<div style="margin-top:56px;padding-top:24px;border-top:1px solid #ece9e0">
+<p style="margin:0 0 16px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:28px">Working through something related?</p>
+<a href="#/work-with-us" style="display:inline-block;background:#ff4b23;color:#0b0b0a;padding:12px 18px;text-decoration:none;font-weight:500" style-hover="background:#ece9e0;color:#0b0b0a">Book a workshop</a>
+</div>
+</article>
+</sc-if>
+
+<sc-if value="{{ isFutures }}" hint-placeholder-val="{{ false }}">
+<section data-screen-label="Futures">
+<h1 style="margin:0;font-family:'Clash Display',sans-serif;font-size:clamp(52px,8.6vw,140px);font-weight:500;letter-spacing:-.04em;line-height:.86">Futures</h1>
+<p style="margin:20px 0 0;font-size:19px;color:#c9c5ba">Signals, scenarios and backcasting for long-range decisions.</p>
+<div style="display:flex;flex-wrap:wrap;margin-top:clamp(40px,6vw,80px);border-top:1px solid #ece9e0">
+<sc-for list="{{ fPhases }}" as="p" hint-placeholder-count="5">
+<div onMouseEnter="{{ p.enter }}" style="flex:1 1 200px;min-width:0;padding:18px 18px 24px;border-right:1px solid #2a2925;background:{{ p.bg }};transition:background .2s">
+<div style="font-family:'Clash Display',sans-serif;font-weight:600;font-size:clamp(26px,2.6vw,40px);letter-spacing:-.02em;color:{{ p.c }}">{{ p.k }} <span style="color:#5a5850;font-weight:400">{{ p.arrow }}</span></div>
+<div style="font-size:15px;color:#c9c5ba;margin:4px 0 14px">{{ p.d }}</div>
+<sc-for list="{{ p.topics }}" as="t" hint-placeholder-count="5"><div style="font-size:14px;padding:5px 0;border-top:1px solid #1d1c1a;color:#8f8b80">{{ t }}</div></sc-for>
+<div style="margin-top:16px">
+<sc-for list="{{ p.items }}" as="r" hint-placeholder-count="3"><a href="{{ r.href }}" style="display:block;padding:7px 0;border-top:1px solid #2a2925;text-decoration:none;font-size:15px" style-hover="color:#ff4b23">{{ r.title }} <span style="font-size:13px;color:#8f8b80">{{ r.typeLabel }}</span></a></sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+<h2 style="margin:clamp(48px,6vw,88px) 0 0;padding-bottom:12px;border-bottom:1px solid #ece9e0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(28px,3vw,44px)">Futures sprints</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))">
+<sc-for list="{{ fSprints }}" as="s" hint-placeholder-count="3">
+<a href="{{ s.href }}" style="display:block;padding:24px 24px 28px 0;border-bottom:1px solid #2a2925;text-decoration:none" style-hover="color:#ff4b23">
+<span style="font-size:14px;color:#8f8b80">{{ s.title }}</span>
+<span style="display:block;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(24px,2.4vw,34px);letter-spacing:-.02em;line-height:1.05;margin:10px 0">{{ s.question }}</span>
+<span style="display:block;font-size:15px;color:#c9c5ba">{{ s.distinct }}</span>
+</a>
+</sc-for>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{ isFacil }}" hint-placeholder-val="{{ false }}">
+<section data-screen-label="Facilitation">
+<h1 style="margin:0;font-family:'Clash Display',sans-serif;font-size:clamp(52px,8.6vw,140px);font-weight:500;letter-spacing:-.04em;line-height:.86">Learn facilitation.</h1>
+<p style="margin:20px 0 0;max-width:46ch;font-size:19px;color:#c9c5ba">Methods matter. So does knowing how to run the room when the method stops working.</p>
+<div style="margin-top:clamp(40px,6vw,80px)">
+<sc-for list="{{ modules }}" as="m" hint-placeholder-count="6">
+<div style="display:flex;flex-wrap:wrap;gap:16px 40px;padding:28px 0;border-top:1px solid #2a2925">
+<h2 style="flex:0 0 240px;margin:0;font-family:'Clash Display',sans-serif;font-weight:600;font-size:clamp(24px,2.4vw,34px);letter-spacing:-.02em">{{ m.k }}</h2>
+<div style="flex:1 1 320px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0 24px">
+<sc-for list="{{ m.lessons }}" as="l" hint-placeholder-count="5"><div style="padding:9px 0;border-bottom:1px solid #1d1c1a;font-size:16px">{{ l }}</div></sc-for>
+</div>
+<div style="flex:0 1 260px">
+<sc-for list="{{ m.items }}" as="r" hint-placeholder-count="2"><a href="{{ r.href }}" style="display:block;padding:7px 0;border-top:1px solid #2a2925;text-decoration:none;font-size:15px" style-hover="color:#ff4b23">{{ r.title }} <span style="font-size:13px;color:#8f8b80">{{ r.typeLabel }}</span></a></sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+<p style="margin:0;padding-top:16px;border-top:1px solid #2a2925;font-size:14px;color:#8f8b80">Lessons are in preparation. We do not offer a certification.</p>
+<h2 style="margin:clamp(48px,6vw,88px) 0 0;padding-bottom:12px;border-bottom:1px solid #ece9e0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(28px,3vw,44px)"><a href="#/library/facilitation-principles" style="text-decoration:none">Facilitation principles</a></h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:0 32px">
+<sc-for list="{{ principles }}" as="p" hint-placeholder-count="7"><div style="padding:16px 0;border-bottom:1px solid #2a2925"><div style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:22px">{{ p.t }}</div><div style="font-size:15px;color:#c9c5ba;margin-top:6px">{{ p.d }}</div></div></sc-for>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{ isPractice }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="About us">
+<section style="max-width:1100px">
+<div style="display:flex;flex-wrap:wrap;gap:6px 18px;font-size:15px;color:#8f8b80"><span>About us</span><a href="#/network" style="color:#c9c5ba">Network</a></div>
+<h1 style="margin:14px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(48px,8vw,128px);letter-spacing:-.045em;line-height:.88;text-wrap:balance">Figure out what to do before you start doing it.</h1>
+<p style="margin:clamp(24px,3vw,40px) 0 0;max-width:46ch;font-size:clamp(19px,1.7vw,23px);line-height:1.45">You have a question. The work needed to answer it can be designed. Builder and the Library let you do that yourself. When the question needs more, I design and run it with you.</p>
+</section>
+<section style="padding:clamp(56px,8vw,120px) 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:24px clamp(32px,6vw,96px)">
+<h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em;line-height:1">Why work this way</h2>
+<div style="max-width:52ch;font-size:19px;line-height:1.5">
+<p style="margin:0">Most hard work gets handled through meetings, opinions and slides, or by jumping straight into execution. The loudest person decides, or nobody does.</p>
+<p style="margin:16px 0 0">A designed session works differently. The question is explicit. The right people are in the room, and the person who decides is one of them. Evidence comes in early. People think on their own before they debate. Alternatives get made tangible. You leave with something usable.</p>
+<p style="margin:24px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:24px">change needs structure</p>
+</div>
+</section>
+<section style="padding:clamp(56px,8vw,120px) 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:24px clamp(32px,6vw,96px)">
+<h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em;line-height:1">What is a Raw Draft?</h2>
+<div style="max-width:52ch">
+<p style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(22px,2.2vw,30px);letter-spacing:-.015em;line-height:1.2">A structured cycle for turning uncertainty into something you can test, learn from and decide on.</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:8px;margin-top:18px"><div style="background:#1a1917;border:1px solid #34332e;padding:12px 14px;transform:rotate(-0.5deg)"><span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:19px">A workshop</span> <span style="font-size:15px;color:#c9c5ba">might be one Raw Draft.</span></div><div style="background:#1a1917;border:1px solid #34332e;padding:12px 14px;transform:rotate(0.4deg)"><span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:19px">A Sprint</span> <span style="font-size:15px;color:#c9c5ba">may contain several.</span></div><div style="background:#1a1917;border:1px solid #34332e;padding:12px 14px;transform:rotate(-0.3deg)"><span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:19px">A prototype</span> <span style="font-size:15px;color:#c9c5ba">can be one.</span></div><div style="background:#1a1917;border:1px solid #34332e;padding:12px 14px;transform:rotate(0.5deg)"><span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:19px">A research cycle</span> <span style="font-size:15px;color:#c9c5ba">can be one.</span></div></div>
+<p style="margin:18px 0 0;font-size:18px;line-height:1.5;color:#c9c5ba">The principle: make the question tangible enough to expose it to reality.</p>
+</div>
+</section>
+<section style="padding:clamp(56px,8vw,120px) 0 0;">
+<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px 40px">
+<h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em">The cycle of creation</h2>
+<p style="margin:0;font-size:17px;color:#8f8b80">Creation · Chaos · Clarity · Cadence</p>
+</div>
+<div style="display:grid;grid-template-columns:{{ cycCols }};gap:24px clamp(24px,4vw,64px);align-items:center;margin-top:clamp(28px,4vw,56px)">
+<div ref="{{ cycHost }}" style="width:100%;height:{{ cycH }};border-top:1px solid #2a2925;border-bottom:1px solid #2a2925"></div>
+<div aria-live="polite" style="min-width:0">
+<div style="font-size:15px;color:#8f8b80">{{ cycNow.label }}</div>
+<div style="margin-top:8px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:{{ cycTitleSize }};letter-spacing:-.04em;line-height:.95;color:#ece9e0">{{ cycNow.title }}</div>
+<div lang="hi" style="margin-top:10px;font-family:'Tiro Devanagari Hindi','Noto Serif Devanagari',serif;font-size:clamp(22px,2vw,30px);line-height:1.2;color:#8f8b80">{{ cycNow.dev }}</div>
+<p style="margin:clamp(14px,2vw,24px) 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(22px,2.2vw,32px);letter-spacing:-.015em;line-height:1.15;max-width:22ch">{{ cycNow.statement }}</p>
+<p style="margin:10px 0 0;font-size:17px;line-height:1.45;color:#c9c5ba;max-width:40ch">{{ cycNow.support }}</p>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:{{ stageCols }};gap:16px 24px;margin-top:clamp(24px,3vw,40px)">
+<sc-for list="{{ stages }}" as="s" hint-placeholder-count="4">
+<button onClick="{{ s.pick }}" style="text-align:left;background:none;border:0;border-top:2px solid {{ s.rule }};padding:12px 0 4px;color:#ece9e0;cursor:pointer;transition:border-color .4s">
+<span style="display:flex;justify-content:space-between;gap:8px;font-size:14px;color:#8f8b80"><span>{{ s.n }}</span><span style="color:#ff4b23">{{ s.loop }}</span></span>
+<span style="display:block;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(20px,2vw,28px);letter-spacing:-.02em;margin-top:4px;color:{{ s.c }};transition:color .4s">{{ s.k }}</span>
+</button>
+</sc-for>
+</div>
+<p style="margin:clamp(28px,4vw,48px) 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(22px,2.4vw,34px);letter-spacing:-.015em;line-height:1.2;max-width:30ch">This is why we work in drafts. You make something. Reality pushes back. You structure what survives. Eventually the system can run.</p>
+</section>
+<section style="padding:clamp(56px,8vw,120px) 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:24px clamp(32px,6vw,96px)">
+<h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em;line-height:1">How a session fits</h2>
+<div style="max-width:52ch;font-size:19px;line-height:1.5">
+<p style="margin:0">Every workshop or Sprint answers four things: the question, the room, the work and the output. Builder asks about them, chooses methods from the Library and sequences them. You can change all of it.</p>
+<div style="display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:18px;font-size:16px"><a href="#/builder" style="white-space:nowrap">Build a workshop</a><a href="#/library" style="white-space:nowrap">Browse the Library</a></div>
+</div>
+</section>
+<section style="padding:clamp(56px,8vw,120px) 0 0">
+<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px 40px;margin-bottom:clamp(20px,3vw,32px)">
+<h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em;line-height:1">What we work on</h2>
+<p style="margin:0;font-size:17px;color:#8f8b80;max-width:44ch">Examples of questions Builder and Raw Draft help structure. Most touch several.</p>
+</div>
+<div style="background-color:#111110;background-image:linear-gradient(rgba(236,233,224,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(236,233,224,.045) 1px,transparent 1px);background-size:48px 48px;border:1px solid #2a2925;padding:clamp(20px,3.5vw,56px)">
+<div style="display:grid;grid-template-columns:{{ areaCols }};gap:clamp(14px,2vw,28px) clamp(14px,2vw,24px);align-items:start">
+<sc-for list="{{ areas }}" as="a" hint-placeholder-count="6">
+<div data-card="1" tabindex="0" style="grid-column:span {{ a.span }};margin-top:{{ a.mt }};position:relative;background:#1a1917;border:1px solid #34332e;padding:{{ areaPad }};transform:rotate({{ a.rot }});transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;box-shadow:0 1px 0 rgba(0,0,0,.4);outline:none" style-hover="transform:translateY(-3px) rotate(0deg);border-color:#5a5850;box-shadow:0 10px 24px rgba(0,0,0,.45)" style-focus="transform:translateY(-3px) rotate(0deg);border-color:#ece9e0">
+<span aria-hidden="true" style="position:absolute;top:-6px;left:{{ a.tape }};width:38px;height:12px;background:rgba(236,233,224,.13);transform:rotate({{ a.tapeRot }})"></span>
+<div style="display:flex;justify-content:space-between;gap:12px;font-size:13px;color:#8f8b80"><span>{{ a.n }}</span><span style="color:{{ a.gc }}">{{ a.g }}</span></div>
+<div style="margin-top:clamp(16px,2vw,28px);font-family:'Clash Display',sans-serif;font-weight:500;font-size:{{ a.fs }};letter-spacing:-.02em;line-height:1.02;text-wrap:balance">{{ a.k }}</div>
+<p style="margin:10px 0 0;font-size:15px;line-height:1.45;color:#c9c5ba">{{ a.d }}</p>
+<button onClick="{{ a.toggle }}" aria-expanded="{{ a.aria }}" style="display:flex;justify-content:space-between;width:100%;margin-top:12px;background:none;border:0;border-top:1px solid #2a2925;color:#8f8b80;min-height:40px;padding:8px 0 0;cursor:pointer;font-size:13px;text-align:left" style-hover="color:#ece9e0"><span>Typical question</span><span>{{ a.sign }}</span></button>
+<sc-if value="{{ a.open }}" hint-placeholder-val="{{ false }}"><p style="margin:6px 0 0;font-size:16px;line-height:1.35;color:#ece9e0">“{{ a.q }}”</p><a href="{{ a.href }}" style="display:inline-flex;align-items:center;min-height:36px;margin-top:4px;font-size:14px;white-space:nowrap">Build a workshop for this →</a></sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</section>
+<section style="padding:clamp(56px,8vw,120px) 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:20px clamp(32px,6vw,96px)">
+<div><h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em;line-height:1">Manas Ayare</h2><p style="margin:10px 0 0;font-size:17px;color:#8f8b80">Product Strategy</p></div>
+<div style="max-width:52ch">
+<p style="margin:0;font-size:19px;line-height:1.5">Manas trained in mechanical engineering and industrial design, and has worked in product strategy and experience design across enterprise systems, startups, AI, financial services and public systems. He designs and runs the workshops and sprints, and brings in <a href="#/network">specialists from the network</a> when a question needs them.</p>
+<div style="display:flex;flex-wrap:wrap;gap:4px 24px;margin-top:20px;font-size:16px"><sc-for list="{{ links }}" as="l" hint-placeholder-count="1"><a href="{{ l.href }}" target="{{ l.target }}" rel="noopener" style="display:inline-flex;align-items:center;min-height:44px">{{ l.label }}</a></sc-for></div>
+</div>
+</section>
+<section style="padding:clamp(56px,8vw,120px) 0 0">
+<h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em;line-height:1">Questions</h2>
+<div style="margin-top:clamp(24px,3vw,40px);border-top:1px solid #ece9e0;max-width:1000px">
+<sc-for list="{{ faqs }}" as="f" hint-placeholder-count="4"><div style="border-bottom:1px solid #2a2925">
+<button onClick="{{ f.toggle }}" aria-expanded="{{ f.aria }}" style="display:flex;justify-content:space-between;gap:24px;align-items:baseline;width:100%;text-align:left;background:none;border:0;color:#ece9e0;min-height:64px;padding:18px 0;cursor:pointer" style-hover="color:#ff4b23"><span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(20px,2vw,26px);letter-spacing:-.01em;line-height:1.2">{{ f.q }}</span><span style="font-size:20px;flex:none">{{ f.sign }}</span></button>
+<sc-if value="{{ f.open }}" hint-placeholder-val="{{ false }}"><p style="margin:0 0 22px;max-width:60ch;font-size:18px;line-height:1.5;color:#c9c5ba">{{ f.a }}</p></sc-if>
+</div></sc-for>
+</div>
+</section>
+</div>
+</sc-if>
+
+<sc-if value="{{ isNetwork }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Network" id="rd-network" style="padding-top:clamp(64px,9vw,140px)">
+<section style="max-width:1100px;border-top:1px solid #ece9e0;padding-top:clamp(28px,3vw,44px)">
+<div style="font-size:15px;color:#8f8b80">Network</div>
+<h2 style="margin:12px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(40px,6vw,96px);letter-spacing:-.045em;line-height:.9">The practice stays small.<br><span style="color:#8f8b80">The field around it does not.</span></h2>
+<p style="margin:clamp(24px,3vw,40px) 0 0;max-width:50ch;font-size:clamp(18px,1.6vw,22px);line-height:1.45">We bring in the right people when the question needs them. Advisors shape the thinking, collaborators join the work, partners help build it.</p>
+</section>
+<sc-for list="{{ netGroups }}" as="g" hint-placeholder-count="3">
+<section style="padding:clamp(56px,8vw,120px) 0 0">
+<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px 40px;margin-bottom:clamp(20px,3vw,32px)"><h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em;line-height:1">{{ g.title }}</h2><p style="margin:0;font-size:17px;color:#8f8b80;max-width:46ch">{{ g.d }}</p></div>
+<div style="background-color:#111110;background-image:linear-gradient(rgba(236,233,224,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(236,233,224,.045) 1px,transparent 1px);background-size:48px 48px;border:1px solid #2a2925;padding:clamp(20px,3.5vw,56px)">
+<div style="display:grid;grid-template-columns:{{ netCols }};gap:clamp(14px,2vw,28px) clamp(14px,2vw,24px);align-items:start">
+<sc-for list="{{ g.cards }}" as="x" hint-placeholder-count="3">
+<div data-card="1" style="margin-top:{{ x.mt }};position:relative;background:#1a1917;border:1px solid #34332e;padding:20px 20px 22px;transform:rotate({{ x.rot }});transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;box-shadow:0 1px 0 rgba(0,0,0,.4)" style-hover="transform:translateY(-3px) rotate(0deg);border-color:#5a5850;box-shadow:0 10px 24px rgba(0,0,0,.45)">
+<span aria-hidden="true" style="position:absolute;top:-6px;left:{{ x.tape }};width:38px;height:12px;background:rgba(236,233,224,.13);transform:rotate({{ x.tapeRot }})"></span>
+<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+<div style="display:flex;gap:12px;align-items:center;min-width:0">
+<sc-if value="{{ x.hasImg }}" hint-placeholder-val="{{ false }}"><img src="{{ x.img }}" alt="" style="width:40px;height:40px;object-fit:{{ x.fit }};filter:grayscale(1);opacity:.85;flex:none"></sc-if>
+<span style="font-size:13px;color:#8f8b80">{{ x.role }}</span>
+</div>
+<sc-if value="{{ x.hasLink }}" hint-placeholder-val="{{ false }}"><a href="{{ x.link }}" target="_blank" rel="noopener" aria-label="{{ x.linkLabel }}" style="flex:none;display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:32px;border:1px solid #4a4843;color:#ece9e0;font-size:12px;font-weight:700;text-decoration:none" style-hover="border-color:#ff4b23">{{ x.glyph }}</a></sc-if>
+<sc-if value="{{ x.noLink }}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="flex:none;display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:32px;border:1px dashed #4a4843;color:#5a5850;font-size:12px;font-weight:700">{{ x.glyph }}</span></sc-if>
+</div>
+<div style="margin-top:22px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(22px,2vw,28px);letter-spacing:-.02em;line-height:1.05">{{ x.name }}</div>
+<p style="margin:10px 0 0;font-size:15px;line-height:1.45;color:#c9c5ba">{{ x.d }}</p>
+<sc-if value="{{ x.placeholder }}" hint-placeholder-val="{{ false }}"><div style="margin-top:10px;font-size:12px;color:#ff4b23">Placeholder record</div></sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</section>
+</sc-for>
+<section style="padding:clamp(56px,8vw,120px) 0 0">
+<div style="margin-bottom:clamp(20px,3vw,32px)"><h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em;line-height:1">Worked with</h2></div>
+<sc-if value="{{ hasWorked }}" hint-placeholder-val="{{ false }}"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,180px),1fr));border-top:1px solid #2a2925;border-left:1px solid #2a2925"><sc-for list="{{ worked }}" as="o" hint-placeholder-count="6"><a href="{{ o.url }}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;min-height:110px;padding:16px;border-right:1px solid #2a2925;border-bottom:1px solid #2a2925;color:#8f8b80;opacity:.7;text-decoration:none;font-size:16px;text-align:center" style-hover="opacity:1;color:#ece9e0">{{ o.name }}</a></sc-for></div></sc-if>
+<sc-if value="{{ noWorked }}" hint-placeholder-val="{{ true }}"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,180px),1fr));border-top:1px dashed #2a2925;border-left:1px dashed #2a2925"><sc-for list="{{ workedSlots }}" as="o" hint-placeholder-count="6"><div style="min-height:110px;border-right:1px dashed #2a2925;border-bottom:1px dashed #2a2925"></div></sc-for></div><p style="margin:14px 0 0;font-size:15px;color:#8f8b80">Organisations are listed here once the work is confirmed.</p></sc-if>
+</section>
+<section style="padding:clamp(56px,8vw,120px) 0 0">
+<div style="margin-bottom:clamp(24px,3vw,40px)"><h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em;line-height:1">How the network works</h2></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));border-top:1px solid #ece9e0">
+<sc-for list="{{ netSteps }}" as="s" hint-placeholder-count="3"><div style="padding:20px 24px 24px 0;border-bottom:1px solid #2a2925"><div style="font-size:14px;color:#8f8b80">{{ s.pre }}</div><div style="margin-top:6px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,52px);letter-spacing:-.03em;line-height:1;color:{{ s.c }}">{{ s.k }}</div><div style="margin-top:10px;font-size:16px;color:#c9c5ba;max-width:30ch">{{ s.d }}</div></div></sc-for>
+</div>
+</section>
+<section style="padding:clamp(56px,8vw,120px) 0 0">
+<a href="#/work-with-us" style="display:inline-flex;align-items:center;min-height:56px;background:#ff4b23;color:#0b0b0a;padding:0 24px;text-decoration:none;font-size:18px;font-weight:500;white-space:nowrap" style-hover="background:#ece9e0;color:#0b0b0a">Book a workshop</a>
+</section>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSources }}" hint-placeholder-val="{{ false }}">
+<section data-screen-label="Sources">
+<h1 style="margin:0;font-family:'Clash Display',sans-serif;font-size:clamp(52px,8.6vw,140px);font-weight:500;letter-spacing:-.04em;line-height:.86">Sources</h1>
+<p style="margin:20px 0 0;max-width:48ch;font-size:19px;color:#c9c5ba">Who created what. Listing a source implies no affiliation or endorsement.</p>
+<div style="margin-top:clamp(32px,4vw,56px);border-top:1px solid #ece9e0">
+<sc-for list="{{ srcList }}" as="s" hint-placeholder-count="10">
+<div style="display:flex;flex-wrap:wrap;gap:6px 24px;align-items:baseline;padding:16px 0;border-bottom:1px solid #2a2925">
+<span style="flex:1 1 260px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:22px">{{ s.name }}</span>
+<span style="width:120px;font-size:14px;color:#8f8b80">{{ s.kind }}</span>
+<span style="flex:2 1 320px;font-size:15px;color:#c9c5ba">{{ s.note }}</span>
+<a href="{{ s.lhref }}" style="width:130px;font-size:14px">{{ s.count }} records</a>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-if>
+
+
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { ready: !!(window.RD && window.RDL), phase: 0, tab: this.props.tab || "work", hq: "", hf: {}, fOpen: false, faq: {}, aOpen: {}, cyc: 0, w: window.innerWidth };
+  static STAGES = [["Creation", "Something begins to take form."], ["Chaos", "Reality introduces uncertainty."], ["Clarity", "Patterns emerge. Decisions become possible."], ["Cadence", "What survives becomes repeatable."]];
+  static VALUES = [["Strategic Thinking", "Start with the question, the context and the constraints before deciding what to build."], ["Integrity", "Recommend what the work needs, even when that means less work or a different path."], ["Curiosity", "Follow useful questions past the first answer."], ["Play", "Make room to explore, make and challenge ideas seriously, without making the process stiff."]];
+  static AREAS = [["Strategy", "Strategy and decisions", "Define what matters, where to focus and which decisions unlock progress.", "Where should we focus next?"], ["Products", "Product and service", "Shape what to build, why it matters and how the product takes form.", "What are we actually building?"], ["Brands", "Brand and market", "Clarify what the brand stands for, how it is understood and how it shows up.", "What should we stand for?"], ["Services and experiences", "Product and service", "Design how people move through a service or experience, end to end.", "Where does the experience break?"], ["Research", "Research and futures", "Find the signals, tensions and evidence behind better decisions.", "What do we actually know?"], ["Futures and foresight", "Research and futures", "Explore what may change, what it could mean and how to prepare early.", "What should we prepare for?"], ["AI and emerging technology", "Technology and AI", "Find where new technology is useful, where it fits the workflow and what to build.", "Where should AI enter the workflow?"], ["Go-to-market", "Brand and market", "Turn strategy into positioning, offers, messaging and a way into the market.", "How should this go to market?"], ["Strategic decisions", "Strategy and decisions", "Compare options, reduce ambiguity and decide what to do next.", "Is this worth pursuing?"]];
+  static BOARD = { span: [5, 4, 3, 3, 5, 4, 4, 3, 5], mt: [0, 28, 10, 14, 0, 24, 6, 20, 0], rot: [-1.2, .8, -.4, 1, -.6, .5, -1, .7, -.3] };
+  static FAQ = [["How is this different from an agency?", "An agency is usually hired to make a defined thing. We come in earlier, while what to make, who it is for, or whether to make it at all is still open. The result is a decision and the evidence behind it, often with a prototype."], ["Do you only work on new ideas?", "No. A lot of the work is on live products, brands and services that need rethinking, repositioning or a difficult decision."], ["Can you help with execution?", "We shape the execution approach and works alongside the teams or partners who build. It is not a production studio. If the strategy is decided and you need assets made, another partner is a better fit."], ["How do engagements usually begin?", "With a short set of questions and a conversation about the decision that matters. Most work starts as one focused sprint, not a retainer."]];
+  componentDidMount() {
+    if (!this.state.ready) this.poll = setInterval(() => { if (window.RD && window.RDL) { clearInterval(this.poll); this.setState({ ready: true }); } }, 40);
+    this.onResize = () => this.setState({ w: window.innerWidth }); window.addEventListener("resize", this.onResize);
+  }
+  scrollNet() { if (this.props.view !== "network") { this.netDone = false; return; } if (this.netDone) return; const el = document.getElementById("rd-network"); if (!el) return; this.netDone = true; setTimeout(() => window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 70), 60); }
+  componentDidUpdate(pp) { this.scrollNet(); if (pp.tab !== this.props.tab && this.props.tab) this.setState({ tab: this.props.tab }); }
+  componentWillUnmount() { clearInterval(this.poll); window.removeEventListener("resize", this.onResize); if (this.eng) this.eng.destroy(); }
+  cycHost = el => {
+    if (el === this.cycEl) return;
+    if (this.eng) { this.eng.destroy(); this.eng = null; }
+    this.cycEl = el; if (!el) return;
+    const start = () => { if (!window.RDCycle) return setTimeout(start, 50); if (this.cycEl === el && !this.eng) this.eng = RDCycle.mount(el, { onStage: (i, ph) => this.setState({ cyc: i, cycPh: ph }) }); };
+    start();
+  };
+  renderVals() {
+    const v = this.props.view, rid = this.props.rid, ok = this.state.ready && window.RD && window.RDL;
+    const base = { isWhyList: false, isWork: false, isNotesList: false, isNote: false, isFutures: false, isFacil: false, isPractice: v === "practice" || v === "network", isNetwork: false, people: [], partners: [], worked: [], workedSlots: [], netSteps: [], isHub: false, tabs: [], results: [], fGroups: [], stages: [], areas: [], values: [], faqs: [], links: [], isSources: false, w: {}, nt: {}, lead: {}, workList: [], wSecs: [], wSecs2: [], artifacts: [], wRel: [], restNotes: [], ntBody: [], ntSources: [], ntRel: [], fPhases: [], fSprints: [], modules: [], principles: [], srcList: [] };
+    if (!ok) return base;
+    const L = RDL, ix = L.index();
+    const grp = (k, items) => items && items.length ? { k, items } : null;
+    const S = this.state;
+    if (v === "practice" || v === "network") {
+      const CYC = [["Creation", "निर्माण", "Possibility acquires form.", "A difference appears. A direction begins."], ["Chaos", "अराजकता", "The idea meets reality.", "Parts collide, fail and reorganise."], ["Clarity", "स्पष्टता", "Structure begins to hold.", "Smaller parts bind into usable systems."], ["Cadence", "प्रवाह", "The system learns to run.", "It absorbs change without losing itself."]];
+    const ci = S.cyc == null ? 0 : S.cyc, ph = S.cycPh || "", osc = ph === "Chaos ⇄ Clarity", dist = ph === "A new disturbance";
+    const cycNow = ci < 0 ? { label: "01 to 04", title: "From possibility to working system", dev: "निर्माण · अराजकता · स्पष्टता · प्रवाह", statement: "Possibility acquires form, meets reality, starts to hold, then learns to run.", support: "" }
+      : osc ? { label: "02 ⇄ 03. Chaos ⇄ Clarity", title: ci === 2 ? "Clarity" : "Chaos", dev: ci === 2 ? CYC[2][1] : CYC[1][1], statement: "Some parts start to hold while others still break.", support: "Order comes from repeated pressure." }
+      : dist ? { label: "04 to 01. A new condition", title: "Cadence", dev: CYC[3][1], statement: "Something new arrives.", support: "The system adapts, and the next draft begins." }
+      : { label: "0" + (ci + 1) + ". " + CYC[ci][0], title: CYC[ci][0], dev: CYC[ci][1], statement: CYC[ci][2], support: CYC[ci][3] };
+    const cycVals = { cycNow, cycTitleSize: ci < 0 ? "clamp(36px,4vw,60px)" : "clamp(56px,6.4vw,104px)", cycCols: S.w >= 900 ? "minmax(0,7fr) minmax(0,4fr)" : "minmax(0,1fr)", cycH: S.w >= 900 ? "clamp(380px,58vh,620px)" : "48vh", stageCols: S.w >= 720 ? "repeat(4,minmax(0,1fr))" : "repeat(2,minmax(0,1fr))",
+      stages: CYC.map(([k], i) => { const act = ci === i || (osc && (i === 1 || i === 2)); return { n: "0" + (i + 1), k, loop: i === 1 ? "⇄" : "", rule: act ? "#ff4b23" : "#2a2925", c: act || ci < 0 ? "#ece9e0" : "#5a5850", pick: () => { this.eng && this.eng.goTo(i); this.setState({ cyc: i, cycPh: k }); } }; }) };
+      Object.assign(base, cycVals, { cycHost: this.cycHost,
+        ...(() => { const B = Component.BOARD, wide = S.w >= 900, mid = S.w >= 560, cols = wide ? 12 : mid ? 6 : 2, r = wide ? 1 : mid ? .6 : .3;
+          const tape = i => ["18px", "42%", "60%", "24px", "50%"][i % 5];
+          return { areaCols: "repeat(" + cols + ",minmax(0,1fr))", valCols: wide ? "repeat(12,minmax(0,1fr))" : "minmax(0,1fr)", areaPad: wide ? "20px 22px 26px" : "16px 16px 20px", valPad: wide ? "24px 26px 30px" : "20px 18px 24px",
+            areas: Component.AREAS.map(([k, g, d, q], i) => ({ k, g, d, q, href: "#/builder?q=" + encodeURIComponent(q), open: !!S.aOpen[i], sign: S.aOpen[i] ? "−" : "+", aria: S.aOpen[i] ? "true" : "false", toggle: () => this.setState(st => ({ aOpen: Object.assign({}, st.aOpen, { [i]: !st.aOpen[i] }) })), n: String(i + 1).padStart(2, "0"), gc: i === 0 ? "#ff4b23" : "#8f8b80", span: wide ? B.span[i] : mid ? 3 : 2, mt: wide ? B.mt[i] + "px" : mid ? (i % 2 ? "14px" : "0px") : "0px", rot: B.rot[i] * r + "deg", tape: tape(i), tapeRot: (i % 2 ? 3 : -4) + "deg", fs: mid ? "clamp(22px,2.2vw,32px)" : "19px" })),
+            values: Component.VALUES.map(([k, d], i) => ({ k, d, n: String(i + 1).padStart(2, "0"), span: 6, mt: wide ? [0, 30, 8, 22][i] + "px" : "0px", rot: [.8, -1, -.5, .9][i] * (wide ? 1 : .3) + "deg", tape: tape(i + 2), tapeRot: (i % 2 ? -3 : 4) + "deg" })) }; })(),
+        faqs: Component.FAQ.map(([q, ans], i) => { const open = !!S.faq[i]; return { q, a: ans, open, aria: open ? "true" : "false", sign: open ? "−" : "+", toggle: () => this.setState(st => ({ faq: Object.assign({}, st.faq, { [i]: !st.faq[i] }) })) }; }),
+        links: [["LinkedIn", (RD.links || {}).linkedin, "_blank"], ["Substack", (RD.links || {}).substack, "_blank"], ["Book a workshop", "#/work-with-us", "_self"]].filter(l => l[1]).map(([label, href, target]) => ({ label, href, target })) });
+    }
+    if (v === "network" || v === "practice") {
+      const N = window.RDN || { people: [], partners: [], workedWith: [] }, wide = S.w >= 900, mid = S.w >= 560;
+      const G = { linkedin: ["in", "LinkedIn"], website: ["↗", "Website"], substack: ["S", "Substack"], instagram: ["IG", "Instagram"], x: ["X", "X"] };
+      const look = (i, ln) => ({ rot: (wide ? [-1.1, .8, -.4, 1.2, -.7, .5][i % 6] : [-.5, .4][i % 2]) + "deg", mt: wide ? [0, 26, 10, 34, 4, 18][i % 6] + "px" : "0px", tape: ["18px", "42%", "60%", "24px", "50%"][i % 5], tapeRot: (i % 2 ? 3 : -4) + "deg" });
+      const person = (x, i) => { const g = G[x.preferredSocial] || ["↗", "Profile"]; return Object.assign(look(i), { name: x.name, role: x.role, d: x.shortBio, hasImg: !!x.portrait, img: x.portrait || "", fit: "cover", link: x.preferredSocialUrl || "", hasLink: !!x.preferredSocialUrl, noLink: !x.preferredSocialUrl, glyph: g[0], linkLabel: g[1] + ": " + x.name, placeholder: !!x.placeholder }); };
+      const ppl = N.people.slice().sort((a, b) => (a.order || 99) - (b.order || 99));
+      Object.assign(base, { isNetwork: true, netCols: wide ? "repeat(3,minmax(0,1fr))" : mid ? "repeat(2,minmax(0,1fr))" : "minmax(0,1fr)",
+        netGroups: [
+          { title: "Advisors", d: "People who shape the thinking, challenge decisions and bring experience.", cards: ppl.filter(x => x.relationshipType === "advisory").map(person) },
+          { title: "Collaborators", d: "Specialists who join research, facilitation, strategy, design or technology work.", cards: ppl.filter(x => x.relationshipType !== "advisory").map(person) },
+          { title: "Partners", d: "Companies and studios we work with when the work needs specialist capability or building.", cards: N.partners.map((x, i) => Object.assign(look(i + 2), { name: x.name, role: x.capability, d: x.shortDescription, hasImg: !!x.logo, img: x.logo || "", fit: "contain", link: x.website || "", hasLink: !!x.website, noLink: !x.website, glyph: "↗", linkLabel: "Website: " + x.name, placeholder: !!x.placeholder })) }
+        ].filter(g => g.cards.length),
+        worked: N.workedWith, hasWorked: N.workedWith.length > 0, noWorked: !N.workedWith.length, workedSlots: [1, 2, 3, 4, 5, 6],
+        netSteps: [["", "The question", "Every piece of work starts with what needs figuring out."], ["determines", "The room", "The format, the sessions and the decisions that must be made."], ["which determines", "The people", "Who joins, for how long, and when they step out. The practice stays lean."]].map(([pre, k, d], i) => ({ pre, k, d, c: i === 2 ? "#ff4b23" : "#ece9e0" })) });
+      return base;
+    }
+    if (v === "hub") {
+      const titles = ids => L.refs(ids || []).map(x => x.title);
+      const W = RD.work.map(w => { const d = L.workD(w), sp = titles(w.relatedSprints); return { kind: "work", title: w.title, desc: w.question || w.descriptor, href: d.href, topics: w.topics || [], format: w.format, year: w.date ? w.date.slice(0, 4) : "",
+        meta: ["Work", (w.topics || []).join(" / "), sp[0]].filter(Boolean).join(" · "), hay: [w.title, w.descriptor, w.question, w.sector, w.type, (w.topics || []).join(" ")].concat(sp, titles(w.relatedFrameworks), titles(w.relatedMethods)).join(" ").toLowerCase() }; });
+      const N = RD.notes.slice().sort((x, y) => y.date.localeCompare(x.date)).map(n => { const d = L.noteD(n); return { kind: "notes", title: n.title, desc: n.dek, href: d.href, topics: n.topics || [n.topic], format: n.format, year: n.date.slice(0, 4),
+        meta: ["Notes", (n.topics || [n.topic]).join(" / "), n.date.slice(0, 4)].join(" · "), hay: [n.title, n.dek, n.topic, (n.body || []).join(" ")].concat(titles(n.related)).join(" ").toLowerCase() }; });
+      const pool = S.tab === "work" ? W : S.tab === "notes" ? N : W.concat(N);
+      const words = S.hq.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      const f = S.hf, matchF = r => (!f.topic || r.topics.includes(f.topic)) && (!f.format || r.format === f.format) && (!f.year || r.year === f.year);
+      const results = pool.filter(r => words.every(wd => r.hay.includes(wd)) && matchF(r));
+      const TOP = ["Strategy", "Product", "Brand", "Experience", "Research", "Futures", "AI", "Facilitation", "Business"], FMT = ["Project", "Experiment", "Research", "Decision", "Retrospective", "Essay", "Observation", "Guide"];
+      const grp = (k, key, vals) => { const opts = vals.filter(x => pool.some(r => key === "topic" ? r.topics.includes(x) : r[key] === x)); return opts.length > 1 ? { k, opts: opts.map(x => { const on = f[key] === x; return { label: x, aria: on ? "true" : "false", rule: on ? "#ff4b23" : "transparent", c: on ? "#ece9e0" : "#8f8b80", pick: () => this.setState(st => ({ hf: Object.assign({}, st.hf, { [key]: on ? null : x }) })) }; }) } : null; };
+      const years = [...new Set(pool.map(r => r.year).filter(Boolean))].sort().reverse();
+      const fGroups = [grp("Topic", "topic", TOP), grp("Format", "format", FMT), grp("Year", "year", years)].filter(Boolean);
+      const narrow = S.w < 760, nf = Object.values(f).filter(Boolean).length;
+      const tab = (k, label, n) => ({ label, n: String(n), aria: S.tab === k ? "true" : "false", rule: S.tab === k ? "#ff4b23" : "transparent", c: S.tab === k ? "#ece9e0" : "#8f8b80", pick: () => { this.setState({ tab: k, hf: {} }); history.replaceState(null, "", k === "work" ? "#/work" : k === "notes" ? "#/notes" : "#/work?tab=all"); } });
+      Object.assign(base, { isHub: true, tabs: [tab("work", "Work", W.length), tab("notes", "Notes", N.length), tab("all", "All", W.length + N.length)],
+        hq: S.hq, onHq: e => this.setState({ hq: e.target.value }), results, noResults: !results.length, rowCols: narrow ? "minmax(0,1fr)" : "minmax(0,5fr) minmax(0,5fr) minmax(0,3fr)",
+        fBtn: narrow && fGroups.length > 0, showF: fGroups.length > 0 && (!narrow || S.fOpen), fGroups, fAria: S.fOpen ? "true" : "false", fLabel: (S.fOpen ? "Hide filters" : "Filter") + (nf ? " (" + nf + ")" : ""), toggleF: () => this.setState(st => ({ fOpen: !st.fOpen })),
+        clearAll: () => this.setState({ hq: "", hf: {} }) });
+      return base;
+    }
+    if (false) {
+    } else if (v === "why") {
+      const w = L.workD(ix.workBy[rid] || RD.work[0]);
+      const sec = (k, val) => { const t = Array.isArray(val) ? val.join(". ") : val; return t ? { k, v: t } : null; };
+      base.isWork = true; base.w = w;
+      base.wSecs = [sec("Context", w.context), sec("Constraints", w.constraints), sec("Approach", w.approach), sec("Decisions", w.decisions)].filter(Boolean);
+      base.wSecs2 = [sec("What happened", w.whatHappened), sec("What I would change", w.whatIWouldChange)].filter(Boolean);
+      base.artifacts = (w.artifacts || []).map((a, i) => Object.assign({}, a, { span: i === 0 ? "1 / -1" : "auto", ratio: i === 0 ? "16 / 7" : "4 / 3" }));
+      base.hasArtifacts = base.artifacts.length > 0;
+      base.wRel = [grp("Sprint", L.refs(w.relatedSprints)), grp("Playbook", L.refs(w.relatedPlaybooks)), grp("Frameworks", L.refs(w.relatedFrameworks)), grp("Methods", L.refs(w.relatedMethods)), grp("Notes", L.notesOf(ix.workNotes[w.id])), grp("Contributors", ((window.RDN && RDN.contributors[w.id]) || []).map(c => { const pp = c.person && RDN.people.find(x => x.slug === c.person && !x.placeholder); const pa = c.partner && RDN.partners.find(x => x.name === c.partner && !x.placeholder); const o = pp || pa; return o ? { title: o.name, href: "#/network", typeLabel: c.role || o.role || o.capability } : null; }).filter(Boolean))].filter(Boolean);
+    } else if (v === "notes") {
+      const n = L.noteD(ix.noteBy[rid] || RD.notes[0]);
+      Object.assign(base, { isNote: true, nt: n, ntBody: n.body, ntSources: n.sourceLinks || [], hasSources: !!(n.sourceLinks && n.sourceLinks.length),
+        ntRel: [grp("Related work", L.works(ix.noteWork[n.id])), grp("In the library", L.refs([].concat(n.relatedSprints, n.relatedFrameworks, n.relatedMethods).filter(Boolean)))].filter(Boolean) });
+    } else if (v === "futures") {
+      Object.assign(base, { isFutures: true, fSprints: L.refs(["foresight-sprint", "futures-thinking-sprint", "scenario-sprint"]),
+        fPhases: RD.futures.map((p, i) => ({ k: p.k, d: p.d, topics: p.topics, items: L.refs(p.ids), arrow: i < RD.futures.length - 1 ? "→" : "", c: this.state.phase === i ? "#ff4b23" : "#ece9e0", bg: this.state.phase === i ? "#121210" : "transparent", enter: () => this.setState({ phase: i }) })) });
+    } else if (v === "facilitation") {
+      const cap = s => s.charAt(0) + s.slice(1).toLowerCase();
+      Object.assign(base, { isFacil: true, principles: (RD.principles || []).map(([t, d]) => ({ t, d })), modules: RD.facilitation.map(m => ({ k: cap(m.k), lessons: m.lessons, items: L.refs(m.ids) })) });
+    } else if (v === "sources") {
+      Object.assign(base, { isSources: true, srcList: RD.sources.map(s => Object.assign({}, s, { count: RD.items.filter(i => i.org === s.id).length, lhref: "#/library?q=" + encodeURIComponent(s.name.split(" ")[0]) })) });
+    }
+    return base;
+  }
+}
+</script>
+</body>
+</html>

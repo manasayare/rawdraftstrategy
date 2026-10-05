@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<section data-screen-label="Sprints" style="padding:clamp(28px,4vw,56px) clamp(16px,3vw,40px) 0;font-family:'Satoshi',sans-serif;color:#ece9e0">
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:20px 40px">
+<h1 style="margin:0;font-family:'Clash Display',sans-serif;font-size:clamp(52px,8.6vw,140px);font-weight:500;letter-spacing:-.04em;line-height:.86;max-width:9ch">Start with the <span style="color:#ff4b23">question.</span></h1>
+<p style="margin:0;max-width:380px;font-size:19px;color:#c9c5ba">A Sprint is a structured way to move an important question toward a decision, artifact or test.</p>
+</div>
+
+<sc-for list="{{ groups }}" as="g" hint-placeholder-count="5">
+<div style="margin-top:clamp(48px,6vw,88px)">
+<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px 24px;padding-bottom:10px;border-bottom:1px solid #ece9e0;font-family:'Satoshi',sans-serif;font-size:14px;"><span style="color:#ff4b23">{{ g.k }}</span></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px;margin-top:20px">
+<sc-for list="{{ g.items }}" as="s" hint-placeholder-count="3">
+<a href="{{ s.href }}" style="display:flex;flex-direction:column;background:#0f0f0e;border:1px solid #2a2925;color:#ece9e0;text-decoration:none;transition:border-color .2s" style-hover="border-color:#ff4b23;color:#ece9e0">
+<rd-visual type="{{ s.visual }}" variant="{{ s.visualVariant }}" seed="{{ s.vseed }}" label="{{ s.title }}" style="display:block;width:100%;height:clamp(112px,13vw,168px);border-bottom:1px solid #2a2925"></rd-visual>
+<span style="display:flex;flex-direction:column;gap:10px;padding:20px 20px 22px;flex:1">
+<span style="display:flex;justify-content:space-between;gap:12px;font-size:14px;color:#8f8b80"><span style="color:#ece9e0;font-weight:500">{{ s.title }}</span><span>{{ s.timeLabel }}</span></span>
+<span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(22px,2vw,28px);letter-spacing:-.02em;line-height:1.08">{{ s.question }}</span>
+<span style="font-size:15px;color:#8f8b80;line-height:1.45">Useful when: {{ s.when1 }}</span>
+<span style="font-size:15px;color:#8f8b80;line-height:1.45">Outputs: {{ s.outs }}</span>
+<span style="margin-top:auto;padding-top:8px;font-size:15px;color:#ff4b23">Explore sprint →</span>
+</span>
+</a>
+</sc-for>
+</div>
+</div>
+</sc-for>
+
+<sc-if value="{{ hasSP }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:clamp(64px,8vw,120px)">
+<h2 style="margin:0 0 20px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em;line-height:1">How a sprint runs</h2>
+<p style="margin:0 0 24px;max-width:56ch;font-size:17px;color:#c9c5ba">A sprint is one way to run a Raw Draft. Ours move through the same eight phases. The topic changes what happens inside each one.</p>
+<div style="display:grid;grid-template-columns:{{ phaseCols }};border-top:1px solid #ece9e0">
+<sc-for list="{{ phases }}" as="p" hint-placeholder-count="8"><button onClick="{{ p.pick }}" aria-expanded="{{ p.aria }}" style="text-align:left;background:{{ p.bg }};border:0;border-bottom:1px solid #2a2925;border-right:1px solid #2a2925;color:#ece9e0;min-height:88px;padding:14px 14px 16px;cursor:pointer" style-hover="background:#121210"><span style="display:block;font-size:14px;color:{{ p.nc }}">{{ p.n }}</span><span style="display:block;margin-top:6px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(18px,1.6vw,22px);letter-spacing:-.01em;line-height:1.05">{{ p.k }}</span></button></sc-for>
+</div>
+<sc-if value="{{ hasPhase }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:20px 40px;padding:24px 0;border-bottom:1px solid #2a2925">
+<sc-for list="{{ phase.blocks }}" as="b" hint-placeholder-count="2"><div><div style="font-size:14px;color:#8f8b80">{{ b.k }}</div><ul style="margin:6px 0 0;padding-left:18px;font-size:16px;line-height:1.5"><sc-for list="{{ b.items }}" as="i" hint-placeholder-count="4"><li>{{ i }}</li></sc-for></ul></div></sc-for>
+</div>
+</sc-if>
+</div>
+
+<div style="margin-top:clamp(64px,8vw,120px)">
+<h2 style="margin:0 0 20px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em;line-height:1">Formats</h2>
+<p style="margin:0 0 24px;max-width:56ch;font-size:17px;color:#c9c5ba">A sprint is a topic plus a delivery format. The same sprint can run as two intensive days or four sessions over two weeks.</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px">
+<sc-for list="{{ formats }}" as="f" hint-placeholder-count="6">
+<div data-card="1" style="display:flex;flex-direction:column;background:#0f0f0e;border:1px solid #2a2925">
+<rd-visual type="sprint_format" variant="{{ f.vis }}" label="{{ f.daysLabel }}" seed="{{ f.id }}" style="display:block;width:100%;height:96px;border-bottom:1px solid #2a2925"></rd-visual>
+<div style="display:flex;flex-direction:column;gap:8px;padding:16px 18px 20px">
+<span style="font-size:14px;color:#8f8b80">{{ f.meta }}</span>
+<span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:22px;letter-spacing:-.015em;line-height:1.1">{{ f.name }}</span>
+<div style="border-top:1px solid #2a2925"><sc-for list="{{ f.rows }}" as="r" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;padding:7px 0;border-bottom:1px solid #1d1c1a;font-size:14px"><span style="color:#8f8b80">{{ r.k }}</span><span>{{ r.v }}</span></div></sc-for></div>
+<sc-if value="{{ f.hasBest }}" hint-placeholder-val="{{ false }}"><span style="font-size:14px;color:#8f8b80;line-height:1.45">Best for: {{ f.best }}</span></sc-if>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="margin-top:clamp(64px,8vw,120px)">
+<h2 style="margin:0 0 20px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em;line-height:1">Which format?</h2>
+<div style="border-top:1px solid #ece9e0;max-width:1000px">
+<sc-for list="{{ matrix }}" as="m" hint-placeholder-count="8"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:4px 32px;padding:14px 0;border-bottom:1px solid #2a2925"><span style="font-size:17px">{{ m.situation }}</span><span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:20px">{{ m.format }}</span></div></sc-for>
+</div>
+</div>
+
+<div style="margin-top:clamp(64px,8vw,120px)">
+<h2 style="margin:0 0 20px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em;line-height:1">Sprints in sequence</h2>
+<div style="border-top:1px solid #ece9e0">
+<sc-for list="{{ sequences }}" as="q" hint-placeholder-count="6"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:8px 32px;padding:16px 0;border-bottom:1px solid #2a2925"><span style="font-size:15px;color:#8f8b80">{{ q.name }}</span><span style="display:flex;flex-wrap:wrap;gap:6px 0;grid-column:span 3;font-size:17px"><sc-for list="{{ q.steps }}" as="st" hint-placeholder-count="4"><span style="display:inline-flex;gap:10px;align-items:baseline;margin-right:10px"><span style="color:#5a5850;font-size:14px">{{ st.n }}</span><span>{{ st.t }}</span></span></sc-for></span></div></sc-for>
+</div>
+</div>
+
+<div style="margin-top:clamp(64px,8vw,120px)">
+<h2 style="margin:0 0 20px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em;line-height:1">What goes wrong</h2>
+<div style="border-top:1px solid #ece9e0">
+<sc-for list="{{ anti }}" as="a" hint-placeholder-count="6"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:6px 32px;padding:18px 0;border-bottom:1px solid #2a2925"><span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:22px;line-height:1.1">{{ a.name }}</span><span style="font-size:16px;color:#c9c5ba;line-height:1.45">{{ a.bad }}</span><span style="font-size:16px;line-height:1.45">{{ a.fixText }}</span></div></sc-for>
+</div>
+</div>
+</sc-if>
+
+<div style="margin-top:clamp(56px,7vw,100px)">
+<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px 24px;padding-bottom:10px;border-bottom:1px solid #ece9e0;font-family:'Satoshi',sans-serif;font-size:14px;"><span>External sprint formats</span><span style="color:#8f8b80">Credited to their creators</span></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr))">
+<sc-for list="{{ ext }}" as="x" hint-placeholder-count="10">
+<a href="{{ x.href }}" style="display:block;padding:16px 16px 16px 0;border-bottom:1px solid #2a2925;color:#ece9e0;text-decoration:none" style-hover="color:#ff4b23">
+<span style="display:flex;gap:8px;font-family:'Satoshi',sans-serif;font-size:14px;color:#8f8b80"><span>{{ x.creatorLabel }}</span><span style="color:{{ x.sC }}">{{ x.sLabel }}</span></span>
+<span style="display:block;font-family:'Clash Display',sans-serif;font-weight:500;font-size:22px;margin-top:6px">{{ x.title }}</span>
+<span style="display:block;font-size:13px;color:#8f8b80;margin-top:4px">{{ x.shortDesc }}</span>
+</a>
+</sc-for>
+</div>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:20px 48px;align-items:baseline;justify-content:space-between;margin-top:clamp(56px,7vw,100px);padding:clamp(24px,3vw,40px) 0;border-top:1px solid #ece9e0;border-bottom:1px solid #2a2925">
+<span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(28px,3.4vw,52px);letter-spacing:-.03em;line-height:1">Want to run one together?</span>
+<a href="#/work-with-us" style="font-family:'Satoshi',sans-serif;font-size:14px;color:#ece9e0;border-bottom:1px solid #ff4b23;text-decoration:none">Run one with us</a>
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  static GROUPS = [
+    ["Define & build", "New things, from conviction to evidence", ["foundation-sprint", "opportunity-sprint", "research-sprint", "product-strategy-sprint", "design-sprint"]],
+    ["Market & meaning", "Why choose it, what it means, how it sells", ["positioning-sprint", "brand-strategy-sprint", "gtm-sprint"]],
+    ["Experience & service", "The whole thing customers go through", ["experience-strategy-sprint", "service-design-sprint"]],
+    ["AI & decisions", "Where value really is; what to choose", ["ai-product-strategy-sprint", "decision-sprint"]],
+    ["Futures", "Prepare · widen · stress-test", ["foresight-sprint", "futures-thinking-sprint", "scenario-sprint"]]];
+  state = { open: "foundation-sprint", ready: !!(window.RD && window.RDL), phase: null, w: window.innerWidth };
+  componentDidMount() { this.onR = () => this.setState({ w: window.innerWidth }); window.addEventListener("resize", this.onR); if (!this.state.ready) this.poll = setInterval(() => { if (window.RD && window.RDL) { clearInterval(this.poll); this.setState({ ready: true }); } }, 40); }
+  componentWillUnmount() { clearInterval(this.poll); window.removeEventListener("resize", this.onR); }
+  renderVals() {
+    if (!(this.state.ready && window.RD && window.RDL)) return { groups: [], ext: [], coreN: 0, extN: 0, hasSP: false, phases: [], formats: [], matrix: [], sequences: [], anti: [], phase: { blocks: [] } };
+    const core = Component.GROUPS.flatMap(g => g[2]);
+    const groups = Component.GROUPS.map(([k, d, ids]) => ({ k, d, items: RDL.refs(ids).map(s => { const open = this.state.open === s.id; return Object.assign(s, { open, sign: open ? "−" : "+", nameC: open ? "#ff4b23" : "#8f8b80", when: (s.useWhen || []).slice(0, 3), when1: (s.useWhen || [])[0] || "", outs: (s.outputs || []).slice(0, 3).join(", "), outputs: s.outputs || [], hasDistinct: !!s.distinct, toggle: () => this.setState(st => ({ open: st.open === s.id ? null : s.id })) }); }) }));
+    const ext = RD.items.filter(i => i.type === "sprint" && !core.includes(i.id)).map(RDL.deco).map(x => Object.assign(x, { sC: x.status === "observed" ? "#ff4b23" : "#8f8b80" }));
+    const SP = window.RD_SPRINT, S = this.state;
+    const sp = SP ? {
+      hasSP: true, phaseCols: S.w >= 1000 ? "repeat(8,minmax(0,1fr))" : S.w >= 560 ? "repeat(4,minmax(0,1fr))" : "repeat(2,minmax(0,1fr))",
+      phases: SP.phases.map((p, i) => ({ n: String(i + 1).padStart(2, "0"), k: p.k.charAt(0) + p.k.slice(1).toLowerCase(), aria: S.phase === i ? "true" : "false", bg: S.phase === i ? "#161614" : "transparent", nc: S.phase === i ? "#ff4b23" : "#8f8b80", pick: () => this.setState(st => ({ phase: st.phase === i ? null : i })) })),
+      hasPhase: S.phase != null, phase: S.phase != null ? SP.phases[S.phase] : { blocks: [] },
+      formats: SP.formats.filter(f => f.group === "Raw Draft default" || f.group === "Calendar shape").filter(f => f.shape.length).map(f => { const best = (f.fields.find(x => /best for|use for|use when/i.test(x.k)) || { items: [] }).items.filter(x => x.length < 60).slice(0, 4).join(", ");
+        return Object.assign({}, f, { daysLabel: String(f.days || (f.vis === "intensive" ? 2 : 3)), meta: f.group + (f.days ? " · " + f.days + (f.days === 1 ? " day" : " days") : ""), rows: f.shape.slice(0, 6).map(r => ({ k: r.k ? r.k.charAt(0) + r.k.slice(1).toLowerCase() : "", v: r.v })), best, hasBest: !!best }); }),
+      matrix: SP.matrix, sequences: SP.sequences.map(q => ({ name: q.name, steps: q.steps.map((t, i) => ({ n: String(i + 1).padStart(2, "0"), t })) })),
+      anti: SP.anti.map(a => Object.assign({}, a, { fixText: a.fix.length ? "Fix: " + a.fix.join(". ") : "" }))
+    } : { hasSP: false, phases: [], formats: [], matrix: [], sequences: [], anti: [], phase: { blocks: [] } };
+    return Object.assign({ groups, ext, coreN: core.length, extN: ext.length }, sp);
+  }
+}
+</script>
+</body>
+</html>

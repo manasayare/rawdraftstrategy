@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<section data-screen-label="Builder" style="padding:clamp(24px,4vw,48px) clamp(16px,3vw,40px) 0;font-family:'Satoshi',sans-serif;color:#ece9e0">
+
+<sc-if value="{{ isStart }}" hint-placeholder-val="{{ true }}">
+<div style="max-width:1100px">
+<div style="font-size:15px;color:#8f8b80">Builder</div>
+<h1 style="margin:16px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(44px,7vw,112px);letter-spacing:-.04em;line-height:.9;max-width:14ch">What are you trying to figure out?</h1>
+<sc-if value="{{ hasSeed }}" hint-placeholder-val="{{ false }}"><p style="margin:20px 0 0;font-size:16px;color:#c9c5ba">Building around <a href="{{ seedHref }}" style="color:#ff4b23">{{ seedTitle }}</a>. Say what you want to use it for.</p></sc-if>
+<textarea aria-label="Describe what you are trying to figure out" value="{{ text }}" onChange="{{ onText }}" onKeyDown="{{ onTextKey }}" rows="4" placeholder="We need to figure out our positioning with the founding team in half a day." style="display:block;width:100%;margin-top:clamp(24px,3vw,40px);background:#111110;border:1px solid #34332e;outline:none;color:#ece9e0;padding:18px 20px;font-family:'Satoshi',sans-serif;font-size:clamp(18px,1.6vw,22px);line-height:1.45;resize:vertical" style-focus="border-color:#8f8b80"></textarea>
+<div style="display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;margin-top:16px">
+<button onClick="{{ submit }}" disabled="{{ busy }}" style="white-space:nowrap;background:#ff4b23;color:#0b0b0a;border:0;min-height:52px;padding:0 24px;cursor:pointer;font-size:17px;font-weight:500">{{ submitLabel }}</button>
+<span style="font-size:15px;color:#8f8b80">No account needed. Your build stays in this browser.</span>
+</div>
+<div style="margin-top:clamp(28px,3vw,40px);font-size:14px;color:#8f8b80">Try one</div>
+<div style="display:flex;flex-direction:column;margin-top:6px;border-top:1px solid #2a2925">
+<sc-for list="{{ examples }}" as="e" hint-placeholder-count="5"><button onClick="{{ e.pick }}" style="text-align:left;background:none;border:0;border-bottom:1px solid #2a2925;color:#c9c5ba;min-height:48px;padding:10px 0;cursor:pointer;font-size:16px" style-hover="color:#ece9e0">“{{ e.t }}”</button></sc-for>
+</div>
+<div style="margin-top:clamp(36px,4vw,56px);font-size:14px;color:#8f8b80">Or start from</div>
+<div style="margin-top:10px;background-color:#111110;background-image:linear-gradient(rgba(236,233,224,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(236,233,224,.045) 1px,transparent 1px);background-size:48px 48px;border:1px solid #2a2925;padding:clamp(18px,3vw,40px)">
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:16px">
+<sc-for list="{{ starts }}" as="s" hint-placeholder-count="6"><button onClick="{{ s.pick }}" style="text-align:left;background:#1a1917;border:1px solid #34332e;color:#ece9e0;padding:16px 18px 20px;cursor:pointer;transform:rotate({{ s.rot }});transition:transform .2s,border-color .2s" style-hover="transform:translateY(-3px) rotate(0deg);border-color:#5a5850"><span style="display:block;font-size:13px;color:#8f8b80">{{ s.n }}</span><span style="display:block;margin-top:14px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:22px;line-height:1.05">{{ s.t }}</span><span style="display:block;margin-top:8px;font-size:14px;color:#8f8b80">{{ s.d }}</span></button></sc-for>
+</div>
+</div>
+<div style="margin-top:clamp(36px,4vw,56px);display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;align-items:baseline"><span style="font-size:14px;color:#8f8b80">Raw Draft templates</span><span style="font-size:14px;color:#8f8b80">Each opens as an editable build.</span></div>
+<div style="display:flex;flex-direction:column;margin-top:6px;border-top:1px solid #2a2925">
+<sc-for list="{{ templates }}" as="t" hint-placeholder-count="5"><button onClick="{{ t.pick }}" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 20px;align-items:center;text-align:left;background:none;border:0;border-bottom:1px solid #2a2925;color:#ece9e0;min-height:60px;padding:12px 0;cursor:pointer" style-hover="color:#ff4b23"><span><span style="display:block;font-family:'Clash Display',sans-serif;font-weight:500;font-size:20px;line-height:1.1">{{ t.name }}</span><span style="display:block;margin-top:4px;font-size:14px;color:#8f8b80">{{ t.q }}</span></span><span style="font-size:14px;color:#8f8b80">Use this template</span></button></sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isBrief }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:{{ briefCols }};gap:28px clamp(24px,4vw,56px);align-items:start">
+<div>
+<div style="font-size:15px;color:#8f8b80">Builder · Brief</div>
+<h1 style="margin:12px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(34px,4.6vw,64px);letter-spacing:-.035em;line-height:.95">{{ askTitle }}</h1>
+<p style="margin:12px 0 0;font-size:16px;color:#8f8b80">{{ askSub }}</p>
+<div role="group" aria-label="{{ askTitle }}" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:20px">
+<sc-for list="{{ askOpts }}" as="o" hint-placeholder-count="6"><button onClick="{{ o.pick }}" aria-pressed="{{ o.aria }}" style="white-space:nowrap;background:{{ o.bg }};color:{{ o.fg }};border:1px solid {{ o.bd }};min-height:48px;padding:0 16px;cursor:pointer;font-size:16px" style-hover="border-color:#ece9e0">{{ o.l }}</button></sc-for>
+</div>
+<input aria-label="Additional context" value="{{ notes }}" onChange="{{ onNotes }}" placeholder="Anything else? For example: CEO can only join the last hour." style="display:block;width:100%;margin-top:20px;background:none;border:0;border-bottom:1px solid #4a4843;outline:none;color:#ece9e0;padding:10px 0;font-size:17px">
+<div style="display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;margin-top:24px">
+<button onClick="{{ build }}" style="white-space:nowrap;background:{{ buildBg }};color:#0b0b0a;border:0;min-height:52px;padding:0 24px;cursor:pointer;font-size:17px;font-weight:500">Build it</button>
+<sc-if value="{{ hasSkip }}" hint-placeholder-val="{{ false }}"><button onClick="{{ skipQ }}" style="white-space:nowrap;background:none;border:0;color:#8f8b80;min-height:44px;cursor:pointer;font-size:15px;border-bottom:1px solid #4a4843;padding:0">Skip this question</button></sc-if>
+<button onClick="{{ restart }}" style="white-space:nowrap;background:none;border:0;color:#8f8b80;min-height:44px;cursor:pointer;font-size:15px;padding:0">Start over</button>
+</div>
+</div>
+<div style="background:#111110;border:1px solid #2a2925;padding:20px 22px">
+<div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;color:#8f8b80"><span>Brief so far</span><span>Select a row to change it</span></div>
+<sc-for list="{{ briefRows }}" as="r" hint-placeholder-count="6"><button onClick="{{ r.edit }}" style="display:grid;grid-template-columns:110px minmax(0,1fr) auto;gap:12px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid #1d1c1a;color:#ece9e0;padding:10px 0;cursor:pointer;font-size:15px" style-hover="color:#ff4b23"><span style="color:#8f8b80">{{ r.k }}</span><span style="color:{{ r.c }}">{{ r.v }}</span><span style="font-size:12px;color:#8f8b80">{{ r.tag }}</span></button></sc-for>
+<div style="margin-top:18px;padding-top:14px;border-top:1px solid #2a2925">
+<div style="font-size:13px;color:#8f8b80">Builder is leaning towards</div>
+<div style="margin-top:4px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:22px;line-height:1.1">{{ lean }}</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isBench }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px 32px;padding-bottom:18px;border-bottom:1px solid #2a2925">
+<div style="min-width:0;flex:1 1 420px">
+<div style="display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font-size:15px;color:#8f8b80"><span>Recommended · {{ rec.kind }}</span><sc-if value="{{ hasRecRef }}" hint-placeholder-val="{{ false }}"><a href="{{ recHref }}" style="color:#c9c5ba">Library format</a></sc-if></div>
+<h1 style="margin:8px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,4vw,56px);letter-spacing:-.035em;line-height:.95">{{ rec.name }}</h1>
+<p style="margin:10px 0 0;max-width:62ch;font-size:16px;line-height:1.45;color:#c9c5ba"><span style="color:#8f8b80">Why this format. </span>{{ rec.why }}</p>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-start;gap:12px">
+<div role="tablist" aria-label="Mode" style="display:flex;border:1px solid #34332e">
+<button role="tab" aria-selected="true" style="white-space:nowrap;background:#ece9e0;color:#0b0b0a;border:0;min-height:36px;padding:0 14px;font-size:14px;cursor:default">Build</button>
+<button role="tab" aria-selected="false" disabled="{{ true }}" title="Coming later" style="white-space:nowrap;background:none;color:#8f8b80;border:0;border-left:1px solid #34332e;min-height:36px;padding:0 14px;font-size:14px">Run · later</button>
+<button role="tab" aria-selected="false" disabled="{{ true }}" title="Coming later" style="white-space:nowrap;background:none;color:#8f8b80;border:0;border-left:1px solid #34332e;min-height:36px;padding:0 14px;font-size:14px">Review · later</button>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;font-size:15px">
+<button onClick="{{ undo }}" disabled="{{ noUndo }}" style="white-space:nowrap;background:none;border:1px solid #4a4843;color:{{ undoFg }};min-height:44px;padding:0 14px;cursor:pointer;font-size:15px">Undo</button>
+<button onClick="{{ copyAgenda }}" style="white-space:nowrap;background:none;border:1px solid #4a4843;color:#ece9e0;min-height:44px;padding:0 14px;cursor:pointer;font-size:15px">{{ copyLabel }}</button>
+<button onClick="{{ save }}" style="white-space:nowrap;background:none;border:1px solid #4a4843;color:#ece9e0;min-height:44px;padding:0 14px;cursor:pointer;font-size:15px">Save</button>
+<button onClick="{{ restart }}" style="white-space:nowrap;background:none;border:0;color:#8f8b80;min-height:44px;cursor:pointer;font-size:15px;padding:0">New build</button>
+</div>
+</div>
+</div>
+<sc-if value="{{ hasNotice }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 20px;margin-top:14px;padding:12px 16px;border:1px solid #4a4843;font-size:15px;color:#c9c5ba"><span>{{ notice }}</span><button onClick="{{ closeNotice }}" style="white-space:nowrap;background:none;border:0;color:#8f8b80;cursor:pointer;font-size:14px;padding:0;min-height:28px">Dismiss</button></div></sc-if>
+
+<div style="margin-top:18px">
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 20px;font-size:14px"><span><span style="color:{{ timeFg }}">{{ totalLabel }}</span><span style="color:#8f8b80"> · {{ availLabel }}</span></span><span style="color:#8f8b80">{{ mixLabel }}</span></div>
+<div aria-hidden="true" style="position:relative;margin-top:8px;height:18px">
+<div style="display:flex;gap:2px;height:100%;width:{{ stripW }}">
+<sc-for list="{{ strip }}" as="s" hint-placeholder-count="8"><span title="{{ s.t }}" style="flex:{{ s.f }} 1 0;min-width:2px;background:{{ s.bg }};border:1px solid {{ s.bd }}"></span></sc-for>
+</div>
+<span style="position:absolute;top:-4px;bottom:-4px;left:{{ availPct }};width:2px;background:#ece9e0"></span>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:8px;font-size:13px;color:#8f8b80"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border:1px solid #8f8b80"></span>Divergent</span><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:#8f8b80"></span>Convergent</span><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:#34332e"></span>Framing and evidence</span><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:2px;height:12px;background:#ece9e0"></span>Time available</span></div>
+</div>
+
+<div style="display:grid;grid-template-columns:{{ benchCols }};gap:24px clamp(20px,2.5vw,32px);align-items:start;margin-top:24px">
+
+<aside aria-label="Brief" style="position:{{ asidePos }};top:84px;min-width:0">
+<sc-if value="{{ narrow }}" hint-placeholder-val="{{ false }}"><button onClick="{{ toggleBrief }}" aria-expanded="{{ briefAria }}" style="display:flex;justify-content:space-between;gap:12px;width:100%;text-align:left;background:#111110;border:1px solid #2a2925;color:#ece9e0;min-height:52px;padding:10px 14px;cursor:pointer;font-size:15px"><span style="min-width:0"><span style="color:#8f8b80">Brief · </span>{{ briefSummary }}</span><span style="color:#8f8b80">{{ briefSign }}</span></button></sc-if>
+<sc-if value="{{ showBrief }}" hint-placeholder-val="{{ true }}">
+<div style="padding-top:{{ briefPad }}">
+<label style="display:block;padding-bottom:12px;border-bottom:1px solid #1d1c1a"><span style="display:block;font-size:13px;color:#8f8b80">Question</span><textarea value="{{ question }}" onChange="{{ onQuestion }}" rows="3" style="display:block;width:100%;margin-top:6px;background:#111110;border:1px solid #2a2925;color:#ece9e0;padding:8px 10px;font-family:'Satoshi',sans-serif;font-size:15px;line-height:1.4;resize:vertical"></textarea></label>
+<sc-for list="{{ edits }}" as="f" hint-placeholder-count="5"><label style="display:block;padding:10px 0;border-bottom:1px solid #1d1c1a"><span style="display:block;font-size:13px;color:#8f8b80">{{ f.k }}</span>
+<select value="{{ f.v }}" onChange="{{ f.change }}" style="width:100%;margin-top:4px;background:#111110;border:1px solid #2a2925;color:#ece9e0;min-height:40px;padding:0 8px;font-family:'Satoshi',sans-serif;font-size:15px"><sc-for list="{{ f.opts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></label></sc-for>
+<sc-for list="{{ chips }}" as="g" hint-placeholder-count="2"><div role="group" aria-label="{{ g.k }}" style="padding:10px 0;border-bottom:1px solid #1d1c1a"><div style="font-size:13px;color:#8f8b80">{{ g.k }}</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"><sc-for list="{{ g.opts }}" as="o" hint-placeholder-count="5"><button onClick="{{ o.pick }}" aria-pressed="{{ o.aria }}" style="white-space:nowrap;background:{{ o.bg }};color:{{ o.fg }};border:1px solid {{ o.bd }};min-height:32px;padding:0 9px;cursor:pointer;font-size:13px">{{ o.l }}</button></sc-for></div></div></sc-for>
+<label style="display:block;padding:10px 0"><span style="display:block;font-size:13px;color:#8f8b80">Constraints</span><input value="{{ notes }}" onChange="{{ onNotes }}" placeholder="CEO joins for the last hour" style="display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid #4a4843;outline:none;color:#ece9e0;padding:8px 0;font-size:15px"></label>
+<p style="margin:6px 0 0;font-size:13px;line-height:1.45;color:#8f8b80">Changing the brief proposes changes. It never rebuilds the agenda without asking.</p>
+</div>
+</sc-if>
+</aside>
+
+<div style="min-width:0">
+<sc-if value="{{ hasPre }}" hint-placeholder-val="{{ false }}">
+<div style="margin-bottom:12px;border:1px dashed #4a4843;padding:12px 14px">
+<div style="display:flex;justify-content:space-between;gap:12px;font-size:13px;color:#8f8b80"><span>Pre-work · before the session</span><span>Not counted in session time</span></div>
+<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px">
+<sc-for list="{{ preBlocks }}" as="p" hint-placeholder-count="1"><div style="background:#1a1917;border:1px solid #34332e;padding:10px 12px;min-width:200px;flex:1 1 200px"><div style="font-size:12px;color:#8f8b80">{{ p.label }} · {{ p.mins }} min, individually</div><div style="margin-top:3px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:18px">{{ p.title }}</div><button onClick="{{ p.back }}" style="white-space:nowrap;margin-top:6px;background:none;border:0;color:#c9c5ba;cursor:pointer;font-size:14px;padding:0;min-height:32px" style-hover="color:#ff4b23">Bring back into the session</button></div></sc-for>
+</div>
+</div>
+</sc-if>
+
+<div style="background-color:#111110;background-image:linear-gradient(rgba(236,233,224,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(236,233,224,.04) 1px,transparent 1px);background-size:40px 40px;border:1px solid #2a2925;padding:clamp(10px,2vw,22px)">
+<ol aria-label="Agenda. Use the move buttons on each block to reorder." style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px">
+<sc-for list="{{ blocks }}" as="b" hint-placeholder-count="7">
+<li aria-label="{{ b.aria }}" onDragOver="{{ b.dragOver }}" onDrop="{{ b.drop }}" style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ b.notes }}" as="n" hint-placeholder-count="0"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 16px;align-items:center;border:1px dashed {{ n.bd }};background:#0b0b0a;padding:9px 12px"><span style="font-size:14px;line-height:1.4;min-width:0;flex:1 1 260px"><span style="color:{{ n.c }}">{{ n.t }}</span><span style="color:#8f8b80"> {{ n.fix }}</span></span><sc-if value="{{ n.hasCmd }}" hint-placeholder-val="{{ false }}"><button onClick="{{ n.run }}" style="white-space:nowrap;background:none;border:1px solid #4a4843;color:#ece9e0;min-height:34px;padding:0 10px;cursor:pointer;font-size:13px">Propose fix</button></sc-if></div></sc-for>
+<div draggable="true" onDragStart="{{ b.dragStart }}" onDragEnd="{{ b.dragEnd }}" style="background:{{ b.bg }};border:1px {{ b.bs }} {{ b.bd }};min-height:{{ b.minH }};opacity:{{ b.op }};display:flex;flex-direction:column;transition:border-color .15s,background .15s;box-shadow:{{ b.shadow }}">
+<div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:10px 12px 0 10px">
+<span aria-hidden="true" title="Drag to reorder" style="color:#5a5850;cursor:grab;font-size:15px;user-select:none;letter-spacing:-2px">⋮⋮</span>
+<span style="display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-size:12px;color:#8f8b80;min-width:0"><span style="width:9px;height:9px;background:{{ b.sq }};border:1px solid {{ b.sqBd }}"></span><span style="color:{{ b.lc }}">{{ b.num }} {{ b.label }}</span><span>{{ b.range }}</span><sc-if value="{{ b.locked }}" hint-placeholder-val="{{ false }}"><span>Locked</span></sc-if></span>
+<span style="display:flex;align-items:center;gap:4px"><button onClick="{{ b.less }}" aria-label="{{ b.lessLabel }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;width:30px;height:30px;cursor:pointer">−</button><span style="min-width:52px;text-align:center;font-size:14px">{{ b.mins }} min</span><button onClick="{{ b.more }}" aria-label="{{ b.moreLabel }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;width:30px;height:30px;cursor:pointer">+</button></span>
+</div>
+<button onClick="{{ b.toggle }}" aria-expanded="{{ b.ariaOpen }}" style="text-align:left;background:none;border:0;color:#ece9e0;padding:6px 14px 0 38px;cursor:pointer;font-family:'Clash Display',sans-serif;font-weight:500;font-size:{{ b.titleSize }};line-height:1.05;letter-spacing:-.01em" style-hover="color:#ff4b23">{{ b.title }}</button>
+<sc-if value="{{ b.hasFlow }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px 0 38px;font-size:12px"><sc-for list="{{ b.uses }}" as="u" hint-placeholder-count="1"><span style="border:1px solid {{ u.bd }};color:{{ u.c }};padding:3px 7px">{{ u.t }}</span></sc-for><sc-for list="{{ b.makes }}" as="m" hint-placeholder-count="1"><span style="background:#26251f;color:#ece9e0;padding:4px 8px">Makes {{ m }}</span></sc-for></div></sc-if>
+<sc-if value="{{ b.hasPend }}" hint-placeholder-val="{{ false }}"><div style="margin:8px 14px 0 38px;font-size:13px;color:#ff4b23">Proposed: {{ b.pend }}</div></sc-if>
+<div style="margin-top:auto;display:flex;flex-wrap:wrap;gap:2px 14px;padding:8px 12px 8px 38px;font-size:13px">
+<button onClick="{{ b.toggle }}" style="white-space:nowrap;background:none;border:0;color:#8f8b80;cursor:pointer;padding:0;min-height:30px" style-hover="color:#ece9e0">{{ b.openLabel }}</button>
+<sc-if value="{{ b.canReplace }}" hint-placeholder-val="{{ false }}"><button onClick="{{ b.replace }}" style="white-space:nowrap;background:none;border:0;color:#8f8b80;cursor:pointer;padding:0;min-height:30px" style-hover="color:#ff4b23">Replace</button></sc-if>
+<button onClick="{{ b.up }}" aria-label="{{ b.upLabel }}" style="white-space:nowrap;background:none;border:0;color:#8f8b80;cursor:pointer;padding:0;min-height:30px" style-hover="color:#ece9e0">↑ Up</button>
+<button onClick="{{ b.down }}" aria-label="{{ b.downLabel }}" style="white-space:nowrap;background:none;border:0;color:#8f8b80;cursor:pointer;padding:0;min-height:30px" style-hover="color:#ece9e0">↓ Down</button>
+</div>
+</div>
+
+<sc-if value="{{ b.showAlts }}" hint-placeholder-val="{{ false }}">
+<div style="border:1px solid #ff4b23;background:#0b0b0a;padding:14px 16px">
+<div style="display:flex;justify-content:space-between;gap:12px;font-size:13px;color:#8f8b80"><span>Replace {{ b.title }} · fitted to this brief</span><button onClick="{{ b.replace }}" style="white-space:nowrap;background:none;border:0;color:#8f8b80;cursor:pointer;padding:0;font-size:13px">Close</button></div>
+<sc-for list="{{ b.alts }}" as="a" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 16px;align-items:center;padding:12px 0;border-bottom:1px solid #2a2925"><div style="min-width:0"><div style="display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline"><a href="{{ a.href }}" style="color:#ece9e0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:18px;text-decoration:none" style-hover="color:#ff4b23">{{ a.title }}</a><span style="font-size:13px;color:#8f8b80">{{ a.meta }}</span></div><div style="margin-top:3px;font-size:14px;line-height:1.4;color:#c9c5ba">{{ a.why }}</div></div><button onClick="{{ a.pick }}" style="white-space:nowrap;background:none;border:1px solid #4a4843;color:#ece9e0;min-height:38px;padding:0 12px;cursor:pointer;font-size:14px" style-hover="border-color:#ff4b23">Use</button></div></sc-for>
+<sc-if value="{{ b.noAlts }}" hint-placeholder-val="{{ false }}"><p style="margin:8px 0 0;font-size:14px;color:#8f8b80">No close alternatives in the Library yet for this stage.</p></sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ b.open }}" hint-placeholder-val="{{ false }}">
+<div role="region" aria-label="{{ b.detailLabel }}" style="position:{{ sheetPos }};left:0;right:0;bottom:0;max-height:{{ sheetMax }};overflow:auto;z-index:60;background:#141413;border:1px solid #4a4843;padding:16px 18px 20px;box-shadow:{{ sheetShadow }}">
+<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+<div style="min-width:0"><div style="font-size:13px;color:#8f8b80">{{ b.label }} · {{ b.d.kind }}</div><div style="margin-top:4px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:26px;line-height:1.05">{{ b.title }}</div></div>
+<button onClick="{{ b.toggle }}" aria-label="Close details" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;min-width:40px;min-height:40px;cursor:pointer;font-size:16px">×</button>
+</div>
+<div style="margin-top:12px;font-size:15px;line-height:1.45"><span style="color:#ff4b23">Why it is here. </span>{{ b.d.why }}</div>
+<sc-if value="{{ b.d.hasPurpose }}" hint-placeholder-val="{{ false }}"><div style="margin-top:8px;font-size:15px;line-height:1.45;color:#c9c5ba"><span style="color:#8f8b80">Purpose. </span>{{ b.d.purpose }}</div></sc-if>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:12px 20px;margin-top:14px;padding:12px 0;border-top:1px solid #2a2925;border-bottom:1px solid #2a2925">
+<sc-for list="{{ b.d.facts }}" as="f" hint-placeholder-count="4"><div><div style="font-size:12px;color:#8f8b80">{{ f.k }}</div><div style="margin-top:3px;font-size:14px;line-height:1.4">{{ f.v }}</div></div></sc-for>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:4px 28px">
+<sc-for list="{{ b.d.lists }}" as="l" hint-placeholder-count="3"><div style="margin-top:12px"><div style="font-size:13px;color:#8f8b80">{{ l.k }}</div><sc-if value="{{ l.ordered }}" hint-placeholder-val="{{ false }}"><ol style="margin:4px 0 0;padding-left:20px;font-size:14px;line-height:1.5"><sc-for list="{{ l.items }}" as="s" hint-placeholder-count="3"><li>{{ s }}</li></sc-for></ol></sc-if><sc-if value="{{ l.bullets }}" hint-placeholder-val="{{ false }}"><ul style="margin:4px 0 0;padding-left:18px;font-size:14px;line-height:1.5"><sc-for list="{{ l.items }}" as="s" hint-placeholder-count="2"><li>{{ s }}</li></sc-for></ul></sc-if></div></sc-for>
+</div>
+<div style="margin-top:14px;font-size:13px;color:#8f8b80">Assets</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">
+<sc-for list="{{ b.d.assets }}" as="a" hint-placeholder-count="0"><a href="{{ a.href }}" style="white-space:nowrap;display:inline-flex;align-items:center;min-height:36px;border:1px solid #34332e;color:#ece9e0;padding:0 10px;font-size:14px;text-decoration:none" style-hover="border-color:#ece9e0">{{ a.title }}</a></sc-for>
+<button onClick="{{ b.copyPrompt }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;min-height:36px;padding:0 10px;cursor:pointer;font-size:14px" style-hover="border-color:#ece9e0">{{ b.promptLabel }}</button>
+</div>
+<sc-if value="{{ b.d.hasSource }}" hint-placeholder-val="{{ false }}"><div style="margin-top:14px;font-size:13px;line-height:1.45;color:#8f8b80">Source. {{ b.d.source }} {{ b.d.rights }}</div></sc-if>
+<sc-if value="{{ b.d.hasRelated }}" hint-placeholder-val="{{ false }}"><div style="margin-top:12px;font-size:13px;color:#8f8b80">Related methods</div><div style="display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:4px;font-size:14px"><sc-for list="{{ b.d.related }}" as="r" hint-placeholder-count="3"><a href="{{ r.href }}" style="color:#c9c5ba" style-hover="color:#ff4b23">{{ r.title }}</a></sc-for></div></sc-if>
+<div style="display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:16px;padding-top:12px;border-top:1px solid #2a2925;font-size:14px">
+<sc-if value="{{ b.d.hasHref }}" hint-placeholder-val="{{ false }}"><a href="{{ b.d.href }}" style="display:inline-flex;align-items:center;min-height:36px;color:#ff4b23">Full Library page</a></sc-if>
+<button onClick="{{ b.dup }}" style="white-space:nowrap;background:none;border:0;color:#c9c5ba;cursor:pointer;min-height:36px;padding:0">Duplicate</button>
+<button onClick="{{ b.lock }}" style="white-space:nowrap;background:none;border:0;color:#c9c5ba;cursor:pointer;min-height:36px;padding:0">{{ b.lockLabel }}</button>
+<button onClick="{{ b.remove }}" style="white-space:nowrap;background:none;border:0;color:#c9c5ba;cursor:pointer;min-height:36px;padding:0">Remove</button>
+</div>
+</div>
+</sc-if>
+</li>
+</sc-for>
+</ol>
+<div style="margin-top:16px;padding-top:14px;border-top:1px dashed #34332e">
+<div style="font-size:13px;color:#8f8b80">Add a block. Builder picks the Library method and places it in sequence.</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+<sc-for list="{{ adds }}" as="a" hint-placeholder-count="10"><button onClick="{{ a.add }}" style="white-space:nowrap;background:none;border:1px dashed #4a4843;color:#c9c5ba;min-height:36px;padding:0 10px;cursor:pointer;font-size:13px" style-hover="color:#ece9e0;border-color:#8f8b80">+ {{ a.l }}</button></sc-for>
+</div>
+</div>
+</div>
+</div>
+
+<aside aria-label="Builder" style="min-width:0">
+<sc-if value="{{ hasProposal }}" hint-placeholder-val="{{ false }}">
+<div role="dialog" aria-label="{{ proposal.title }}" style="position:{{ sheetPos }};left:0;right:0;bottom:0;max-height:{{ sheetMax }};overflow:auto;z-index:70;border:1px solid #ff4b23;padding:16px 18px;margin-bottom:22px;background:#140f0d;box-shadow:{{ sheetShadow }}">
+<div style="font-size:13px;color:#ff4b23">Proposed change</div>
+<div style="margin-top:4px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:22px;line-height:1.1">{{ proposal.title }}</div>
+<sc-if value="{{ proposal.hasSub }}" hint-placeholder-val="{{ false }}"><div style="margin-top:4px;font-size:14px;color:#8f8b80">{{ proposal.sub }}</div></sc-if>
+<sc-if value="{{ proposal.hasDelta }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:10px;align-items:baseline;margin-top:10px;font-size:15px"><span style="color:#8f8b80;text-decoration:line-through">{{ proposal.before }}</span><span>→</span><span>{{ proposal.after }}</span><span style="color:#8f8b80">{{ proposal.availL }}</span></div></sc-if>
+<sc-for list="{{ proposal.rows }}" as="c" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:26px minmax(0,1fr);gap:10px;padding:12px 0;border-bottom:1px solid #2a2925">
+<button role="checkbox" aria-checked="{{ c.aria }}" aria-label="{{ c.ariaL }}" onClick="{{ c.toggle }}" style="white-space:nowrap;width:24px;height:24px;margin-top:1px;background:{{ c.cb }};border:1px solid {{ c.cbd }};color:#0b0b0a;cursor:pointer;font-size:14px;line-height:1;padding:0">{{ c.mark }}</button>
+<div style="min-width:0;opacity:{{ c.op }}">
+<div style="display:flex;justify-content:space-between;gap:10px;font-size:12px;letter-spacing:.04em"><span style="color:#ff4b23">{{ c.label }}</span><span style="color:#8f8b80">{{ c.savedLabel }}</span></div>
+<sc-if value="{{ c.hasOld }}" hint-placeholder-val="{{ false }}"><div style="margin-top:4px;font-size:14px;color:#8f8b80;text-decoration:line-through">{{ c.old }}</div></sc-if>
+<div style="margin-top:2px;font-size:15px">{{ c.nw }}</div>
+<div style="margin-top:4px;font-size:13px;line-height:1.4;color:#c9c5ba">{{ c.why }}</div>
+<sc-if value="{{ c.hasImpact }}" hint-placeholder-val="{{ false }}"><div style="margin-top:3px;font-size:13px;line-height:1.4;color:#8f8b80">Downstream: {{ c.impact }}</div></sc-if>
+</div>
+</div></sc-for>
+<sc-if value="{{ proposal.empty }}" hint-placeholder-val="{{ false }}"><p style="margin:8px 0 0;font-size:14px;color:#8f8b80">Nothing needs to change.</p></sc-if>
+<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px"><button onClick="{{ accept }}" style="white-space:nowrap;background:#ff4b23;color:#0b0b0a;border:0;min-height:44px;padding:0 16px;cursor:pointer;font-size:15px;font-weight:500">{{ proposal.acceptL }}</button><button onClick="{{ reject }}" style="white-space:nowrap;background:none;border:1px solid #4a4843;color:#ece9e0;min-height:44px;padding:0 16px;cursor:pointer;font-size:15px">Reject</button></div>
+</div>
+</sc-if>
+
+<div style="font-size:14px;color:#8f8b80">Change it</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+<sc-for list="{{ cmds }}" as="c" hint-placeholder-count="10"><button onClick="{{ c.run }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;min-height:38px;padding:0 10px;cursor:pointer;font-size:13px" style-hover="border-color:#ece9e0">{{ c.l }}</button></sc-for>
+</div>
+<form onSubmit="{{ onAsk }}" style="display:flex;gap:0;margin-top:10px;border-bottom:1px solid #4a4843">
+<input aria-label="Ask Builder" value="{{ askText }}" onChange="{{ onAskText }}" placeholder="Ask Builder… e.g. cut 45 minutes" style="flex:1 1 auto;min-width:0;background:none;border:0;outline:none;color:#ece9e0;padding:10px 0;font-size:15px">
+<button type="submit" style="white-space:nowrap;background:none;border:0;color:#8f8b80;cursor:pointer;font-size:14px;padding:0 0 0 10px;min-height:44px" style-hover="color:#ece9e0">{{ askBtn }}</button>
+</form>
+
+<div style="margin-top:26px;display:flex;justify-content:space-between;gap:12px;font-size:14px;color:#8f8b80"><span>Observations</span><span>{{ obsCount }}</span></div>
+<sc-for list="{{ obs }}" as="o" hint-placeholder-count="2"><div style="padding:10px 0;border-bottom:1px solid #2a2925"><div style="font-size:15px;line-height:1.4;color:{{ o.c }}">{{ o.t }}</div><div style="margin-top:3px;font-size:14px;color:#8f8b80">{{ o.fix }}</div><sc-if value="{{ o.hasCmd }}" hint-placeholder-val="{{ false }}"><button onClick="{{ o.run }}" style="white-space:nowrap;margin-top:6px;background:none;border:1px solid #4a4843;color:#ece9e0;min-height:34px;padding:0 10px;cursor:pointer;font-size:13px">Propose fix</button></sc-if></div></sc-for>
+<sc-if value="{{ noObs }}" hint-placeholder-val="{{ false }}"><p style="margin:8px 0 0;font-size:15px;color:#8f8b80">{{ noObsText }}</p></sc-if>
+
+<button onClick="{{ runStress }}" style="white-space:nowrap;margin-top:24px;width:100%;background:#ece9e0;color:#0b0b0a;border:0;min-height:48px;cursor:pointer;font-size:16px;font-weight:500">{{ stressLabel }}</button>
+<sc-if value="{{ hasStress }}" hint-placeholder-val="{{ false }}">
+<sc-for list="{{ stressGroups }}" as="g" hint-placeholder-count="2"><div style="margin-top:16px"><div style="font-size:12px;letter-spacing:.06em;color:{{ g.c }}">{{ g.k }}</div>
+<sc-for list="{{ g.rows }}" as="s" hint-placeholder-count="2"><div style="padding:10px 0;border-bottom:1px solid #1d1c1a"><div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;color:#8f8b80"><span>{{ s.k }}</span><span>{{ s.q }}</span></div><div style="margin-top:3px;font-size:15px;line-height:1.4">{{ s.msg }}</div><sc-if value="{{ s.bad }}" hint-placeholder-val="{{ false }}"><div style="margin-top:3px;font-size:14px;color:#8f8b80">Suggested fix: {{ s.fix }}</div></sc-if><sc-if value="{{ s.hasFix }}" hint-placeholder-val="{{ false }}"><button onClick="{{ s.apply }}" style="white-space:nowrap;margin-top:6px;background:none;border:1px solid #4a4843;color:#ece9e0;min-height:34px;padding:0 10px;cursor:pointer;font-size:13px">Propose fix</button></sc-if></div></sc-for>
+</div></sc-for>
+</sc-if>
+
+<div style="margin-top:28px;font-size:14px;color:#8f8b80">Methods in this build</div>
+<sc-for list="{{ methods }}" as="m" hint-placeholder-count="5"><a href="{{ m.href }}" style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid #1d1c1a;color:#ece9e0;text-decoration:none;font-size:14px" style-hover="color:#ff4b23"><span>{{ m.title }}</span><span style="color:#8f8b80">{{ m.kind }}</span></a></sc-for>
+
+<div style="margin-top:28px;font-size:14px;color:#8f8b80">Working pack</div>
+<sc-for list="{{ packRows }}" as="g" hint-placeholder-count="4"><div style="padding:8px 0;border-bottom:1px solid #1d1c1a;font-size:14px;line-height:1.45"><span style="color:#ece9e0">{{ g.k }}</span><span style="color:#8f8b80"> · {{ g.v }}</span></div></sc-for>
+<p style="margin:10px 0 0;font-size:13px;line-height:1.45;color:#8f8b80">Generated from the structure, so only what this build needs. Downloads come with saved projects.</p>
+</aside>
+</div>
+</sc-if>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  load() { try { return JSON.parse(localStorage.getItem("rd-builder") || "null"); } catch (e) { return null; } }
+  state = Object.assign({ step: "start", text: "", brief: {}, inferred: [], blocks: [], hist: [], open: null, alts: null, proposal: null, stress: false, busy: false, skipped: [], copied: false, prompted: null, notice: "", askText: "", asking: false, briefOpen: false, ready: !!(window.RDB && window.RD && window.RDL), w: window.innerWidth }, this.load() || {}, { busy: false, copied: false, proposal: null, notice: "", asking: false });
+  componentDidMount() {
+    this.onR = () => this.setState({ w: window.innerWidth }); window.addEventListener("resize", this.onR);
+    this.onK = e => { if (e.key === "Escape") this.setState({ open: null, alts: null }); }; window.addEventListener("keydown", this.onK);
+    if (!this.state.ready) this.poll = setInterval(() => { if (window.RDB && window.RD && window.RDL) { clearInterval(this.poll); this.setState({ ready: true }); this.fromLib(); } }, 40); else this.fromLib();
+  }
+  componentWillUnmount() { window.removeEventListener("resize", this.onR); window.removeEventListener("keydown", this.onK); clearInterval(this.poll); }
+  componentDidUpdate(pp) { if (pp.add !== this.props.add) this.fromLib(); try { const { step, text, brief, blocks, inferred, hist } = this.state; localStorage.setItem("rd-builder", JSON.stringify({ step, text, brief, blocks, inferred, hist: hist.slice(-15) })); } catch (e) {} }
+  roleFor(it) { return it.type === "sprint" || it.type === "workshop" || it.type === "playbook" ? null : (({ open: "open", explore: "options", makesense: "sense", create: "options", decide: "decide", commit: "commit", close: "commit", reflect: "commit" })[it.stage] || "options"); }
+  fromLib() { const id = this.props.add; if (!id || this.added === id || !window.RDL) return; this.added = id; const it = RDL.get(id); if (!it) return;
+    const role = this.roleFor(it);
+    if (this.state.step === "bench" && role) { const at = RDB.insertAt(this.state.blocks, role), nb = RDB.block(role, it.id); this.mut(bl => { bl.splice(at, 0, nb); return bl; }); this.setState({ open: nb.id, notice: "Added " + it.title + " to this build, placed where its inputs exist. Undo to take it out, or start a new build around it." }); return; }
+    this.setState({ step: "start", text: role ? "We want to use " + it.title + " to figure out " : "We want to adapt " + it.title + " for ", seed: { role, id: it.id } }); }
+  Q = [["outcome", "What needs to exist at the end?", "Builder picks the structure from this.", ["Decision", "Direction", "Ideas", "Prototype", "Research evidence", "Plan", "Alignment", "Priorities", "Strategy"], false, "Outcome"],
+    ["time", "How much time do you have?", "The whole session, not including prep.", ["90 min", "Half day", "1 day", "2 days", "3 to 5 days", "Multiple sessions", "Not sure"], false, "Time"],
+    ["people", "How many people?", "Changes how discussion and synthesis are run.", ["1", "2 to 5", "6 to 10", "11 to 20", "20+"], false, "People"],
+    ["owner", "Who can make the final decision?", "Is that person in the room? Without them, the session ends with a recommendation.", ["Yes", "Joins final part", "No", "Not sure"], false, "Decision owner"],
+    ["who", "Who is in the room?", "Choose all that apply.", ["Founders", "Leadership", "Product", "Design", "Engineering", "Research", "Sales", "Marketing", "Operations", "Customers", "External stakeholders"], true, "In the room"],
+    ["evidence", "What evidence exists already?", "Choose all that apply.", ["Customer research", "Analytics", "Market research", "Internal data", "Existing strategy", "Prototype", "Nothing yet"], true, "Evidence"],
+    ["format", "Where will it happen?", "", ["In person", "Remote", "Hybrid", "Not sure"], false, "Format"]];
+  set(k, v) { this.setState(s => ({ brief: Object.assign({}, s.brief, { [k]: v }), inferred: s.inferred.filter(x => x !== k) })); }
+  doBuild(brief) { const b = brief || this.state.brief; let blocks = RDB.compose(b); const sd = this.state.seed;
+    if (sd && sd.role && !blocks.some(x => x.ref === sd.id)) { const i = blocks.findIndex(x => x.role === sd.role); const nb = RDB.block(sd.role, sd.id); if (i >= 0) blocks[i] = Object.assign(nb, { mins: blocks[i].mins }); else blocks.splice(RDB.insertAt(blocks, sd.role), 0, nb); }
+    this.setState({ step: "bench", brief: b, blocks, hist: [], open: null, alts: null, stress: false, proposal: null, seed: null, notice: "" }); window.scrollTo(0, 0); }
+  mut(fn) { this.setState(s => ({ hist: s.hist.concat([s.blocks]).slice(-30), blocks: fn(s.blocks.map(x => Object.assign({}, x))), stress: false })); }
+  propose(cmd, avail, n, sub) { const S = this.state; if (cmd === "stress") { this.setState({ stress: true }); return; } const P = RDB.command(cmd, S.brief, S.blocks, avail || RDB.MIN[S.brief.time] || 210, n); P.changes.forEach(c => c.on = true); P.sub = [sub, P.short].filter(Boolean).join(" · "); P.avail = avail || RDB.MIN[S.brief.time] || 210; this.setState({ proposal: P }); }
+  onBrief(k, val) { const S = this.state, was = S.brief[k], big = v => ["11 to 20", "20+"].includes(v); this.set(k, val); if (!val || val === was) return;
+    const sub = "You changed " + k.replace("owner", "decision owner") + ": " + (was || "not set") + " → " + val;
+    if (k === "time") this.propose("fit", RDB.MIN[val], null, sub);
+    else if (k === "people" && big(val) && !big(was)) this.propose("big", null, null, sub);
+    else if (k === "format" && val === "Remote") this.propose("remote", null, null, sub); }
+  renderVals() {
+    const S = this.state;
+    if (!(S.ready && window.RDB && window.RD && window.RDL)) return { isStart: true, isBrief: false, isBench: false, examples: [], starts: [], templates: [], askOpts: [], briefRows: [], blocks: [], edits: [], chips: [], obs: [], cmds: [], stressGroups: [], packRows: [], methods: [], strip: [], adds: [], preBlocks: [], rec: {}, proposal: { rows: [] } };
+    const b = S.brief, wide = S.w >= 1100, mid = S.w >= 760, pad = n => String(n).padStart(2, "0"), clock = m => pad(Math.floor(m / 60)) + ":" + pad(m % 60), hm = m => m < 60 ? m + " min" : Math.floor(m / 60) + "h" + (m % 60 ? " " + pad(m % 60) + "m" : "");
+    const go = async (txt) => { const t = (txt != null ? txt : S.text).trim(); if (!t) return; this.setState({ busy: true, text: t }); const br = await RDB.extractAI(t); const inf = Object.keys(br).filter(k => k !== "question" && br[k] != null && !(Array.isArray(br[k]) && !br[k].length)); this.setState({ busy: false, step: "brief", brief: Object.assign({}, br), inferred: inf, skipped: [], ask: null }); window.scrollTo(0, 0); };
+    const seedIt = S.seed && RDL.get(S.seed.id);
+    const v = { isStart: S.step === "start", isBrief: S.step === "brief", isBench: S.step === "bench", text: S.text, onText: e => this.setState({ text: e.target.value }), onTextKey: e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) go(); }, busy: S.busy, submitLabel: S.busy ? "Reading it" : "Continue", submit: () => go(),
+      hasSeed: !!seedIt, seedTitle: seedIt ? seedIt.title : "", seedHref: seedIt ? RDL.deco(seedIt).href : "",
+      restart: () => this.setState({ step: "start", text: "", brief: {}, blocks: [], hist: [], proposal: null, stress: false, seed: null, notice: "" }),
+      examples: ["We need to figure out our positioning with the founding team in half a day.", "We have a new AI product idea but do not know whether people actually need it.", "Our leadership team cannot agree on the product direction.", "We need to redesign a public service for very different kinds of users.", "We want to explore how our category might change over the next five years."].map(t => ({ t, pick: () => go(t) })),
+      starts: [["Build a Sprint", "Several days, with making and testing.", "We need to run a 2-day sprint to "], ["Build a Workshop", "One session with one clear output.", "We have half a day to "], ["Adapt an existing Sprint", "Start from a Library sprint.", null, "#/sprints"], ["Start from a Playbook", "A curated route for a known situation.", null, "#/library/playbooks"], ["Start from a Method", "Build around something you already use.", null, "#/library/activities"], ["Fix an agenda I already have", "Paste it and describe the goal.", "Here is our current agenda: "]].map(([t, d, pre, href], i) => ({ t, d, n: pad(i + 1), rot: [-.8, .6, -.4, .9, -.6, .5][i] * (mid ? 1 : .3) + "deg", pick: () => href ? (location.hash = href) : this.setState({ text: pre }) })),
+      templates: RDB.TEMPLATES.map(t => ({ name: t.name, q: t.brief.question, pick: () => { this.setState({ text: t.brief.question, inferred: [] }); this.doBuild(Object.assign({}, t.brief)); } })) };
+    if (S.step === "brief") {
+      const missing = this.Q.filter(q => (b[q[0]] == null || (Array.isArray(b[q[0]]) && !b[q[0]].length)) && !S.skipped.includes(q[0]));
+      const q = this.Q.find(x => x[0] === S.ask) || missing[0] || null, val = q ? b[q[0]] : null, rec = RDB.recommend(b);
+      Object.assign(v, { briefCols: wide ? "minmax(0,7fr) minmax(0,4fr)" : "minmax(0,1fr)", askTitle: q ? q[1] : "Ready to build.", askSub: q ? q[2] : "Edit anything on the right, or build now.", hasSkip: !!q && !S.ask,
+        askOpts: q ? q[3].map(o => { const on = q[4] ? (val || []).includes(o) : val === o; return { l: o, aria: on ? "true" : "false", bg: on ? "#ece9e0" : "transparent", fg: on ? "#0b0b0a" : "#ece9e0", bd: on ? "#ece9e0" : "#34332e", pick: () => { if (q[4]) { const cur = (b[q[0]] || []).filter(x => x !== "Nothing yet" || o === "Nothing yet"); this.set(q[0], cur.includes(o) ? cur.filter(x => x !== o) : (o === "Nothing yet" ? ["Nothing yet"] : cur.concat([o]))); } else { this.set(q[0], o); this.setState({ ask: null }); } } }; }) : [],
+        skipQ: () => q && this.setState(s => ({ skipped: s.skipped.concat([q[0]]), ask: null })), notes: b.notes || "", onNotes: e => this.set("notes", e.target.value), build: () => this.doBuild(), buildBg: missing.length > 3 ? "#8f8b80" : "#ff4b23",
+        lean: rec.name + (b.time ? " · " + b.time : ""),
+        briefRows: [["Question", b.question, "question"]].concat(this.Q.map(x => [x[5], Array.isArray(b[x[0]]) ? b[x[0]].join(", ") : b[x[0]], x[0]])).concat(b.notes ? [["Constraints", b.notes, null]] : []).map(([k, val2, key]) => ({ k, v: val2 || "Not set", c: val2 ? "#ece9e0" : "#8f8b80", tag: key && val2 && S.inferred.includes(key) ? "Inferred" : "", edit: () => key && key !== "question" && this.setState({ ask: key }) })) });
+    }
+    if (S.step === "bench") {
+      const rec = RDB.recommend(b), blocks = S.blocks, live = blocks.filter(x => !x.pre), tot = RDB.total(blocks), avail = RDB.MIN[b.time] || 210, P = S.proposal, ROLES = RDB.ROLES;
+      const flow = {}; RDB.flow(blocks).forEach(f => flow[f.id] = f);
+      const ins = RDB.insights(b, blocks), byAt = {}; ins.filter(o => o.at).forEach(o => (byAt[o.at] = byAt[o.at] || []).push(o));
+      const pend = {}; if (P) P.changes.filter(c => c.on && c.id).forEach(c => { const x = blocks.find(y => y.id === c.id); pend[c.id] = c.type === "mins" ? (c.label.toLowerCase() + " to " + c.to + " min") : c.type === "async" ? "move to pre-work" : c.type === "remove" ? "remove" : c.type === "replace" ? "replace with " + (RDL.get(c.ref) || {}).title : ""; });
+      const kind = r => ROLES[r][5], sqOf = r => r === "breaks" ? ["transparent", "#5a5850"] : kind(r) === "conv" ? ["#8f8b80", "#8f8b80"] : kind(r) === "div" ? ["transparent", "#8f8b80"] : ["#34332e", "#5a5850"];
+      const runCmd = o => () => this.propose(o.cmd, avail, o.n);
+      let m = 0, idx = 0;
+      const rows = live.map(x => { const i = blocks.indexOf(x), R = ROLES[x.role], open = S.open === x.id, isBreak = x.role === "breaks", m0 = m; m += x.mins; const f = flow[x.id], it = x.ref ? RDL.get(x.ref) : null; if (!isBreak) idx++;
+        const mv = dir => () => this.mut(bl => { let j = i + dir; while (j >= 0 && j < bl.length && bl[j].pre) j += dir; if (j < 0 || j >= bl.length) return bl; [bl[i], bl[j]] = [bl[j], bl[i]]; return bl; });
+        const showAlts = S.alts === x.id, alts = showAlts ? RDB.alternatives(b, x).map(a => Object.assign(a, { href: RDL.deco(RDL.get(a.id)).href, pick: () => { this.mut(bl => { const y = bl.find(z => z.id === x.id); const ni = RDL.get(a.id); y.ref = ni.id; y.title = ni.title; return bl; }); this.setState({ alts: null, notice: "Replaced " + x.title + " with " + a.title + ". Same stage and output, so later blocks are unaffected." }); } })) : [];
+        let dd = { facts: [], lists: [], assets: [], related: [] };
+        if (open) { const D = RDB.detail(b, x); dd = Object.assign(D, { hasPurpose: !!D.purpose, hasSource: !!D.source, hasRelated: D.related.length > 0, hasHref: !!D.href, kind: D.kind || (isBreak ? "Structure" : "Builder block"),
+          facts: [["Planned", x.mins + " min"], ["Library range", D.time], ["People", D.people], ["Input", D.input], ["Output", D.output]].filter(r => r[1]).map(([k, vv]) => ({ k, v: vv })),
+          lists: [["How to run", D.steps, true], ["Use when", D.useWhen], ["Avoid when", D.avoidWhen], ["Facilitator notes", D.notes], ["Watch for", D.watch]].filter(l => l[1] && l[1].length).map(([k, items, o]) => ({ k, items, ordered: !!o, bullets: !o })) }); }
+        const notes = (byAt[x.id] || []).map(o => ({ t: o.t, fix: o.fix, c: o.sev === "high" ? "#ff4b23" : "#ece9e0", bd: o.sev === "high" ? "#ff4b23" : "#5a5850", hasCmd: !!o.cmd, run: runCmd(o) }));
+        const sq = sqOf(x.role), hasPend = !!pend[x.id];
+        return { title: x.title, label: x.label, num: isBreak ? "" : pad(idx), range: clock(m0) + "–" + clock(m), mins: x.mins, locked: !!x.locked, aria: (isBreak ? "" : "Block " + idx + ", ") + x.label + ": " + x.title + ", " + x.mins + " minutes, starts at " + clock(m0),
+          bg: isBreak ? "#131312" : "#1a1917", bs: isBreak ? "dashed" : "solid", bd: open || showAlts ? "#ece9e0" : hasPend ? "#ff4b23" : S.drag === x.id ? "#8f8b80" : "#34332e", op: S.drag === x.id ? ".45" : "1", shadow: open ? "0 10px 30px rgba(0,0,0,.45)" : "none",
+          minH: mid && !isBreak ? Math.min(220, 96 + Math.round(x.mins * .9)) + "px" : "0px", titleSize: isBreak ? "17px" : mid ? "22px" : "19px", sq: sq[0], sqBd: sq[1], lc: hasPend ? "#ff4b23" : "#8f8b80",
+          hasFlow: !isBreak && !!f && (f.uses.length + f.makes.length > 0), uses: f ? f.uses.map(u => ({ t: (u.ok ? "Uses " : "Missing ") + u.k, c: u.ok ? "#c9c5ba" : "#ff4b23", bd: u.ok ? "#34332e" : "#ff4b23" })) : [], makes: f ? f.makes : [],
+          hasPend, pend: pend[x.id] || "", notes, open, ariaOpen: open ? "true" : "false", openLabel: open ? "Close details" : "Details", detailLabel: x.title + " details", d: dd, canReplace: !isBreak && R[1].length > 0,
+          toggle: () => this.setState({ open: open ? null : x.id, alts: null }), less: () => this.mut(bl => { bl[i].mins = Math.max(5, bl[i].mins - 5); return bl; }), more: () => this.mut(bl => { bl[i].mins += 5; return bl; }), lessLabel: "Shorten " + x.title + " by 5 minutes", moreLabel: "Lengthen " + x.title + " by 5 minutes",
+          up: mv(-1), down: mv(1), upLabel: "Move " + x.title + " earlier", downLabel: "Move " + x.title + " later",
+          dup: () => this.mut(bl => { bl.splice(i + 1, 0, Object.assign({}, bl[i], { id: "b" + Date.now().toString(36), locked: false })); return bl; }), remove: () => { this.mut(bl => bl.filter(z => z.id !== x.id)); this.setState({ open: null, notice: "Removed " + x.title + ". " + RDB.impact(blocks, { type: "remove", id: x.id }) }); }, lock: () => this.mut(bl => { bl[i].locked = !bl[i].locked; return bl; }), lockLabel: x.locked ? "Unlock" : "Lock",
+          replace: () => this.setState({ alts: showAlts ? null : x.id, open: null }), showAlts, alts, noAlts: showAlts && !alts.length,
+          promptLabel: S.prompted === x.id ? "Copied" : "Copy facilitation prompt", copyPrompt: () => { const D = RDB.detail(b, x); const t = "Facilitate " + x.title + " (" + x.mins + " min) for " + (b.people || "a small group") + " people. Question: " + (b.question || "") + ". Input: " + D.input + ". Output: " + D.output + ". " + D.steps.map((s, k) => (k + 1) + ". " + s).join(" "); try { navigator.clipboard.writeText(t); } catch (e) {} this.setState({ prompted: x.id }); setTimeout(() => this.setState({ prompted: null }), 1500); },
+          dragStart: e => { e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", x.id); } catch (er) {} this.setState({ drag: x.id }); }, dragEnd: () => this.setState({ drag: null }), dragOver: e => e.preventDefault(),
+          drop: e => { e.preventDefault(); const from = S.drag; this.setState({ drag: null }); if (!from || from === x.id) return; this.mut(bl => { const fi = bl.findIndex(z => z.id === from); const [mvd] = bl.splice(fi, 1); const ti = bl.findIndex(z => z.id === x.id); bl.splice(fi <= ti ? ti + 1 : ti, 0, mvd); return bl; }); } }; });
+      const span = Math.max(tot, avail) || 1, div = live.filter(x => kind(x.role) === "div").reduce((s, x) => s + x.mins, 0), conv = live.filter(x => kind(x.role) === "conv").reduce((s, x) => s + x.mins, 0), brk = live.filter(x => x.role === "breaks").reduce((s, x) => s + x.mins, 0);
+      const strip = live.filter(x => x.mins > 0).map(x => { const k = kind(x.role), sel = S.open === x.id || pend[x.id]; return { f: x.mins, t: x.title + " · " + x.mins + " min", bg: sel ? "#ff4b23" : x.role === "breaks" ? "transparent" : k === "conv" ? "#8f8b80" : k === "div" ? "transparent" : "#34332e", bd: sel ? "#ff4b23" : x.role === "breaks" ? "#2a2925" : k === "div" ? "#8f8b80" : k === "conv" ? "#8f8b80" : "#34332e" }; });
+      const over = tot - avail, long = avail > 390;
+      const opt = k => this.Q.find(x => x[0] === k)[3], mk = s => () => this.setState({ notice: s });
+      const obsG = ins.filter(o => !o.at).map(o => ({ t: o.t, fix: o.fix, c: o.sev === "high" ? "#ff4b23" : "#ece9e0", hasCmd: !!o.cmd, run: runCmd(o) }));
+      const SEVK = ["Decision", "Authority", "Evidence", "Timing", "Outcome"], FIXC = { Decision: "decision", Authority: "owner", Evidence: "evidence", Timing: "fit", Divergence: "diverge", Convergence: "converge", Participation: "big", Load: "break", "Follow through": "commit" };
+      const QS = { Question: "Is the question specific enough?", Outcome: "Does it produce something tangible?", Decision: "Is there a decision?", Authority: "Will the decision owner be present?", Evidence: "Where does reality enter?", Sequence: "Do outputs feed later activities?", Divergence: "Are alternatives generated?", Convergence: "Is there time to choose?", Participation: "Can everyone contribute?", Load: "Is it cognitively realistic?", Timing: "Does it fit?", "Follow through": "Who owns what happens next?" };
+      const st = S.stress ? RDB.stress(b, blocks) : [], sRow = r => ({ k: r.k, q: QS[r.k] || "", msg: r.msg, fix: r.fix, bad: !r.ok, hasFix: !r.ok && !!FIXC[r.k], apply: () => this.propose(FIXC[r.k], avail) });
+      const groups = [["HIGH PRIORITY", "#ff4b23", st.filter(r => !r.ok && SEVK.includes(r.k))], ["WORTH FIXING", "#ece9e0", st.filter(r => !r.ok && !SEVK.includes(r.k))], ["HOLDING UP", "#8f8b80", st.filter(r => r.ok)]].filter(g => g[2].length).map(([k, c, rs]) => ({ k, c, rows: rs.map(sRow) }));
+      const bl2 = id => blocks.find(y => y.id === id);
+      const PV = P ? (() => { const sel = P.changes.filter(c => c.on), after = RDB.total(RDB.apply(blocks, sel.filter(c => c.type !== "brief"))); return { title: P.title, sub: P.sub, hasSub: !!P.sub, empty: !P.changes.length, before: hm(tot), after: hm(after), availL: "of " + hm(P.avail) + " available", hasDelta: after !== tot, acceptL: P.changes.length ? (sel.length === P.changes.length ? "Accept all" : "Accept " + sel.length + " of " + P.changes.length) : "Close",
+        rows: P.changes.map((c, ci) => { const x = c.id ? bl2(c.id) : null, ni = c.ref ? RDL.get(c.ref) : null; let old = x ? x.title + " · " + x.mins + " min" : "", nw = c.what || "";
+          if (c.type === "remove" && x) nw = "Removed from the agenda"; if (c.type === "async" && x) nw = x.title + " · pre-work, before the session"; if (c.type === "mins" && x) nw = x.title + " · " + c.to + " min"; if (c.type === "replace" && x && ni) nw = ni.title + " · " + x.mins + " min"; if (c.type === "insert" && c.nb) nw = c.nb.title + (c.nb.mins ? " · " + c.nb.mins + " min" : ""); if (c.type === "brief") old = (c.key === "owner" ? "Decision owner: " : "") + (b[c.key] || "not set");
+          const imp = c.type === "brief" || c.type === "note" ? "" : RDB.impact(blocks, c);
+          return { label: c.label.toUpperCase(), old, hasOld: !!old, nw, why: c.why, impact: imp, hasImpact: !!imp, savedLabel: c.saved > 0 ? "Saves " + c.saved + " min" : c.saved < 0 ? "Adds " + (-c.saved) + " min" : "", aria: c.on ? "true" : "false", ariaL: "Include: " + c.label + " " + nw, mark: c.on ? "✓" : "", cb: c.on ? "#ff4b23" : "transparent", cbd: c.on ? "#ff4b23" : "#5a5850", op: c.on ? "1" : ".5",
+            toggle: () => this.setState(s => ({ proposal: Object.assign({}, s.proposal, { changes: s.proposal.changes.map((y, yi) => yi === ci ? Object.assign({}, y, { on: !y.on }) : y) }) })) }; }) }; })() : { rows: [] };
+      const ADD = [["frame", "Frame"], ["evidence", "Evidence"], ["sense", "Make sense"], ["landscape", "Landscape"], ["options", "Options"], ["assumptions", "Assumptions"], ["criteria", "Criteria"], ["prioritise", "Prioritise"], ["decide", "Decide"], ["test", "Next test"], ["commit", "Commit"], ["breaks", "Break"]];
+      const methods = live.filter(x => x.ref).map(x => RDL.deco(RDL.get(x.ref))).filter((x, i, a) => x && a.findIndex(y => y.id === x.id) === i).map(d => ({ title: d.title, href: d.href, kind: d.typeLabel }));
+      const narrow = !wide, briefOpen = wide || S.briefOpen;
+      Object.assign(v, { rec, hasRecRef: !!rec.ref, recHref: rec.ref ? RDL.deco(RDL.get(rec.ref)).href : "",
+        totalLabel: hm(tot) + " planned", availLabel: long ? b.time + " available" : over > 0 ? hm(over) + " over the " + hm(avail) + " available" : over < 0 ? hm(-over) + " spare of " + hm(avail) : "fits " + hm(avail) + " exactly", timeFg: over > 0 && !long ? "#ff4b23" : "#ece9e0",
+        mixLabel: "Divergent " + div + " · Convergent " + conv + " · Breaks " + brk, strip, stripW: (tot / span * 100) + "%", availPct: "calc(" + Math.min(100, avail / span * 100) + "% - 1px)",
+        benchCols: wide ? "250px minmax(0,1fr) 310px" : "minmax(0,1fr)", asidePos: wide ? "sticky" : "static", narrow, showBrief: briefOpen, briefPad: narrow ? "10px" : "0px", briefAria: S.briefOpen ? "true" : "false", briefSign: S.briefOpen ? "Close" : "Edit",
+        toggleBrief: () => this.setState(s => ({ briefOpen: !s.briefOpen })), briefSummary: [b.time, b.people && b.people + " people", b.format, b.owner === "Yes" ? "decider in room" : b.owner === "Joins final part" ? "decider joins late" : "no decider"].filter(Boolean).join(" · "),
+        sheetPos: mid ? "static" : "fixed", sheetMax: mid ? "none" : "82vh", sheetShadow: mid ? "none" : "0 -20px 60px rgba(0,0,0,.7)",
+        question: b.question || "", onQuestion: e => this.set("question", e.target.value), notes: b.notes || "", onNotes: e => this.set("notes", e.target.value),
+        edits: ["outcome", "time", "people", "owner", "format"].map(k => { const q = this.Q.find(x => x[0] === k); return { k: q[5], v: b[k] || "", opts: [{ v: "", l: "Not set" }].concat(opt(k).map(o => ({ v: o, l: o }))), change: e => this.onBrief(k, e.target.value) }; }),
+        chips: ["evidence", "who"].map(k => { const q = this.Q.find(x => x[0] === k); return { k: q[5], opts: opt(k).map(o => { const on = (b[k] || []).includes(o); return { l: o, aria: on ? "true" : "false", bg: on ? "#ece9e0" : "transparent", fg: on ? "#0b0b0a" : "#c9c5ba", bd: on ? "#ece9e0" : "#34332e", pick: () => { const cur = (b[k] || []).filter(x => x !== "Nothing yet" || o === "Nothing yet"); this.set(k, cur.includes(o) ? cur.filter(x => x !== o) : (o === "Nothing yet" ? ["Nothing yet"] : cur.concat([o]))); } }; }) }; }),
+        blocks: rows, hasPre: blocks.some(x => x.pre), preBlocks: blocks.filter(x => x.pre).map(x => ({ title: x.title, label: x.label, mins: x.mins, back: () => this.mut(bl => { bl.find(y => y.id === x.id).pre = false; return bl; }) })),
+        adds: ADD.map(([r, l]) => ({ l, add: () => { const nb = RDB.block(r), at = RDB.insertAt(blocks, r); this.mut(bl => { bl.splice(at, 0, nb); return bl; }); this.setState({ open: r === "breaks" ? null : nb.id, notice: (r === "breaks" ? "Break" : nb.title) + " added where its inputs exist. " + RDB.impact(blocks, { type: "insert", at, nb }) }); } })),
+        obs: obsG, noObs: !obsG.length, obsCount: ins.length ? ins.length + " total, " + (ins.length - obsG.length) + " on the canvas" : "", noObsText: ins.length ? "Everything else is flagged on the canvas, next to the block it affects." : "Nothing flagged. Run a stress test to check it properly.",
+        cmds: [["Fit to time", "fit"], ["Cut 60 minutes", "cut60"], ["Make this remote", "remote"], ["Adapt for 20 people", "big"], ["Make it executive-friendly", "exec"], ["Add a decision gate", "decision"], ["Add customer evidence", "evidence"], ["More divergence", "diverge"], ["Improve convergence", "converge"], ["Make the output concrete", "concrete"], ["Create pre-work", "prework"], ["Easier to facilitate", "easy"], ["Turn into 2 half-days", "halves"], ["Add a break", "break"]].map(([l, c]) => ({ l, run: () => this.propose(c, avail) })),
+        askText: S.askText, onAskText: e => this.setState({ askText: e.target.value }), askBtn: S.asking ? "Reading" : "Ask",
+        onAsk: async e => { e.preventDefault(); const t = S.askText.trim(); if (!t) return; this.setState({ asking: true }); const r = await RDB.ask(t); this.setState({ asking: false }); if (!r) { this.setState({ notice: "Builder could not turn that into a change yet. Try one of the actions above, or edit the blocks directly." }); return; } this.setState({ askText: "" }); this.propose(r.cmd, avail, r.n, "From: “" + t + "”"); },
+        hasProposal: !!P, proposal: PV,
+        accept: () => this.setState(s => { const sel = s.proposal.changes.filter(c => c.on); const br = Object.assign({}, s.brief); sel.filter(c => c.type === "brief").forEach(c => br[c.key] = c.val); return { hist: s.hist.concat([s.blocks]).slice(-30), blocks: RDB.apply(s.blocks, sel.filter(c => c.type !== "brief")), brief: br, proposal: null, stress: false, notice: sel.length ? "Applied " + sel.length + " change" + (sel.length > 1 ? "s" : "") + ". Undo if it is not right." : "" }; }),
+        reject: () => this.setState({ proposal: null }),
+        runStress: () => this.setState({ stress: true }), stressLabel: S.stress ? "Stress test · re-run after changes" : "Stress test", hasStress: S.stress, stressGroups: groups,
+        methods, packRows: RDB.pack(b, live).map(([k, list]) => ({ k, v: list.join(", ") })),
+        undo: () => this.setState(s => s.hist.length ? { blocks: s.hist[s.hist.length - 1], hist: s.hist.slice(0, -1), proposal: null, notice: "" } : {}), noUndo: !S.hist.length, undoFg: S.hist.length ? "#ece9e0" : "#5a5850",
+        save: mk("Saved in this browser. An account keeps builds across devices, lets others edit with you, and will unlock Run mode."), hasNotice: !!S.notice, notice: S.notice, closeNotice: () => this.setState({ notice: "" }),
+        copyLabel: S.copied ? "Copied" : "Copy agenda", copyAgenda: () => { try { navigator.clipboard.writeText(RDB.agendaText(b, live)); } catch (e) {} this.setState({ copied: true }); setTimeout(() => this.setState({ copied: false }), 1500); } });
+    }
+    return v;
+  }
+}
+</script>
+</body>
+</html>
