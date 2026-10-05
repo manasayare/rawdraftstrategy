@@ -77,6 +77,9 @@ Component.prototype.template = function (V) {
         <p style={{"margin":"20px 0 0","maxWidth":"46ch","fontSize":"19px","color":"#c9c5ba"}}>
           {"Sprints, workshops, frameworks and tools for working through difficult questions."}
         </p>
+        <a href="/suggest" style={{"display":"inline-flex","alignItems":"center","minHeight":"40px","marginTop":"10px","fontSize":"16px","color":"#ece9e0"}}>
+          {"Suggest a resource →"}
+        </a>
         <div style={{"marginTop":"clamp(28px,4vw,48px)","maxWidth":"1100px"}}>
           <label htmlFor="rdlq" style={{"fontSize":"15px","color":"#8f8b80"}}>
             {"Search the library"}

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<section data-screen-label="Suggest a resource" style="font-family:'Satoshi',sans-serif;color:#ece9e0;padding:clamp(32px,6vw,80px) clamp(16px,3vw,40px) 0">
+<div style="max-width:820px">
+
+<sc-if value="{{ isForm }}" hint-placeholder-val="{{ true }}">
+<div style="font-size:15px;color:#8f8b80">Library · Suggest a resource</div>
+<h1 style="margin:14px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(40px,6vw,88px);letter-spacing:-.04em;line-height:.92;text-wrap:balance">Know something the Library is missing?</h1>
+<p style="margin:18px 0 0;max-width:50ch;font-size:clamp(17px,1.5vw,20px);line-height:1.5;color:#c9c5ba">A method, exercise, framework, game or reading that works. I review every suggestion. If it goes in, it carries your name and link, and anyone can use it.</p>
+
+<form onSubmit="{{ submit }}" noValidate="{{ true }}" style="margin-top:clamp(32px,4vw,48px)">
+<div style="font-size:12px;letter-spacing:.06em;color:#8f8b80">THE RESOURCE</div>
+<div style="display:grid;grid-template-columns:{{ cols }};gap:18px 24px;margin-top:12px">
+<label style="display:block;min-width:0"><span style="font-size:14px;color:#8f8b80">Name of the resource</span><input name="resourceTitle" value="{{ v.resourceTitle }}" onChange="{{ on.resourceTitle }}" placeholder="e.g. Pre-mortem" aria-invalid="{{ bad.resourceTitle }}" style="display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid {{ bd.resourceTitle }};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:19px" style-focus="border-bottom-color:#ece9e0"></label>
+<label style="display:block;min-width:0"><span style="font-size:14px;color:#8f8b80">Type</span><select value="{{ v.resourceType }}" onChange="{{ on.resourceType }}" style="display:block;width:100%;margin-top:6px;background:#111110;border:1px solid #34332e;color:#ece9e0;min-height:46px;padding:0 10px;font-family:'Satoshi',sans-serif;font-size:16px;color-scheme:dark"><sc-for list="{{ types }}" as="o" hint-placeholder-count="6"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></label>
+</div>
+<label style="display:block;margin-top:18px"><span style="font-size:14px;color:#8f8b80">Link (optional). Where people can find the original.</span><input type="url" name="resourceUrl" value="{{ v.resourceUrl }}" onChange="{{ on.resourceUrl }}" placeholder="https://" aria-invalid="{{ bad.resourceUrl }}" style="display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid {{ bd.resourceUrl }};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:19px" style-focus="border-bottom-color:#ece9e0"></label>
+<label style="display:block;margin-top:24px"><span style="font-size:14px;color:#8f8b80">What it is and how it runs</span><textarea value="{{ v.description }}" onChange="{{ on.description }}" rows="5" aria-invalid="{{ bad.description }}" placeholder="The steps, the time it takes, the group size, what you leave with." style="display:block;width:100%;margin-top:6px;background:#111110;border:1px solid {{ bdBox.description }};outline:none;color:#ece9e0;padding:12px 14px;font-family:'Satoshi',sans-serif;font-size:17px;line-height:1.45;resize:vertical" style-focus="border-color:#8f8b80"></textarea></label>
+<label style="display:block;margin-top:18px"><span style="font-size:14px;color:#8f8b80">When you use it (optional)</span><textarea value="{{ v.howUsed }}" onChange="{{ on.howUsed }}" rows="3" placeholder="The situations where it earns its place, and where it doesn't." style="display:block;width:100%;margin-top:6px;background:#111110;border:1px solid #34332e;outline:none;color:#ece9e0;padding:12px 14px;font-family:'Satoshi',sans-serif;font-size:17px;line-height:1.45;resize:vertical" style-focus="border-color:#8f8b80"></textarea></label>
+
+<div style="margin-top:clamp(32px,4vw,44px);font-size:12px;letter-spacing:.06em;color:#8f8b80">CREDIT</div>
+<div style="display:grid;grid-template-columns:{{ cols }};gap:18px 24px;margin-top:12px">
+<label style="display:block;min-width:0"><span style="font-size:14px;color:#8f8b80">Credit as</span><input name="creditName" autoComplete="name" value="{{ v.creditName }}" onChange="{{ on.creditName }}" placeholder="Your name or team" aria-invalid="{{ bad.creditName }}" style="display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid {{ bd.creditName }};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:19px" style-focus="border-bottom-color:#ece9e0"></label>
+<label style="display:block;min-width:0"><span style="font-size:14px;color:#8f8b80">Credit link (optional)</span><input type="url" name="creditUrl" value="{{ v.creditUrl }}" onChange="{{ on.creditUrl }}" placeholder="Website or LinkedIn" aria-invalid="{{ bad.creditUrl }}" style="display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid {{ bd.creditUrl }};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:19px" style-focus="border-bottom-color:#ece9e0"></label>
+<label style="display:block;min-width:0"><span style="font-size:14px;color:#8f8b80">Email. Private, only to ask you questions.</span><input type="email" name="email" autoComplete="email" value="{{ v.email }}" onChange="{{ on.email }}" placeholder="name@company.com" aria-invalid="{{ bad.email }}" style="display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid {{ bd.email }};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:19px" style-focus="border-bottom-color:#ece9e0"></label>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;margin-top:24px">
+<sc-for list="{{ checks }}" as="c" hint-placeholder-count="2"><button type="button" role="checkbox" aria-checked="{{ c.aria }}" onClick="{{ c.toggle }}" style="display:flex;align-items:flex-start;gap:12px;text-align:left;background:none;border:0;color:#ece9e0;padding:4px 0;cursor:pointer;font-size:16px;line-height:1.4"><span aria-hidden="true" style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-top:1px;border:1px solid {{ c.bd }};background:{{ c.bg }};color:#0b0b0a;font-size:14px;font-weight:700">{{ c.mark }}</span><span>{{ c.l }}</span></button></sc-for>
+</div>
+
+<label aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">Website<input tabIndex="-1" autoComplete="off" value="{{ trap }}" onChange="{{ onTrap }}"></label>
+
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;margin-top:28px">
+<button type="submit" disabled="{{ sending }}" style="white-space:nowrap;background:#ff4b23;color:#0b0b0a;border:0;min-height:56px;padding:0 26px;cursor:pointer;font-size:18px;font-weight:500;opacity:{{ sendOp }}" style-hover="background:#ece9e0">{{ sendL }}</button>
+<span role="status" aria-live="polite" style="font-size:15px;color:{{ msgC }}">{{ msg }}</span>
+</div>
+</form>
+</sc-if>
+
+<sc-if value="{{ isSent }}" hint-placeholder-val="{{ false }}">
+<div style="font-size:15px;color:#ff4b23">Suggestion received</div>
+<h1 style="margin:14px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(40px,6vw,88px);letter-spacing:-.04em;line-height:.92;text-wrap:balance">Thank you.</h1>
+<p style="margin:18px 0 0;max-width:48ch;font-size:clamp(17px,1.5vw,20px);line-height:1.5;color:#c9c5ba">{{ sentCopy }}</p>
+<div style="display:flex;flex-wrap:wrap;gap:12px 24px;margin-top:28px;font-size:16px"><button onClick="{{ another }}" style="background:none;border:0;padding:0;color:#ece9e0;text-decoration:underline;cursor:pointer;font-size:16px">Suggest another</button><a href="#/library">Back to the Library</a></div>
+</sc-if>
+
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  static TYPES = [["", "Choose…"], ["activity", "Activity or exercise"], ["framework", "Framework"], ["workshop", "Workshop format"], ["sprint", "Sprint"], ["icebreaker", "Icebreaker"], ["energiser", "Energiser"], ["reflection", "Reflection or retro"], ["game", "Game or simulation"], ["methodology", "Methodology"], ["playbook", "Playbook"], ["resource", "Book, article, course or toolkit"]];
+  static EMPTY = { resourceTitle: "", resourceType: "", resourceUrl: "", description: "", howUsed: "", creditName: "", creditUrl: "", email: "" };
+
+  state = { v: Object.assign({}, Component.EMPTY), isAuthor: false, consent: false, trap: "", status: "idle", bad: {}, w: window.innerWidth };
+  componentDidMount() { this.onR = () => this.setState({ w: window.innerWidth }); window.addEventListener("resize", this.onR); }
+  componentWillUnmount() { window.removeEventListener("resize", this.onR); }
+  set(k, val) { this.setState(s => ({ v: Object.assign({}, s.v, { [k]: val }), bad: Object.assign({}, s.bad, { [k]: false }), status: s.status === "sent" || s.status === "sending" ? s.status : "idle" })); }
+
+  async submit(e) {
+    e.preventDefault();
+    const S = this.state, v = S.v, bad = {}, url = x => !x.trim() || /^https?:\/\/\S+\.\S+/.test(x.trim());
+    if (!v.resourceTitle.trim()) bad.resourceTitle = true;
+    if (v.description.trim().length < 20) bad.description = true;
+    if (!v.creditName.trim()) bad.creditName = true;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email.trim())) bad.email = true;
+    if (!url(v.resourceUrl)) bad.resourceUrl = true;
+    if (!url(v.creditUrl)) bad.creditUrl = true;
+    if (Object.keys(bad).length || !S.consent) { this.setState({ bad, status: !S.consent && !Object.keys(bad).length ? "consent" : "invalid" }); return; }
+    this.setState({ status: "sending" });
+    try {
+      const res = await fetch("/api/suggest", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({}, v, { isAuthor: S.isAuthor, consent: S.consent, website: S.trap })) });
+      if (res.ok) { this.setState({ status: "sent" }); window.scrollTo(0, 0); return; }
+      this.setState({ status: res.status === 503 ? "offline" : "error" });
+    } catch (err) { this.setState({ status: "error" }); }
+  }
+
+  renderVals() {
+    const S = this.state, wide = S.w >= 700, keys = Object.keys(Component.EMPTY);
+    const MSG = { idle: ["", "#8f8b80"], sending: ["Sending…", "#8f8b80"], invalid: ["Check the fields marked in orange. The description needs a couple of sentences.", "#ff4b23"], consent: ["Tick the box to let the Library publish it with your credit.", "#ff4b23"], error: ["That didn't go through. Please try again.", "#ff4b23"], offline: ["Suggestions aren't connected yet. Please try again later.", "#ff4b23"] }[S.status] || ["", "#8f8b80"];
+    const check = (key, l) => ({ l, aria: S[key] ? "true" : "false", mark: S[key] ? "✓" : "", bg: S[key] ? "#ff4b23" : "transparent", bd: S[key] ? "#ff4b23" : (key === "consent" && S.status === "consent" ? "#ff4b23" : "#4a4843"), toggle: () => this.setState(s => ({ [key]: !s[key], status: s.status === "consent" ? "idle" : s.status })) });
+    return {
+      isForm: S.status !== "sent", isSent: S.status === "sent", cols: wide ? "minmax(0,1fr) minmax(0,1fr)" : "minmax(0,1fr)", v: S.v,
+      on: Object.fromEntries(keys.map(k => [k, e => this.set(k, e.target.value)])),
+      bad: Object.fromEntries(keys.map(k => [k, S.bad[k] ? "true" : "false"])), bd: Object.fromEntries(keys.map(k => [k, S.bad[k] ? "#ff4b23" : "#4a4843"])), bdBox: Object.fromEntries(keys.map(k => [k, S.bad[k] ? "#ff4b23" : "#34332e"])),
+      types: Component.TYPES.map(([v, l]) => ({ v, l })),
+      checks: [check("isAuthor", "I made this, or I'm one of the people who did."), check("consent", "Raw Draft can publish this in the Library, edited for length and clarity, with my name and link as credit.")],
+      trap: S.trap, onTrap: e => this.setState({ trap: e.target.value }),
+      submit: e => this.submit(e), sending: S.status === "sending", sendOp: S.status === "sending" ? ".6" : "1", sendL: S.status === "sending" ? "Sending…" : "Send suggestion", msg: MSG[0], msgC: MSG[1],
+      sentCopy: "I'll review it and may email " + (S.v.email.trim() || "you") + " with a question. If it goes into the Library, it'll be credited to " + (S.v.creditName.trim() || "you") + ".",
+      another: () => this.setState({ v: Object.assign({}, Component.EMPTY), isAuthor: false, consent: false, status: "idle", bad: {} })
+    };
+  }
+}
+</script>
+</body>
+</html>

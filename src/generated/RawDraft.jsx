@@ -7,6 +7,7 @@ import RDSprints from "./RDSprints";
 import RDLibrary from "./RDLibrary";
 import RDItem from "./RDItem";
 import RDBuilder from "./RDBuilder";
+import RDSuggest from "./RDSuggest";
 import RDWork from "./RDWork";
 import RDPages from "./RDPages";
 
@@ -119,7 +120,7 @@ class Component extends DCLogic {
     const cur = workish ? (p[1] ? "why" : "hub") : p0 === "notes" ? (p[1] ? "notes" : "hub") : (p0 === "about" ? "practice" : p0);
     const slugType = p0 === "library" && p[1] && window.RDL ? RDL.SLUG[p[1]] : null;
     const libList = (p0 === "library" && (!p[1] || (!!slugType && !p[2]))) || p0 === "resources";
-    const sect = { builder: "builder", practice: "about", network: "about", hub: "work", sprints: "library", library: "library", resources: "library", futures: "library", facilitation: "library", sources: "library", why: "work", notes: "work" }[cur] || "";
+    const sect = { suggest: "library", builder: "builder", practice: "about", network: "about", hub: "work", sprints: "library", library: "library", resources: "library", futures: "library", facilitation: "library", sources: "library", why: "work", notes: "work" }[cur] || "";
     const mk = (label, href, key) => ({ label, href, color: sect === key ? "#ff4b23" : "#ece9e0" });
     const navLinks = [mk("Builder", "#/builder", "builder"), mk("Library", "#/library", "library"), mk("Work", "#/work", "work"), mk("About us", "#/about", "about")];
     const rows = this.palRowsData().map((r, i) => Object.assign(r, { bg: i === S.pal.sel ? "#1a1917" : "transparent", tc: i === S.pal.sel ? "#ff4b23" : "#8f8b80", hover: () => this.setState(s => ({ pal: Object.assign({}, s.pal, { sel: i }) })) }));
@@ -155,7 +156,7 @@ class Component extends DCLogic {
       onPalQ: e => this.setState({ pal: { open: true, q: e.target.value, sel: 0 } }),
       onPalKey: e => { const n = rows.length; if (e.key === "ArrowDown") { e.preventDefault(); this.setState(s => ({ pal: Object.assign({}, s.pal, { sel: (s.pal.sel + 1) % n }) })); } else if (e.key === "ArrowUp") { e.preventDefault(); this.setState(s => ({ pal: Object.assign({}, s.pal, { sel: (s.pal.sel - 1 + n) % n }) })); } else if (e.key === "Enter" && rows[S.pal.sel]) this.go(rows[S.pal.sel].href); },
 
-      isHome: !p0, isSprints: p0 === "sprints", isLibrary: libList, isItem: p0 === "library" && !libList, isPage: pages.includes(p0), isWorkFlow: p0 === "work-with-us", isBuilder: p0 === "builder", builderAdd: S.route.params.get("add") || "", builderQ: S.route.params.get("q") || "", builderTpl: S.route.params.get("tpl") || "", hubTab: p0 === "notes" ? "notes" : (S.route.params.get("tab") || "work"), srcType: (this.lastSrc || {}).sourceType || "direct", srcTitle: (this.lastSrc || {}).sourceTitle || "",
+      isHome: !p0, isSprints: p0 === "sprints", isLibrary: libList, isItem: p0 === "library" && !libList, isPage: pages.includes(p0), isWorkFlow: p0 === "work-with-us", isSuggest: p0 === "suggest", isBuilder: p0 === "builder", builderAdd: S.route.params.get("add") || "", builderQ: S.route.params.get("q") || "", builderTpl: S.route.params.get("tpl") || "", hubTab: p0 === "notes" ? "notes" : (S.route.params.get("tab") || "work"), srcType: (this.lastSrc || {}).sourceType || "direct", srcTitle: (this.lastSrc || {}).sourceTitle || "",
       routeKey: S.route.key, rid: p0 === "library" ? (p[2] || p[1] || "") : (p[1] || ""), view: cur, libQ: S.route.params.get("q") || "", libType: p0 === "resources" ? "resource" : (slugType || S.route.params.get("type") || "all"),
       libGoal: S.route.params.get("goal") || "all", libStage: S.route.params.get("stage") || "all",
 
@@ -175,7 +176,7 @@ class Component extends DCLogic {
       homeSprints: ready ? RDL.refs(["foundation-sprint", "product-strategy-sprint", "ai-product-strategy-sprint", "foresight-sprint"]) : [],
       homeWork: ready ? RD.work.slice(0, 3).map(RDL.workD) : [],
       homeNotes: ready ? RD.notes.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3).map(RDL.noteD) : [],
-      footCols: [["About us", [["About us", "#/about"], ["Network", "#/network"], ["Sources", "#/sources"]]], ["Library", [["Builder", "#/builder"], ["Sprints", "#/sprints"], ["Workshops", "#/library/workshops"], ["Frameworks", "#/library/frameworks"], ["Activities", "#/library/activities"], ["Facilitation", "#/facilitation"], ["Futures", "#/futures"]]], ["Work", [["Work", "#/work"], ["Notes", "#/notes"]]], ["Connect", [["Book a workshop", "#/work-with-us"], ["LinkedIn", ready && RD.links && RD.links.linkedin], ["Substack", ready && RD.links && RD.links.substack]]]].map(([h2, ls]) => ({ h: h2, links: ls.filter(l => l[1]).map(([label, href]) => ({ label, href, target: href.startsWith("http") ? "_blank" : "_self" })) }))
+      footCols: [["About us", [["About us", "#/about"], ["Network", "#/network"], ["Sources", "#/sources"]]], ["Library", [["Builder", "#/builder"], ["Sprints", "#/sprints"], ["Workshops", "#/library/workshops"], ["Frameworks", "#/library/frameworks"], ["Activities", "#/library/activities"], ["Facilitation", "#/facilitation"], ["Futures", "#/futures"], ["Suggest a resource", "#/suggest"]]], ["Work", [["Work", "#/work"], ["Notes", "#/notes"]]], ["Connect", [["Book a workshop", "#/work-with-us"], ["LinkedIn", ready && RD.links && RD.links.linkedin], ["Substack", ready && RD.links && RD.links.substack]]]].map(([h2, ls]) => ({ h: h2, links: ls.filter(l => l[1]).map(([label, href]) => ({ label, href, target: href.startsWith("http") ? "_blank" : "_self" })) }))
     };
   }
 }
@@ -1018,6 +1019,11 @@ Component.prototype.template = function (V) {
           {V.isBuilder ? (
             <>
               <div className="sc-host"><RDBuilder add={V.builderAdd} q={V.builderQ} tpl={V.builderTpl} /></div>
+            </>
+          ) : null}
+          {V.isSuggest ? (
+            <>
+              <div className="sc-host"><RDSuggest  /></div>
             </>
           ) : null}
           {V.isWorkFlow ? (

@@ -21,6 +21,7 @@
 <h1 style="margin:10px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:{{ titleSize }};letter-spacing:-.04em;line-height:.92;max-width:16ch;text-wrap:balance">{{ d.title }}</h1>
 <p style="margin:18px 0 0;max-width:52ch;font-size:clamp(18px,1.6vw,22px);color:#c9c5ba;line-height:1.4">{{ d.shortDesc }}</p>
 <sc-if value="{{ hasNotice }}" hint-placeholder-val="{{ false }}"><p style="margin:16px 0 0;font-size:16px;color:#ff4b23">{{ notice }}</p></sc-if>
+<sc-if value="{{ hasCredit }}" hint-placeholder-val="{{ false }}"><p style="margin:14px 0 0;font-size:15px;color:#8f8b80">Contributed by <sc-if value="{{ creditLinked }}" hint-placeholder-val="{{ false }}"><a href="{{ creditUrl }}" target="_blank" rel="noopener" style="color:#ece9e0">{{ creditName }}</a></sc-if><sc-if value="{{ creditPlain }}" hint-placeholder-val="{{ true }}"><span style="color:#ece9e0">{{ creditName }}</span></sc-if>{{ creditNote }}</p></sc-if>
 <div data-noprint="1" style="display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;margin-top:28px">
 <a href="{{ builderHref }}" style="display:inline-flex;align-items:center;min-height:46px;border:1px solid #4a4843;color:#ece9e0;padding:0 16px;text-decoration:none;font-size:16px" style-hover="border-color:#ece9e0;color:#ece9e0">{{ builderLabel }}</a>
 <sc-if value="{{ hasRun }}" hint-placeholder-val="{{ false }}"><button onClick="{{ goRun }}" style="background:#ff4b23;color:#0b0b0a;border:0;padding:0 18px;min-height:46px;cursor:pointer;font-size:16px;font-weight:500" style-hover="background:#ece9e0">{{ runLabel }}</button></sc-if>
@@ -345,7 +346,7 @@ class Component extends DCLogic {
     return {
       notFound: false, found: true, d, kindLabel: T === "playbook" ? "Suggested playbook" : d.typeLabel + (it.methodology ? " · " + (L.get(it.methodology) || {}).title : ""), typePl: L.TYPE[T].pl, typeHref: "#/library/" + L.TYPE[T].slug,
       titleSize: it.title.length > 26 ? "clamp(40px,6vw,96px)" : "clamp(48px,8vw,132px)",
-      hasNotice: !!notice, notice, hasRun, runLabel, goRun: () => this.go(runId), hasFv: !!(it.agenda && it.agenda.length),
+      hasNotice: !!notice, notice, hasCredit: !!(it.contributor && it.contributor.name), creditName: it.contributor ? it.contributor.name : "", creditUrl: it.contributor && it.contributor.url || "", creditLinked: !!(it.contributor && it.contributor.url), creditPlain: !!(it.contributor && !it.contributor.url), creditNote: it.contributor && it.contributor.note ? ". " + it.contributor.note : "", hasRun, runLabel, goRun: () => this.go(runId), hasFv: !!(it.agenda && it.agenda.length),
       setOverview: () => this.setState({ fv: false }), setFv: () => this.setState({ fv: true }),
       ovBg: fvOn ? "transparent" : "#ece9e0", ovFg: fvOn ? "#ece9e0" : "#0b0b0a", fvBg: fvOn ? "#ece9e0" : "transparent", fvFg: fvOn ? "#0b0b0a" : "#ece9e0",
       doPrint: () => window.print(), builderHref: "#/builder?add=" + it.id, builderLabel: T === "sprint" ? "Adapt in Builder" : T === "workshop" ? "Adapt this workshop" : T === "playbook" ? "Use this playbook" : T === "framework" ? "Build around this" : "Add to Builder", hasHeroVis: S.w >= 900 && d.visual !== "plain_type", heroCols: S.w >= 900 && d.visual !== "plain_type" ? "minmax(0,7fr) minmax(0,4fr)" : "minmax(0,1fr)",

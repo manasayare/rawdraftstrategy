@@ -175,7 +175,7 @@ class Component extends DCLogic {
     return {
       notFound: false, found: true, d, kindLabel: T === "playbook" ? "Suggested playbook" : d.typeLabel + (it.methodology ? " · " + (L.get(it.methodology) || {}).title : ""), typePl: L.TYPE[T].pl, typeHref: "#/library/" + L.TYPE[T].slug,
       titleSize: it.title.length > 26 ? "clamp(40px,6vw,96px)" : "clamp(48px,8vw,132px)",
-      hasNotice: !!notice, notice, hasRun, runLabel, goRun: () => this.go(runId), hasFv: !!(it.agenda && it.agenda.length),
+      hasNotice: !!notice, notice, hasCredit: !!(it.contributor && it.contributor.name), creditName: it.contributor ? it.contributor.name : "", creditUrl: it.contributor && it.contributor.url || "", creditLinked: !!(it.contributor && it.contributor.url), creditPlain: !!(it.contributor && !it.contributor.url), creditNote: it.contributor && it.contributor.note ? ". " + it.contributor.note : "", hasRun, runLabel, goRun: () => this.go(runId), hasFv: !!(it.agenda && it.agenda.length),
       setOverview: () => this.setState({ fv: false }), setFv: () => this.setState({ fv: true }),
       ovBg: fvOn ? "transparent" : "#ece9e0", ovFg: fvOn ? "#ece9e0" : "#0b0b0a", fvBg: fvOn ? "#ece9e0" : "transparent", fvFg: fvOn ? "#0b0b0a" : "#ece9e0",
       doPrint: () => window.print(), builderHref: "#/builder?add=" + it.id, builderLabel: T === "sprint" ? "Adapt in Builder" : T === "workshop" ? "Adapt this workshop" : T === "playbook" ? "Use this playbook" : T === "framework" ? "Build around this" : "Add to Builder", hasHeroVis: S.w >= 900 && d.visual !== "plain_type", heroCols: S.w >= 900 && d.visual !== "plain_type" ? "minmax(0,7fr) minmax(0,4fr)" : "minmax(0,1fr)",
@@ -230,6 +230,28 @@ Component.prototype.template = function (V) {
                   <>
                     <p style={{"margin":"16px 0 0","fontSize":"16px","color":"#ff4b23"}}>
                       {dcText(V.notice)}
+                    </p>
+                  </>
+                ) : null}
+                {V.hasCredit ? (
+                  <>
+                    <p style={{"margin":"14px 0 0","fontSize":"15px","color":"#8f8b80"}}>
+                      {"Contributed by "}
+                      {V.creditLinked ? (
+                        <>
+                          <a href={dcHref(V.creditUrl)} target="_blank" rel="noopener" style={{"color":"#ece9e0"}}>
+                            {dcText(V.creditName)}
+                          </a>
+                        </>
+                      ) : null}
+                      {V.creditPlain ? (
+                        <>
+                          <span style={{"color":"#ece9e0"}}>
+                            {dcText(V.creditName)}
+                          </span>
+                        </>
+                      ) : null}
+                      {dcText(V.creditNote)}
                     </p>
                   </>
                 ) : null}

@@ -24,6 +24,7 @@ const PAGES = {
   "RD Pages": "RDPages",
   "RD Sprints": "RDSprints",
   "RD Work": "RDWork",
+  "RD Suggest": "RDSuggest",
 };
 
 // Engine and data scripts, in the order Raw Draft.dc.html loads them.
