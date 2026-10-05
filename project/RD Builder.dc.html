@@ -25,102 +25,16 @@ a:hover{color:#ff4b23}
 <section data-screen-label="Builder" style="padding:clamp(16px,2.5vw,32px) clamp(12px,2vw,28px) {{ pageBottom }};font-family:'Satoshi',sans-serif;color:#ece9e0">
 <div aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">{{ liveMsg }}</div>
 
-<sc-if value="{{ isChat }}" hint-placeholder-val="{{ true }}">
-<div style="display:grid;grid-template-columns:{{ chatCols }};gap:24px clamp(24px,4vw,64px);align-items:start;max-width:1320px">
-<div style="min-width:0">
-<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;font-size:14px;color:#8f8b80"><span>Builder</span><span style="display:flex;gap:18px"><sc-if value="{{ hasAccount }}" hint-placeholder-val="{{ false }}"><button onClick="{{ goHome }}" style="white-space:nowrap;background:none;border:0;color:#8f8b80;cursor:pointer;font-size:14px;padding:0;min-height:32px" style-hover="color:#ece9e0">Your workshops</button></sc-if><sc-if value="{{ chatStarted }}" hint-placeholder-val="{{ false }}"><button onClick="{{ chatReset }}" style="white-space:nowrap;background:none;border:0;color:#8f8b80;cursor:pointer;font-size:14px;padding:0;min-height:32px" style-hover="color:#ece9e0">Start over</button></sc-if></span></div>
-<h1 style="margin:14px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:{{ chatH }};letter-spacing:-.04em;line-height:.92;max-width:14ch;transition:font-size .4s ease">What are you trying to figure out?</h1>
-<sc-if value="{{ hasSeedNote }}" hint-placeholder-val="{{ false }}"><p style="margin:16px 0 0;font-size:16px;color:#c9c5ba">Building around <a href="{{ seedHref }}" style="color:#ff4b23">{{ seedTitle }}</a>. Say what you want to use it for.</p></sc-if>
-<sc-if value="{{ chatEmpty }}" hint-placeholder-val="{{ true }}">
-<form onSubmit="{{ onChat }}" style="margin-top:clamp(22px,3vw,36px)">
-<textarea aria-label="Describe what you are trying to figure out" value="{{ chatText }}" onChange="{{ onChatText }}" onKeyDown="{{ onChatKey }}" rows="4" placeholder="We need to decide which customer segment to focus on." style="display:block;width:100%;background:#111110;border:1px solid #34332e;outline:none;color:#ece9e0;padding:18px 20px;font-family:'Satoshi',sans-serif;font-size:clamp(18px,1.6vw,22px);line-height:1.45;resize:vertical" style-focus="border-color:#8f8b80"></textarea>
-<div style="display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-top:14px"><button type="submit" disabled="{{ busy }}" style="white-space:nowrap;background:#ff4b23;color:#0b0b0a;border:0;min-height:52px;padding:0 24px;cursor:pointer;font-size:17px;font-weight:500">{{ sendL }}</button><span style="font-size:14px;color:#8f8b80">Say it the way you would to a colleague. No account needed to start.</span></div>
-</form>
-<div style="margin-top:clamp(26px,3vw,40px);font-size:12px;letter-spacing:.06em;color:#8f8b80">OR START FROM ONE OF THESE</div>
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:12px;margin-top:10px">
-<sc-for list="{{ starters }}" as="e" hint-placeholder-count="5"><button onClick="{{ e.pick }}" style="text-align:left;background:#1a1917;border:1px solid #34332e;color:#ece9e0;padding:14px 16px 16px;cursor:pointer;font-size:16px;line-height:1.4;transform:rotate({{ e.rot }});transition:transform .2s,border-color .2s" style-hover="transform:rotate(0deg) translateY(-2px);border-color:#8f8b80">{{ e.t }}</button></sc-for>
-</div>
-</sc-if>
-<div style="margin-top:{{ convoTop }}">
-<sc-for list="{{ chatRows }}" as="m" hint-placeholder-count="0">
-<sc-if value="{{ m.isU }}" hint-placeholder-val="{{ false }}"><div style="padding:18px 0 14px;border-top:1px solid #2a2925"><div style="font-size:12px;letter-spacing:.06em;color:#8f8b80">YOU</div><div style="margin-top:6px;font-size:clamp(18px,1.6vw,22px);line-height:1.45;max-width:60ch">{{ m.t }}</div></div></sc-if>
-<sc-if value="{{ m.isGot }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:4px 0 14px"><span style="font-size:12px;letter-spacing:.06em;color:#8f8b80;margin-right:4px">NOTED</span><sc-for list="{{ m.rows }}" as="g" hint-placeholder-count="2"><span style="display:inline-block;border:1px solid #4a4843;padding:4px 9px;font-size:13px;line-height:1.35"><span style="color:#8f8b80">{{ g.k }} </span>{{ g.v }}</span></sc-for></div></sc-if>
-<sc-if value="{{ m.isQ }}" hint-placeholder-val="{{ false }}"><div style="padding:14px 0 22px;opacity:{{ m.op }}"><div style="font-size:12px;letter-spacing:.06em;color:#ff4b23">BUILDER</div><div style="margin-top:6px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(24px,2.6vw,36px);letter-spacing:-.02em;line-height:1.05">{{ m.q }}</div><sc-if value="{{ m.hasSub }}" hint-placeholder-val="{{ false }}"><div style="margin-top:6px;font-size:15px;color:#8f8b80">{{ m.sub }}</div></sc-if>
-<div role="group" aria-label="{{ m.q }}" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,170px),1fr));gap:10px;margin-top:14px"><sc-for list="{{ m.opts }}" as="o" hint-placeholder-count="4"><button onClick="{{ o.pick }}" aria-pressed="{{ o.aria }}" disabled="{{ o.dis }}" style="text-align:left;background:{{ o.bg }};border:1px solid {{ o.bd }};color:{{ o.fg }};min-height:64px;padding:12px 14px;cursor:pointer;font-family:'Clash Display',sans-serif;font-weight:500;font-size:18px;line-height:1.1;transform:rotate({{ o.rot }});transition:transform .2s,border-color .2s" style-hover="transform:rotate(0deg);border-color:#ece9e0">{{ o.l }}</button></sc-for></div>
-<sc-if value="{{ m.live }}" hint-placeholder-val="{{ false }}"><div style="margin-top:8px;font-size:13px;color:#8f8b80">Pick one, or just type your answer below. You can do both.</div></sc-if></div></sc-if>
-<sc-if value="{{ m.isOld }}" hint-placeholder-val="{{ false }}"><div style="padding:6px 0 14px;font-size:14px;color:#8f8b80">Builder updated its recommendation. The latest version is below.</div></sc-if>
-<sc-if value="{{ m.isNote }}" hint-placeholder-val="{{ false }}"><div style="padding:6px 0 14px;font-size:15px;color:#c9c5ba">{{ m.t }}</div></sc-if>
-<sc-if value="{{ m.isRec }}" hint-placeholder-val="{{ false }}">
-<div style="margin:6px 0 18px;border:1px solid #4a4843;background-color:#111110;background-image:linear-gradient(rgba(236,233,224,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(236,233,224,.04) 1px,transparent 1px);background-size:40px 40px;padding:clamp(18px,2.6vw,30px)">
-<div style="font-size:12px;letter-spacing:.06em;color:#8f8b80">BASED ON WHAT YOU HAVE TOLD ME</div>
-<div style="margin-top:12px;font-size:14px;color:#ff4b23">Recommended · {{ rec.kind }}</div>
-<div style="margin-top:4px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,4vw,58px);letter-spacing:-.035em;line-height:.95">{{ rec.name }}</div>
-<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:14px"><sc-for list="{{ recChips }}" as="c" hint-placeholder-count="4"><span style="display:inline-block;border:1px solid {{ c.bd }};color:{{ c.c }};padding:4px 10px;font-size:14px;line-height:1.35">{{ c.t }}</span></sc-for></div>
-<p style="margin:14px 0 0;max-width:62ch;font-size:16px;line-height:1.5;color:#c9c5ba">{{ rec.why }}</p>
-<div style="display:flex;justify-content:space-between;gap:12px;margin-top:20px;font-size:12px;letter-spacing:.06em;color:#8f8b80"><span>SUGGESTED STRUCTURE</span><span>{{ outlineL }}</span></div>
-<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><sc-for list="{{ outline }}" as="o" hint-placeholder-count="6"><div style="background:#1a1917;border:1px solid #34332e;padding:10px 12px;min-width:118px;transform:rotate({{ o.rot }})"><div style="font-size:12px;color:#8f8b80">{{ o.n }} · {{ o.mins }} min</div><div style="margin-top:3px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:18px">{{ o.l }}</div></div></sc-for></div>
-<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;margin-top:22px"><button onClick="{{ openInBuilder }}" style="white-space:nowrap;background:#ff4b23;color:#0b0b0a;border:0;min-height:52px;padding:0 22px;cursor:pointer;font-size:17px;font-weight:500">Open in Builder</button><span style="font-size:14px;color:#8f8b80">Or keep typing to change anything.</span></div>
-<p style="margin:12px 0 0;font-size:13px;line-height:1.45;color:#8f8b80">Each block comes from the Raw Draft Library. In Builder you can drag, replace, retime or delete any of it.</p>
-</div>
-</sc-if>
-</sc-for>
-<sc-if value="{{ busy }}" hint-placeholder-val="{{ false }}"><div style="padding:10px 0;font-size:15px;color:#8f8b80">Builder is reading it…</div></sc-if>
-</div>
-<sc-if value="{{ chatStarted }}" hint-placeholder-val="{{ false }}">
-<form onSubmit="{{ onChat }}" style="position:sticky;bottom:0;z-index:5;display:flex;gap:10px;align-items:flex-end;background:#0b0b0a;padding:12px 0 16px;border-top:1px solid #34332e">
-<textarea aria-label="Reply to Builder" value="{{ chatText }}" onChange="{{ onChatText }}" onKeyDown="{{ onChatKey }}" rows="2" placeholder="{{ replyPh }}" style="flex:1 1 auto;min-width:0;background:#111110;border:1px solid #34332e;outline:none;color:#ece9e0;padding:12px 14px;font-family:'Satoshi',sans-serif;font-size:16px;line-height:1.4;resize:none" style-focus="border-color:#8f8b80"></textarea>
-<button type="submit" disabled="{{ busy }}" style="white-space:nowrap;background:#ece9e0;color:#0b0b0a;border:0;min-height:50px;padding:0 18px;cursor:pointer;font-size:15px;font-weight:500">Send</button>
-</form>
-</sc-if>
-</div>
-<aside aria-label="Current brief" style="position:{{ briefPos }};top:84px;min-width:0;order:{{ briefOrder }}">
-<sc-if value="{{ briefToggle }}" hint-placeholder-val="{{ false }}"><button onClick="{{ toggleBriefView }}" aria-expanded="{{ briefAria }}" style="display:flex;justify-content:space-between;gap:12px;width:100%;text-align:left;background:#111110;border:1px solid #2a2925;color:#ece9e0;min-height:48px;padding:0 14px;cursor:pointer;font-size:15px"><span>View brief <span style="color:#8f8b80">· {{ briefN }}</span></span><span style="color:#8f8b80">{{ briefSign }}</span></button></sc-if>
-<sc-if value="{{ briefShown }}" hint-placeholder-val="{{ true }}">
-<div style="border:1px solid #2a2925;padding:16px 18px;background:#0f0f0e;margin-top:{{ briefMt }}">
-<div style="font-size:12px;letter-spacing:.06em;color:#8f8b80">CURRENT BRIEF</div>
-<sc-for list="{{ briefPanel }}" as="r" hint-placeholder-count="0"><button onClick="{{ r.edit }}" style="display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid #1d1c1a;color:#ece9e0;padding:10px 0;cursor:pointer" style-hover="color:#ff4b23"><span style="display:block;font-size:11px;letter-spacing:.08em;color:#8f8b80">{{ r.k }}</span><span style="display:block;margin-top:2px;font-size:15px;line-height:1.4">{{ r.v }}</span></button></sc-for>
-<sc-if value="{{ briefEmpty }}" hint-placeholder-val="{{ true }}"><p style="margin:10px 0 0;font-size:14px;line-height:1.45;color:#8f8b80">Builder fills this in as you talk: the question, what must exist at the end, time, people, who decides and what you already know.</p></sc-if>
-<sc-if value="{{ briefMissing }}" hint-placeholder-val="{{ false }}"><p style="margin:10px 0 0;font-size:13px;line-height:1.45;color:#8f8b80">Still open: {{ missingL }}</p></sc-if>
-</div>
-</sc-if>
-</aside>
-</div>
-</sc-if>
-
 <sc-if value="{{ isHomeW }}" hint-placeholder-val="{{ false }}">
 <div style="max-width:1100px">
-<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;font-size:14px;color:#8f8b80"><span>Builder · {{ acctL }}</span><button onClick="{{ signOut }}" style="white-space:nowrap;background:none;border:0;color:#8f8b80;cursor:pointer;font-size:14px;padding:0;min-height:32px" style-hover="color:#ece9e0">Sign out</button></div>
-<h1 style="margin:14px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(40px,6vw,92px);letter-spacing:-.04em;line-height:.92">What are you working on?</h1>
-<form onSubmit="{{ onChat }}" style="margin-top:24px;display:flex;flex-wrap:wrap;gap:10px"><input aria-label="Describe what you are working on" value="{{ chatText }}" onChange="{{ onChatText }}" placeholder="Our leadership team cannot agree on product priorities." style="flex:1 1 320px;min-width:0;background:#111110;border:1px solid #34332e;outline:none;color:#ece9e0;min-height:56px;padding:0 16px;font-size:18px;font-family:'Satoshi',sans-serif" style-focus="border-color:#8f8b80"><button type="submit" style="white-space:nowrap;background:#ff4b23;color:#0b0b0a;border:0;min-height:56px;padding:0 22px;cursor:pointer;font-size:16px;font-weight:500">Continue</button></form>
-<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px"><button onClick="{{ newBlank }}" style="white-space:nowrap;background:none;border:1px solid #4a4843;color:#ece9e0;min-height:44px;padding:0 16px;cursor:pointer;font-size:15px">Start blank</button><button onClick="{{ openAI }}" style="white-space:nowrap;background:none;border:1px solid #4a4843;color:#ece9e0;min-height:44px;padding:0 16px;cursor:pointer;font-size:15px">Build with AI</button><button onClick="{{ homeTpl }}" style="white-space:nowrap;background:none;border:1px solid #4a4843;color:#ece9e0;min-height:44px;padding:0 16px;cursor:pointer;font-size:15px">Use a template</button></div>
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;font-size:14px;color:#8f8b80"><span>Builder</span><span>Saved in this browser</span></div>
+<h1 style="margin:14px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(40px,6vw,92px);letter-spacing:-.04em;line-height:.92">Your workshops</h1>
+
+<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px"><button onClick="{{ newBlank }}" style="white-space:nowrap;background:none;border:1px solid #4a4843;color:#ece9e0;min-height:44px;padding:0 16px;cursor:pointer;font-size:15px">Start blank</button><button onClick="{{ homeTpl }}" style="white-space:nowrap;background:none;border:1px solid #4a4843;color:#ece9e0;min-height:44px;padding:0 16px;cursor:pointer;font-size:15px">Use a template</button></div>
 <div style="margin-top:clamp(32px,4vw,52px);font-size:12px;letter-spacing:.06em;color:#8f8b80">RECENT</div>
 <div style="margin-top:8px;border-top:1px solid #2a2925">
 <sc-for list="{{ recent }}" as="r" hint-placeholder-count="3"><button onClick="{{ r.open }}" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 20px;align-items:center;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid #2a2925;color:#ece9e0;min-height:64px;padding:12px 0;cursor:pointer" style-hover="color:#ff4b23"><span><span style="display:block;font-family:'Clash Display',sans-serif;font-weight:500;font-size:22px;line-height:1.1">{{ r.name }}</span><span style="display:block;margin-top:3px;font-size:14px;color:#8f8b80">{{ r.meta }}</span></span><span style="font-size:14px;color:#8f8b80">Open</span></button></sc-for>
-<sc-if value="{{ noRecent }}" hint-placeholder-val="{{ false }}"><p style="margin:12px 0 0;font-size:15px;color:#8f8b80">No workshops yet. Describe a problem above, or start blank.</p></sc-if>
-</div>
-</div>
-</sc-if>
-
-<sc-if value="{{ isMorph }}" hint-placeholder-val="{{ false }}">
-<div style="max-width:900px">
-<div style="font-size:14px;color:#8f8b80">Opening in Builder</div>
-<h1 style="margin:10px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(34px,4.6vw,64px);letter-spacing:-.035em;line-height:.95">{{ name }}</h1>
-<div style="display:flex;flex-direction:column;gap:{{ morphGap }};margin-top:24px;transition:gap .6s ease">
-<sc-for list="{{ morphRows }}" as="r" hint-placeholder-count="7"><div style="display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:12px;align-items:center;background:#1a1917;border:1px solid #34332e;padding:{{ r.pad }};transform:rotate({{ r.rot }});transition:transform .7s cubic-bezier(.2,.7,.2,1) {{ r.delay }},padding .7s cubic-bezier(.2,.7,.2,1) {{ r.delay }}"><span style="font-size:13px;color:#8f8b80;opacity:{{ r.op }};transition:opacity .5s {{ r.delay }}">{{ r.time }}</span><span style="min-width:0"><span style="display:block;font-size:{{ r.ls }};color:{{ r.lc }};font-family:{{ r.lf }};font-weight:500;transition:font-size .6s {{ r.delay }},color .6s {{ r.delay }}">{{ r.label }}</span><span style="display:block;font-family:'Clash Display',sans-serif;font-weight:500;font-size:19px;opacity:{{ r.op }};max-height:{{ r.mh }};overflow:hidden;transition:opacity .5s {{ r.delay }},max-height .6s {{ r.delay }}">{{ r.title }}</span></span><span style="font-size:14px;opacity:{{ r.op }};transition:opacity .5s {{ r.delay }}">{{ r.mins }} min</span></div></sc-for>
-</div>
-</div>
-</sc-if>
-
-<sc-if value="{{ hasGate }}" hint-placeholder-val="{{ false }}">
-<div onClick="{{ closeGate }}" style="position:fixed;inset:0;z-index:140;background:rgba(5,5,4,.86);display:flex;align-items:center;justify-content:center;padding:16px">
-<div role="dialog" aria-modal="true" aria-label="{{ gateTitle }}" onClick="{{ stopProp }}" style="width:100%;max-width:470px;background:#0b0b0a;border:1px solid #4a4843;padding:clamp(22px,4vw,32px)">
-<div style="font-size:13px;color:#ff4b23">{{ gateKicker }}</div>
-<h2 style="margin:8px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(26px,3vw,34px);letter-spacing:-.02em;line-height:1.05">{{ gateTitle }}</h2>
-<p style="margin:10px 0 0;font-size:15px;line-height:1.5;color:#c9c5ba">{{ gateSub }}</p>
-<sc-if value="{{ gateStart }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-direction:column;gap:10px;margin-top:20px"><button onClick="{{ authGoogle }}" style="white-space:nowrap;background:#ece9e0;color:#0b0b0a;border:0;min-height:50px;cursor:pointer;font-size:16px;font-weight:500">Continue with Google</button><button onClick="{{ gateToEmail }}" style="white-space:nowrap;background:none;border:1px solid #4a4843;color:#ece9e0;min-height:50px;cursor:pointer;font-size:16px">Continue with email</button><button onClick="{{ gateToSignin }}" style="white-space:nowrap;background:none;border:0;color:#8f8b80;cursor:pointer;font-size:14px;padding:0;min-height:32px;align-self:flex-start;margin-top:4px" style-hover="color:#ece9e0">Already have a workspace? Sign in</button></div></sc-if>
-<sc-if value="{{ gateEmailMode }}" hint-placeholder-val="{{ false }}"><form onSubmit="{{ authEmail }}" style="margin-top:20px"><label style="display:block;font-size:13px;color:#8f8b80">Email<input type="email" required="{{ true }}" value="{{ gateEmail }}" onChange="{{ onGateEmail }}" placeholder="you@company.com" style="display:block;width:100%;margin-top:6px;background:#111110;border:1px solid #34332e;outline:none;color:#ece9e0;min-height:48px;padding:0 12px;font-size:16px;font-family:'Satoshi',sans-serif"></label><button type="submit" style="white-space:nowrap;width:100%;margin-top:12px;background:#ff4b23;color:#0b0b0a;border:0;min-height:50px;cursor:pointer;font-size:16px;font-weight:500">{{ gateEmailBtn }}</button><button type="button" onClick="{{ gateBack }}" style="white-space:nowrap;background:none;border:0;color:#8f8b80;cursor:pointer;font-size:14px;padding:0;min-height:32px;margin-top:8px" style-hover="color:#ece9e0">Back</button></form></sc-if>
-<p style="margin:18px 0 0;font-size:12px;line-height:1.45;color:#8f8b80">Prototype: accounts are simulated and stored in this browser.</p>
-<button onClick="{{ closeGate }}" style="white-space:nowrap;background:none;border:0;color:#8f8b80;cursor:pointer;font-size:14px;padding:0;min-height:32px;margin-top:6px" style-hover="color:#ece9e0">Not now</button>
+<sc-if value="{{ noRecent }}" hint-placeholder-val="{{ false }}"><p style="margin:12px 0 0;font-size:15px;color:#8f8b80">No workshops yet. Start blank, or open a template.</p></sc-if>
 </div>
 </div>
 </sc-if>
@@ -141,10 +55,10 @@ a:hover{color:#ff4b23}
 <div role="group" aria-label="View" style="display:flex;border:1px solid #34332e">
 <sc-for list="{{ views }}" as="vw" hint-placeholder-count="3"><button onClick="{{ vw.pick }}" aria-pressed="{{ vw.aria }}" style="white-space:nowrap;background:{{ vw.bg }};color:{{ vw.fg }};border:0;min-height:38px;padding:0 12px;cursor:pointer;font-size:14px">{{ vw.l }}</button></sc-for>
 </div>
-<sc-if value="{{ hasAccount }}" hint-placeholder-val="{{ false }}"><button onClick="{{ goHome }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;min-height:40px;padding:0 12px;cursor:pointer;font-size:14px" style-hover="border-color:#8f8b80">Workshops</button></sc-if>
+<button onClick="{{ goHome }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;min-height:40px;padding:0 12px;cursor:pointer;font-size:14px" style-hover="border-color:#8f8b80">Workshops</button>
 <button onClick="{{ undo }}" disabled="{{ noUndo }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:{{ undoFg }};min-height:40px;padding:0 12px;cursor:pointer;font-size:14px">Undo</button>
 <button onClick="{{ openTpl }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;min-height:40px;padding:0 12px;cursor:pointer;font-size:14px" style-hover="border-color:#8f8b80">Templates</button>
-<button onClick="{{ openAI }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;min-height:40px;padding:0 12px;cursor:pointer;font-size:14px" style-hover="border-color:#8f8b80">Build with AI</button>
+
 <button onClick="{{ newBlank }}" style="white-space:nowrap;background:#ece9e0;border:0;color:#0b0b0a;min-height:40px;padding:0 14px;cursor:pointer;font-size:14px;font-weight:500">New workshop</button>
 <button onClick="{{ runOpen }}" disabled="{{ runNo }}" title="{{ runTip }}" style="white-space:nowrap;background:#ff4b23;border:0;color:#0b0b0a;min-height:40px;padding:0 16px;cursor:pointer;font-size:14px;font-weight:500;opacity:{{ runOp }}">Run workshop</button>
 </div>
@@ -205,7 +119,7 @@ a:hover{color:#ff4b23}
 <div style="font-size:12px;letter-spacing:.06em;color:#ff4b23">SESSION COMPLETE</div>
 <h1 style="margin:10px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(40px,6vw,84px);letter-spacing:-.04em;line-height:.95">{{ runSumTitle }}</h1>
 <p style="margin:14px 0 0;font-size:17px;line-height:1.5;color:#c9c5ba;max-width:60ch">{{ runSumSub }}</p>
-<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:22px"><button onClick="{{ pdfAgenda }}" style="white-space:nowrap;background:#ff4b23;border:0;color:#0b0b0a;min-height:48px;padding:0 18px;cursor:pointer;font-size:15px;font-weight:500">Session notes PDF</button><button onClick="{{ openClaude }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;cursor:pointer;min-height:48px;padding:0 16px;font-size:15px">Write up with Claude ↗</button><button onClick="{{ openGpt }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;cursor:pointer;min-height:48px;padding:0 16px;font-size:15px">Write up with ChatGPT ↗</button><button onClick="{{ copyCtx }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;cursor:pointer;min-height:48px;padding:0 16px;font-size:15px">{{ ctxL }}</button></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:22px"><button onClick="{{ pdfAgenda }}" style="white-space:nowrap;background:#ff4b23;border:0;color:#0b0b0a;min-height:48px;padding:0 18px;cursor:pointer;font-size:15px;font-weight:500">Session notes PDF</button><button onClick="{{ copyAgenda }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;cursor:pointer;min-height:48px;padding:0 16px;font-size:15px">{{ copyL }}</button></div>
 <sc-if value="{{ hasSumGroups }}" hint-placeholder-val="{{ false }}"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:28px 40px;margin-top:36px"><sc-for list="{{ sumGroups }}" as="sgp" hint-placeholder-count="3"><div><div style="display:flex;justify-content:space-between;gap:10px;font-size:12px;letter-spacing:.06em;color:{{ sgp.lc }}"><span>{{ sgp.label }}</span><span style="color:#8f8b80">{{ sgp.n }}</span></div><sc-for list="{{ sgp.entries }}" as="en" hint-placeholder-count="2"><div style="padding:10px 0;border-top:1px solid #1d1c1a"><div style="font-size:15px;line-height:1.4">{{ en.text }}</div><div style="margin-top:2px;font-size:12px;color:#8f8b80">{{ en.meta }}</div><sc-if value="{{ en.isOff }}" hint-placeholder-val="{{ false }}"><input aria-label="Type up this offline capture" value="{{ en.typed }}" onChange="{{ en.onTyped }}" placeholder="Type up the key points when you have them" style="display:block;width:100%;margin-top:8px;background:#111110;border:1px solid #34332e;color:#ece9e0;min-height:40px;padding:0 10px;font:inherit;font-size:14px"></sc-if></div></sc-for></div></sc-for></div></sc-if>
 <sc-if value="{{ noSumGroups }}" hint-placeholder-val="{{ false }}"><p style="margin:28px 0 0;font-size:15px;color:#8f8b80">No notes were captured. You can still export timings and agenda.</p></sc-if>
 <div style="margin-top:36px;font-size:12px;letter-spacing:.06em;color:#8f8b80">TIMING</div>
@@ -262,36 +176,6 @@ a:hover{color:#ff4b23}
 </aside>
 
 <main style="min-width:0">
-<sc-if value="{{ isAI }}" hint-placeholder-val="{{ false }}">
-<div style="background:#111110;border:1px solid #2a2925;padding:clamp(18px,3vw,36px)">
-<div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;color:#8f8b80"><span>Build with AI · {{ aiStep }}</span><button onClick="{{ closeCenter }}" style="white-space:nowrap;background:none;border:0;color:#c9c5ba;cursor:pointer;font-size:14px;padding:0">Back to the canvas</button></div>
-<sc-if value="{{ aiAsk }}" hint-placeholder-val="{{ true }}">
-<h2 style="margin:14px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,4vw,60px);letter-spacing:-.035em;line-height:.95;max-width:14ch">What are you trying to figure out?</h2>
-<textarea aria-label="Describe what you are trying to figure out" value="{{ aiText }}" onChange="{{ onAiText }}" rows="4" placeholder="We need to choose a positioning direction with 6 people in 3 hours." style="display:block;width:100%;margin-top:20px;background:#0b0b0a;border:1px solid #34332e;outline:none;color:#ece9e0;padding:16px 18px;font-family:'Satoshi',sans-serif;font-size:clamp(17px,1.5vw,20px);line-height:1.45;resize:vertical" style-focus="border-color:#8f8b80"></textarea>
-<div style="display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-top:14px"><button onClick="{{ aiGo }}" disabled="{{ busy }}" style="white-space:nowrap;background:#ff4b23;color:#0b0b0a;border:0;min-height:50px;padding:0 22px;cursor:pointer;font-size:16px;font-weight:500">{{ aiGoL }}</button><span style="font-size:14px;color:#8f8b80">The draft lands on the same canvas. Nothing is locked.</span></div>
-<div style="display:flex;flex-direction:column;margin-top:22px;border-top:1px solid #2a2925"><sc-for list="{{ examples }}" as="e" hint-placeholder-count="4"><button onClick="{{ e.pick }}" style="text-align:left;background:none;border:0;border-bottom:1px solid #2a2925;color:#c9c5ba;min-height:46px;padding:10px 0;cursor:pointer;font-size:15px" style-hover="color:#ece9e0">“{{ e.t }}”</button></sc-for></div>
-</sc-if>
-<sc-if value="{{ aiBrief }}" hint-placeholder-val="{{ false }}">
-<div style="display:grid;grid-template-columns:{{ briefCols }};gap:24px 36px;align-items:start;margin-top:14px">
-<div>
-<h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(28px,3.4vw,48px);letter-spacing:-.03em;line-height:1">{{ askTitle }}</h2>
-<p style="margin:10px 0 0;font-size:15px;color:#8f8b80">{{ askSub }}</p>
-<div role="group" aria-label="{{ askTitle }}" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px"><sc-for list="{{ askOpts }}" as="o" hint-placeholder-count="6"><button onClick="{{ o.pick }}" aria-pressed="{{ o.aria }}" style="white-space:nowrap;background:{{ o.bg }};color:{{ o.fg }};border:1px solid {{ o.bd }};min-height:46px;padding:0 14px;cursor:pointer;font-size:15px" style-hover="border-color:#ece9e0">{{ o.l }}</button></sc-for></div>
-<input aria-label="Additional context" value="{{ notes }}" onChange="{{ onNotes }}" placeholder="Anything else? CEO can only join the last hour." style="display:block;width:100%;margin-top:18px;background:none;border:0;border-bottom:1px solid #4a4843;outline:none;color:#ece9e0;padding:10px 0;font-size:16px">
-<div style="display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-top:20px"><button onClick="{{ aiBuild }}" style="white-space:nowrap;background:#ff4b23;color:#0b0b0a;border:0;min-height:50px;padding:0 22px;cursor:pointer;font-size:16px;font-weight:500">Build the first draft</button><sc-if value="{{ hasSkip }}" hint-placeholder-val="{{ false }}"><button onClick="{{ skipQ }}" style="white-space:nowrap;background:none;border:0;color:#8f8b80;min-height:44px;cursor:pointer;font-size:14px;padding:0;border-bottom:1px solid #4a4843">Skip this question</button></sc-if></div>
-<sc-if value="{{ replaces }}" hint-placeholder-val="{{ false }}"><p style="margin:10px 0 0;font-size:14px;color:#8f8b80">This replaces what is on the canvas. Undo brings it back.</p></sc-if>
-</div>
-<div style="border:1px solid #2a2925;padding:16px 18px;background:#0b0b0a">
-<div style="font-size:13px;color:#8f8b80">Brief so far</div>
-<sc-for list="{{ briefRows }}" as="r" hint-placeholder-count="6"><button onClick="{{ r.edit }}" style="display:grid;grid-template-columns:100px minmax(0,1fr) auto;gap:10px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid #1d1c1a;color:#ece9e0;padding:9px 0;cursor:pointer;font-size:14px" style-hover="color:#ff4b23"><span style="color:#8f8b80">{{ r.k }}</span><span style="color:{{ r.c }}">{{ r.v }}</span><span style="font-size:12px;color:#8f8b80">{{ r.tag }}</span></button></sc-for>
-<div style="margin-top:12px;font-size:13px;color:#8f8b80">Builder is leaning towards</div>
-<div style="margin-top:3px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:20px;line-height:1.1">{{ lean }}</div>
-</div>
-</div>
-</sc-if>
-</div>
-</sc-if>
-
 <sc-if value="{{ isTpl }}" hint-placeholder-val="{{ false }}">
 <div style="background:#111110;border:1px solid #2a2925;padding:clamp(18px,3vw,32px)">
 <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;color:#8f8b80"><span>Templates · each opens as an editable copy</span><button onClick="{{ closeCenter }}" style="white-space:nowrap;background:none;border:0;color:#c9c5ba;cursor:pointer;font-size:14px;padding:0">Back to the canvas</button></div>
@@ -316,7 +200,7 @@ a:hover{color:#ff4b23}
 <sc-if value="{{ d.hero }}" hint-placeholder-val="{{ false }}">
 <div style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(30px,3.6vw,52px);letter-spacing:-.03em;line-height:1">Build your workshop.</div>
 <p style="margin:10px auto 0;max-width:42ch;font-size:16px;line-height:1.45;color:#c9c5ba">Drag something from the Library or describe what you need.</p>
-<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:20px"><button onClick="{{ startBlank }}" style="white-space:nowrap;background:#ece9e0;color:#0b0b0a;border:0;min-height:46px;padding:0 18px;cursor:pointer;font-size:15px;font-weight:500">Start blank</button><button onClick="{{ openAI }}" style="white-space:nowrap;background:none;border:1px solid #4a4843;color:#ece9e0;min-height:46px;padding:0 18px;cursor:pointer;font-size:15px">Build with AI</button><button onClick="{{ openTpl }}" style="white-space:nowrap;background:none;border:1px solid #4a4843;color:#ece9e0;min-height:46px;padding:0 18px;cursor:pointer;font-size:15px">Use a template</button></div>
+<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:20px"><button onClick="{{ startBlank }}" style="white-space:nowrap;background:#ece9e0;color:#0b0b0a;border:0;min-height:46px;padding:0 18px;cursor:pointer;font-size:15px;font-weight:500">Start blank</button><button onClick="{{ openTpl }}" style="white-space:nowrap;background:none;border:1px solid #4a4843;color:#ece9e0;min-height:46px;padding:0 18px;cursor:pointer;font-size:15px">Use a template</button></div>
 <div style="margin-top:22px;font-size:13px;color:#8f8b80">Or browse by stage</div>
 <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:8px"><sc-for list="{{ cats }}" as="c" hint-placeholder-count="5"><button onClick="{{ c.pick }}" style="white-space:nowrap;background:#1a1917;border:1px solid #34332e;color:#ece9e0;min-height:36px;padding:0 12px;cursor:pointer;font-size:14px" style-hover="border-color:#8f8b80">{{ c.l }}</button></sc-for></div>
 </sc-if>
@@ -441,7 +325,7 @@ a:hover{color:#ff4b23}
 <div style="border:1px solid #ece9e0;padding:14px 16px;margin-bottom:18px">
 <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:19px">{{ selL }}</span><button onClick="{{ clearSel }}" style="white-space:nowrap;background:none;border:0;color:#8f8b80;cursor:pointer;font-size:13px;padding:0">Clear</button></div>
 <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"><sc-for list="{{ selActs }}" as="a" hint-placeholder-count="6"><button onClick="{{ a.run }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;min-height:34px;padding:0 9px;cursor:pointer;font-size:13px" style-hover="border-color:#ece9e0">{{ a.l }}</button></sc-for></div>
-<div style="margin-top:12px;font-size:12px;letter-spacing:.06em;color:#8f8b80">ASK BUILDER ABOUT THESE</div>
+<div style="margin-top:12px;font-size:12px;letter-spacing:.06em;color:#8f8b80">ADJUST THESE</div>
 <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"><sc-for list="{{ selAI }}" as="a" hint-placeholder-count="6"><button onClick="{{ a.run }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;min-height:34px;padding:0 9px;cursor:pointer;font-size:13px" style-hover="border-color:#ff4b23">{{ a.l }}</button></sc-for></div>
 <form onSubmit="{{ onCmp }}" style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:14px;color:#c9c5ba"><span>Compress these into</span><input type="number" min="5" step="5" aria-label="Target minutes" value="{{ cmp }}" onChange="{{ onCmpV }}" style="width:70px;background:#111110;border:1px solid #2a2925;color:#ece9e0;min-height:34px;padding:0 6px;font-size:14px"><span>min</span><button type="submit" style="white-space:nowrap;background:none;border:1px solid #4a4843;color:#ece9e0;min-height:34px;padding:0 10px;cursor:pointer;font-size:13px">Propose</button></form>
 </div>
@@ -464,36 +348,28 @@ a:hover{color:#ff4b23}
 
 <button onClick="{{ toggleCtx }}" aria-expanded="{{ ctxAria }}" style="display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid #2a2925;color:#ece9e0;padding:0 0 8px;cursor:pointer"><span><span style="display:block;font-family:'Clash Display',sans-serif;font-weight:500;font-size:19px">Workshop context</span><span style="display:block;margin-top:2px;font-size:13px;color:#8f8b80">{{ ctxSummary }}</span></span><span style="font-size:13px;color:#8f8b80">{{ ctxSign }}</span></button>
 <sc-if value="{{ ctxOpen }}" hint-placeholder-val="{{ false }}">
-<p style="margin:8px 0 0;font-size:13px;line-height:1.45;color:#8f8b80">Optional. Builder uses it to check what you build.</p>
+<p style="margin:8px 0 0;font-size:13px;line-height:1.45;color:#8f8b80">Optional. Used by the checks below.</p>
 <label style="display:block;margin-top:8px"><span style="font-size:12px;color:#8f8b80">Question</span><textarea value="{{ question }}" onChange="{{ onQuestion }}" rows="2" placeholder="What must this workshop figure out?" style="display:block;width:100%;margin-top:4px;background:#111110;border:1px solid #2a2925;color:#ece9e0;padding:8px 10px;font-family:'Satoshi',sans-serif;font-size:14px;line-height:1.4;resize:vertical"></textarea></label>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
 <sc-for list="{{ ctxEdits }}" as="f" hint-placeholder-count="5"><label style="display:block;margin-top:8px;min-width:0"><span style="font-size:12px;color:#8f8b80">{{ f.k }}</span><select value="{{ f.v }}" onChange="{{ f.change }}" style="width:100%;margin-top:4px;background:#111110;border:1px solid #2a2925;color:#ece9e0;min-height:36px;padding:0 6px;font-family:'Satoshi',sans-serif;font-size:13px"><sc-for list="{{ f.opts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></label></sc-for>
 </div>
 </sc-if>
 
-<div style="margin-top:22px;display:flex;justify-content:space-between;gap:10px;font-size:12px;letter-spacing:.06em;color:#8f8b80"><span>BUILDER IS WATCHING</span><span>{{ obsCount }}</span></div>
+<div style="margin-top:22px;display:flex;justify-content:space-between;gap:10px;font-size:12px;letter-spacing:.06em;color:#8f8b80"><span>CHECKS</span><span>{{ obsCount }}</span></div>
 <sc-for list="{{ obs }}" as="o" hint-placeholder-count="2"><div style="padding:10px 0;border-bottom:1px solid #2a2925"><div style="font-size:14px;line-height:1.4;color:{{ o.c }}">{{ o.t }}</div><div style="margin-top:3px;font-size:13px;line-height:1.4;color:#8f8b80">{{ o.fix }}</div><sc-if value="{{ o.hasCmd }}" hint-placeholder-val="{{ false }}"><button onClick="{{ o.run }}" style="white-space:nowrap;margin-top:6px;background:none;border:1px solid #4a4843;color:#ece9e0;min-height:32px;padding:0 10px;cursor:pointer;font-size:13px">Propose fix</button></sc-if></div></sc-for>
 <sc-if value="{{ noObs }}" hint-placeholder-val="{{ false }}"><p style="margin:8px 0 0;font-size:14px;line-height:1.45;color:#8f8b80">{{ noObsT }}</p></sc-if>
 
-<sc-if value="{{ hasConvo }}" hint-placeholder-val="{{ false }}"><div style="margin-top:22px"><button onClick="{{ toggleConvo }}" aria-expanded="{{ convoAria }}" style="white-space:nowrap;background:none;border:0;color:#c9c5ba;cursor:pointer;font-size:14px;padding:0;min-height:32px" style-hover="color:#ece9e0">{{ convoL }}</button><sc-if value="{{ showConvo }}" hint-placeholder-val="{{ false }}"><div style="margin-top:6px;max-height:300px;overflow:auto;border-left:1px solid #34332e;padding-left:12px"><sc-for list="{{ convo }}" as="m" hint-placeholder-count="3"><div style="padding:5px 0;font-size:13px;line-height:1.45;color:{{ m.c }}">{{ m.t }}</div></sc-for></div></sc-if></div></sc-if>
+
 <div style="margin-top:22px;font-size:12px;letter-spacing:.06em;color:#8f8b80">ADJUST THE WHOLE WORKSHOP</div>
 <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"><sc-for list="{{ cmds }}" as="c" hint-placeholder-count="8"><button onClick="{{ c.run }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;min-height:34px;padding:0 9px;cursor:pointer;font-size:13px" style-hover="border-color:#ece9e0">{{ c.l }}</button></sc-for></div>
-<form onSubmit="{{ onAsk }}" style="display:flex;margin-top:10px;border-bottom:1px solid #4a4843"><input aria-label="Ask Builder" value="{{ askText }}" onChange="{{ onAskText }}" placeholder="Ask Builder… make this fit into 3 hours" style="flex:1 1 auto;min-width:0;background:none;border:0;outline:none;color:#ece9e0;padding:10px 0;font-size:14px"><button type="submit" style="white-space:nowrap;background:none;border:0;color:#8f8b80;cursor:pointer;font-size:14px;padding:0 0 0 10px;min-height:42px">{{ askBtn }}</button></form>
+
 
 <button onClick="{{ runStress }}" style="white-space:nowrap;margin-top:22px;width:100%;background:#ece9e0;color:#0b0b0a;border:0;min-height:46px;cursor:pointer;font-size:15px;font-weight:500">{{ stressL }}</button>
 <sc-if value="{{ hasStress }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ stressGroups }}" as="g" hint-placeholder-count="2"><div style="margin-top:14px"><div style="font-size:12px;letter-spacing:.06em;color:{{ g.c }}">{{ g.k }}</div><sc-for list="{{ g.rows }}" as="s" hint-placeholder-count="2"><div style="padding:9px 0;border-bottom:1px solid #1d1c1a"><div style="display:flex;justify-content:space-between;gap:10px;font-size:12px;color:#8f8b80"><span>{{ s.k }}</span><span>{{ s.q }}</span></div><div style="margin-top:3px;font-size:14px;line-height:1.4">{{ s.msg }}</div><sc-if value="{{ s.bad }}" hint-placeholder-val="{{ false }}"><div style="margin-top:2px;font-size:13px;color:#8f8b80">Suggested fix: {{ s.fix }}</div></sc-if><sc-if value="{{ s.hasFix }}" hint-placeholder-val="{{ false }}"><button onClick="{{ s.apply }}" style="white-space:nowrap;margin-top:6px;background:none;border:1px solid #4a4843;color:#ece9e0;min-height:32px;padding:0 10px;cursor:pointer;font-size:13px">Propose fix</button></sc-if></div></sc-for></div></sc-for></sc-if>
 
 <div style="margin-top:24px;font-size:12px;letter-spacing:.06em;color:#8f8b80">EXPORT</div>
 <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"><button onClick="{{ pdfAgenda }}" style="white-space:nowrap;background:#ece9e0;border:0;color:#0b0b0a;min-height:36px;padding:0 12px;cursor:pointer;font-size:13px;font-weight:500">Agenda PDF</button><button onClick="{{ copyAgenda }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;cursor:pointer;min-height:36px;padding:0 10px;font-size:13px">{{ copyL }}</button><button onClick="{{ dlCsv }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;cursor:pointer;min-height:36px;padding:0 10px;font-size:13px">.csv</button><button onClick="{{ dlJson }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;cursor:pointer;min-height:36px;padding:0 10px;font-size:13px">.json</button></div>
-<div style="margin-top:24px;font-size:12px;letter-spacing:.06em;color:#8f8b80">YOUR AI AGENT</div>
-<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"><button onClick="{{ openClaude }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;cursor:pointer;min-height:36px;padding:0 10px;font-size:13px">Claude ↗</button><button onClick="{{ openGpt }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;cursor:pointer;min-height:36px;padding:0 10px;font-size:13px">ChatGPT ↗</button><button onClick="{{ copyCtx }}" style="white-space:nowrap;background:none;border:1px solid #34332e;color:#ece9e0;cursor:pointer;min-height:36px;padding:0 10px;font-size:13px">{{ ctxL }}</button></div>
-<p style="margin:6px 0 0;font-size:12px;line-height:1.45;color:#8f8b80">Sends the brief, agenda and any session notes. Copy works with any agent.</p>
-<button onClick="{{ toggleAgent }}" aria-expanded="{{ agentAria }}" style="white-space:nowrap;background:none;border:0;padding:0;margin-top:8px;color:#ff4b23;cursor:pointer;font-size:13px;min-height:28px">{{ agentToggleL }}</button>
-<sc-if value="{{ agentOpen }}" hint-placeholder-val="{{ false }}">
-<textarea aria-label="Paste your AI agent's reply" value="{{ agentPaste }}" onChange="{{ onAgentPaste }}" rows="4" placeholder="Paste the agent's reply. Builder reads its agenda block." style="display:block;width:100%;box-sizing:border-box;margin-top:4px;background:#111110;border:1px solid #34332e;color:#ece9e0;padding:10px;font:inherit;font-size:13px;line-height:1.45;resize:vertical"></textarea>
-<div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-top:6px"><button onClick="{{ applyAgent }}" style="white-space:nowrap;background:#ff4b23;border:0;color:#0b0b0a;min-height:36px;padding:0 12px;cursor:pointer;font-size:13px;font-weight:500">Apply to canvas</button><span style="font-size:12px;color:{{ agentMsgC }}">{{ agentMsg }}</span></div>
-</sc-if>
-<p style="margin:16px 0 0;font-size:13px;line-height:1.45;color:#8f8b80">Stored in this browser. An account will add saving, multiple workshops and collaboration.</p>
+<p style="margin:16px 0 0;font-size:13px;line-height:1.45;color:#8f8b80">Saved in this browser. Export the agenda to share it.</p>
 <sc-if value="{{ hasMethods }}" hint-placeholder-val="{{ false }}"><div style="margin-top:20px;font-size:12px;letter-spacing:.06em;color:#8f8b80">METHODS IN THIS WORKSHOP</div><sc-for list="{{ methods }}" as="m" hint-placeholder-count="4"><a href="{{ m.href }}" style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #1d1c1a;color:#ece9e0;text-decoration:none;font-size:14px" style-hover="color:#ff4b23"><span>{{ m.title }}</span><span style="color:#8f8b80">{{ m.kind }}</span></a></sc-for></sc-if>
 </sc-if>
 </aside>
@@ -510,20 +386,22 @@ class Component extends DCLogic {
   ghostRef = React.createRef();
   load() { try { return JSON.parse(localStorage.getItem("rd-builder-2") || "null"); } catch (e) { return null; } }
   loadK(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
-  state = Object.assign((() => { const acct = this.loadK("rd-account"), ws = this.loadK("rd-workspace") || { workshops: [], current: null }, ses = this.loadK("rd-builder-session") || {};
+  state = Object.assign((() => { const acct = true, ws = this.loadK("rd-workspace") || { workshops: [], current: null }, ses = this.loadK("rd-builder-session") || {};
       const cur = acct && ws.current ? (ws.workshops || []).find(w => w.id === ws.current) : null;
       const base = { items: [], brief: {}, name: "Untitled workshop", start: "09:30", view: "timeline", hist: [], started: false, chat: [], wid: null };
       const own = cur ? { items: cur.items || [], brief: cur.brief || {}, name: cur.name, start: cur.start || "09:30", view: cur.view || "timeline", chat: cur.chat || [], wid: cur.id } : {};
-      const phase = acct ? (cur && ses.phase === "bench" ? "bench" : ses.phase === "chat" ? "chat" : "home") : "chat";
+      const phase = cur ? "bench" : "home";
       return Object.assign(base, acct ? own : { brief: ses.brief || {}, chat: ses.chat || [] }, acct && ses.phase === "chat" && ses.chat ? { chat: ses.chat, brief: ses.brief || {} } : {}, { account: acct, workshops: ws.workshops || [], phase, pendQ: ses.pendQ || null, asked: ses.asked || [], recShown: !!ses.recShown, seed: ses.seed || null }); })(),
     { chatText: "", gate: null, gateMode: "start", gateEmail: "", briefView: false, showConvo: false, morph: 0, open: null, sel: [], drag: null, drop: null, proposal: null, stress: false, notice: "", live: "", lib: { q: "", stage: "", time: "", people: "", format: "", output: "", type: "" }, filters: false, libPrev: null, libN: 24, sheet: null, center: "canvas", aiText: "", busy: false, ask: null, skipped: [], inferred: [], suggestFor: null, pendingAdd: null, alts: null, ctx: false, askText: "", asking: false, cmp: "90", copied: false, prompted: null,
       ready: !!(window.RDB && window.RD && window.RDL && window.RDB.TPL), w: window.innerWidth, rm: !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) });
   componentDidMount() {
     this.onR = () => this.setState({ w: window.innerWidth }); window.addEventListener("resize", this.onR);
     this.onK = e => { if (e.key === "Escape") { if (this.pd && this.pd.started) this.endDrag(true); else this.setState({ open: null, alts: null, sel: [], sheet: null }); } }; window.addEventListener("keydown", this.onK);
-    const go = () => { this.setState({ ready: true }); this.fromLib(); this.fromProps(); };
-    if (!this.state.ready) this.poll = setInterval(() => { if (window.RDB && window.RD && window.RDL && window.RDB.TPL) { clearInterval(this.poll); go(); } }, 40); else { this.fromLib(); this.fromProps(); }
+    const go = () => { this.setState({ ready: true }); this.fromLib(); this.fromProps(); this.firstVisit(); };
+    if (!this.state.ready) this.poll = setInterval(() => { if (window.RDB && window.RD && window.RDL && window.RDB.TPL) { clearInterval(this.poll); go(); } }, 40); else { this.fromLib(); this.fromProps(); this.firstVisit(); }
   }
+  // With nothing saved yet, open a blank canvas with the template picker showing.
+  firstVisit() { setTimeout(() => { if (this.state.phase === "home" && !(this.state.workshops || []).length) this.newWorkshop({}, { center: "tpl" }); }, 0); }
   componentWillUnmount() { window.removeEventListener("resize", this.onR); window.removeEventListener("keydown", this.onK); clearInterval(this.poll); this.unbind(); this.runStop(); }
   runEl(r) { r = r || this.state.run; return r ? r.acc + (r.t0 ? Date.now() - r.t0 : 0) : 0; }
   runStop() { clearInterval(this.runTick); this.runTick = null; if (this.runKey) window.removeEventListener("keydown", this.runKey, true); this.runKey = null; }
@@ -564,6 +442,7 @@ class Component extends DCLogic {
     return Object.assign(base, { runLive: !r.done, runDone: !!r.done, runCols: S.w >= 1000 ? "minmax(0,1fr) minmax(320px,400px)" : "minmax(0,1fr)",
       runWhere: [nD > 1 ? "Day " + c.day + " of " + nD : "", c.sec].filter(Boolean).join(" · "), runDriftL: !r.t0 && !el && !i ? "Not started" : Math.abs(dm) < 1 ? "On schedule" : dm > 0 ? dm + " min behind" : -dm + " min ahead", runDriftC: dm >= 5 ? "#ff4b23" : "#c9c5ba",
       runEndL: nD > 1 ? "" : "Ends " + clock(endM) + (endM !== start + totalPlan ? " (planned " + clock(start + totalPlan) + ")" : ""),
+      runRows: rows,
       runSegs: L.map((x, k) => ({ t: x.title, f: Math.max(1, plan(x)), bg: k < i || r.done ? "#8f8b80" : k === i ? "#ff4b23" : "#2a2925" })),
       runStatus: r.t0 ? (over ? "OVER TIME" : "RUNNING") : el ? "PAUSED" : "READY", runStatusC: over || r.t0 ? "#ff4b23" : "#8f8b80", runPos: "BLOCK " + (i + 1) + " OF " + L.length, runSec: (c.sec || "").toUpperCase(), runTitle: cur.title,
       runDigits: tStr.split("").map(ch => ({ c: ch, w: ch === ":" ? ".46em" : ch === "+" ? ".66em" : ".7em" })), runTimerAria: (over ? "Over by " : "Remaining ") + tStr.replace("+", ""),
@@ -597,7 +476,7 @@ class Component extends DCLogic {
   openTemplate(t) { if (!t) return; this.newWorkshop({ name: t.name, items: this.tplItems(t), brief: Object.assign({}, t.brief) }, { notice: t.name + " opened as an editable copy. Change anything." }); }
   fromProps() { if (!this.state.ready && !(window.RDB && window.RDB.TPL)) return; const q = this.props.q, tpl = this.props.tpl;
     const clean = () => { try { history.replaceState(null, "", "#/builder"); } catch (e) {} };
-    if (q && this.qDone !== q) { this.qDone = q; clean(); this.setState({ phase: "chat", chat: [], brief: {}, asked: [], pendQ: null, recShown: false, seed: null }, () => this.send(q)); }
+    if (q && this.qDone !== q) { this.qDone = q; clean(); if (this.state.phase !== "bench") { if ((this.state.workshops || []).length) this.openWs((this.state.workshops.find(w => w.id === this.state.wid) || this.state.workshops[this.state.workshops.length - 1]).id); else this.newWorkshop({}); } this.setState(s => ({ lib: Object.assign({}, s.lib, { q }), libN: 24 })); }
     if (tpl !== undefined && tpl !== null && tpl !== "" && this.tplDone !== tpl) { this.tplDone = tpl; clean(); const t = RDB.TPL[+tpl]; if (t) { if (this.state.account) this.openTemplate(t); else this.setState({ gate: { kind: "tpl", tpl: +tpl }, gateMode: "start" }); } } }
   CQ = { outcome: ["What needs to exist by the end?", "Builder picks the structure from this.", [["A decision", "Decision"], ["A direction", "Direction"], ["Ideas to test", "Ideas"], ["A prototype", "Prototype"], ["Alignment", "Alignment"], ["Priorities", "Priorities"], ["Not sure", ""]]],
     time: ["How much time do you have with the team?", "The whole session, not the prep.", [["90 min", "90 min"], ["Half day", "Half day"], ["1 day", "1 day"], ["2 days", "2 days"], ["Multiple sessions", "Multiple sessions"]]],
@@ -662,8 +541,8 @@ class Component extends DCLogic {
   fromLib() { const id = this.props.add; if (!id || this.added === id || !window.RDL || !window.RDB) return; this.added = id; const it = RDL.get(id); if (!it) return;
     const isF = ["workshop", "sprint", "playbook"].includes(it.type);
     if (!this.state.account) { this.setState({ phase: "chat", chat: [], brief: {}, asked: [], pendQ: null, recShown: false, seed: { id: it.id }, chatText: isF ? "We want to adapt " + it.title + " for " : "We want to use " + it.title + " to figure out " }); return; }
-    if (this.state.phase !== "bench") { this.newWorkshop({ name: isF ? it.title : "Untitled workshop", items: this.expand(it) }, { notice: "Added " + it.title + ". Drag more from the Library, or ask Builder." }); return; }
-    if (!this.state.items.some(x => x.kind === "block")) { const add = this.expand(it); this.commit(() => add, "Added " + it.title, { name: it.type === "workshop" || it.type === "sprint" ? it.title : this.state.name, notice: "Added " + it.title + ". Drag more from the Library, or open Build with AI to compose around it." }); }
+    if (this.state.phase !== "bench") { this.newWorkshop({ name: isF ? it.title : "Untitled workshop", items: this.expand(it) }, { notice: "Added " + it.title + ". Drag more from the Library." }); return; }
+    if (!this.state.items.some(x => x.kind === "block")) { const add = this.expand(it); this.commit(() => add, "Added " + it.title, { name: it.type === "workshop" || it.type === "sprint" ? it.title : this.state.name, notice: "Added " + it.title + ". Drag more from the Library." }); }
     else this.setState({ pendingAdd: id }); }
   insertItems(add, at, msg) { this.commit(items => { const pos = at == null ? items.filter(x => x.zone !== "after").length : at; items.splice(pos, 0, ...add); return items; }, msg); }
   addEnd(add, label) { const S = this.state; let at = null; if (S.sel.length) { const last = Math.max(...S.sel.map(id => S.items.findIndex(x => x.id === id))); if (last >= 0) { at = last + 1; add.forEach(a => a.zone = S.items[last].zone); } }
@@ -953,7 +832,7 @@ class Component extends DCLogic {
       hasConvo: ph === "bench" && convo.length > 0, convo, showConvo: S.showConvo, toggleConvo: () => this.setState(s2 => ({ showConvo: !s2.showConvo })), convoAria: S.showConvo ? "true" : "false", convoL: (S.showConvo ? "Hide conversation" : "View conversation") + " · " + convo.length
     });
     return Object.assign(v, {
-      pageBottom: wide ? "48px" : "96px", rDir: view === "blocks" ? "row" : "column", rWrap: view === "blocks" ? "wrap" : "nowrap", rGap: view === "blocks" ? "12px" : "8px", rAlign: view === "blocks" ? "stretch" : "stretch", liveMsg: S.live, modeL: S.center === "ai" ? "Build with AI" : S.center === "tpl" ? "Templates" : "Build",
+      pageBottom: wide ? "48px" : "96px", rDir: view === "blocks" ? "row" : "column", rWrap: view === "blocks" ? "wrap" : "nowrap", rGap: view === "blocks" ? "12px" : "8px", rAlign: view === "blocks" ? "stretch" : "stretch", liveMsg: S.live, modeL: S.center === "tpl" ? "Templates" : "Build",
       name: S.name, onName: e => this.setState({ name: e.target.value }), start: S.start, onStart: e => this.setState({ start: e.target.value || "09:30" }),
       totalL: hasBlocks ? hm(total) + (nDays > 1 ? " across " + nDays + " days" : " · ends " + clock(start + total)) : "Nothing planned yet", overL: !hasBlocks ? "" : over > 0 ? hm(over) + " over the " + hm(avail) + " available" : over < 0 ? hm(-over) + " spare of " + hm(avail) : avail && hasBlocks ? "Fits " + hm(avail) : "", overC: over > 0 ? "#ff4b23" : "#8f8b80",
       views: [["timeline", "Timeline"], ["blocks", "Blocks"], ["days", "Days"]].map(([kk, l]) => ({ l, aria: view === kk ? "true" : "false", bg: view === kk ? "#ece9e0" : "transparent", fg: view === kk ? "#0b0b0a" : "#ece9e0", pick: () => this.setState({ view: kk }) })),
@@ -966,7 +845,7 @@ class Component extends DCLogic {
       pendExisting: () => { const it = RDL.get(S.pendingAdd); this.setState({ pendingAdd: null }); if (it) this.addEnd(this.expand(it), it.title); }, pendNew: () => { const it = RDL.get(S.pendingAdd); this.setState({ pendingAdd: null }); if (it) this.commit(() => this.expand(it), "New workshop", { name: it.type === "workshop" || it.type === "sprint" ? it.title : "Untitled workshop", notice: "New workshop started with " + it.title + ". Undo brings the previous one back." }); },
       cols: wide ? "minmax(260px,300px) minmax(0,1fr) minmax(280px,330px)" : "minmax(0,1fr)", wide, isSheet: !wide,
       libPos: wide ? "sticky" : "fixed", libDisp: libShow ? "block" : "none", asPos: wide ? "sticky" : "fixed", asDisp: asShow ? "block" : "none", panTop: wide ? "84px" : "auto", panMax: wide ? "calc(100vh - 100px)" : "86vh", panBg: wide ? "transparent" : "#0f0f0e", panBd: wide ? "0" : "1px solid #4a4843", panPad: wide ? "0 4px 24px 0" : "16px 16px 28px", panShadow: wide ? "none" : "0 -24px 60px rgba(0,0,0,.7)",
-      closeSheet: () => this.setState({ sheet: null, open: wide ? S.open : null }), showBar: !wide && !dragging && ph === "bench", openLib: () => this.setState({ sheet: "lib", open: null }), openAssist: () => this.setState({ sheet: "assist" }), assistL: "Assist" + (ins.length ? " · " + ins.length : ""),
+      closeSheet: () => this.setState({ sheet: null, open: wide ? S.open : null }), showBar: !wide && !dragging && ph === "bench", openLib: () => this.setState({ sheet: "lib", open: null }), openAssist: () => this.setState({ sheet: "assist" }), assistL: "Checks & export" + (ins.length ? " · " + ins.length : ""),
       touchA: wide ? "none" : "auto",
       libQ: L.q, onLibQ: e => { const vq = e.target.value; this.setState(s => ({ lib: Object.assign({}, s.lib, { q: vq }), libN: 24 })); }, hasParsed: !!parsed, parsedL: parsed,
       toggleFilters: () => this.setState(s => ({ filters: !s.filters })), filtersAria: S.filters ? "true" : "false", filtersL: (S.filters ? "Hide filters" : "Filters") + (nF ? " · " + nF : ""), showFilters: S.filters, hasFilters: nF > 0 || !!L.q, clearFilters: () => this.setState(blank),

@@ -61,7 +61,7 @@ Component.prototype.template = function (V) {
               <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fill,minmax(min(100%,300px),1fr))","gap":"16px","marginTop":"20px"}}>
                 {dcList(g_0?.items).map((s_1, $i1) => (
                   <React.Fragment key={$i1}>
-                    <a href={dcHref(s_1?.href)} style={{"display":"flex","flexDirection":"column","background":"#0f0f0e","border":"1px solid #2a2925","color":"#ece9e0","textDecoration":"none","transition":"border-color .2s"}} className="scp-hover-8">
+                    <a href={dcHref(s_1?.href)} style={{"display":"flex","flexDirection":"column","background":"#0f0f0e","border":"1px solid #2a2925","color":"#ece9e0","textDecoration":"none","transition":"border-color .2s"}} className="scp-hover-7">
                       <rd-visual key={[s_1?.visual, s_1?.visualVariant, s_1?.vseed, s_1?.title].join("|")} type={s_1?.visual} variant={s_1?.visualVariant} seed={s_1?.vseed} label={s_1?.title} style={{"display":"block","width":"100%","height":"clamp(112px,13vw,168px)","borderBottom":"1px solid #2a2925"}}></rd-visual>
                       <span style={{"display":"flex","flexDirection":"column","gap":"10px","padding":"20px 20px 22px","flex":"1"}}>
                         <span style={{"display":"flex","justifyContent":"space-between","gap":"12px","fontSize":"14px","color":"#8f8b80"}}>
@@ -106,7 +106,7 @@ Component.prototype.template = function (V) {
               <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.phaseCols)};border-top:1px solid #ece9e0`)}>
                 {dcList(V.phases).map((p_2, $i2) => (
                   <React.Fragment key={$i2}>
-                    <button onClick={p_2?.pick} aria-expanded={p_2?.aria} style={dcCss(`text-align:left;background:${dcStr(p_2?.bg)};border:0;border-bottom:1px solid #2a2925;border-right:1px solid #2a2925;color:#ece9e0;min-height:88px;padding:14px 14px 16px;cursor:pointer`)} className="scp-hover-o">
+                    <button onClick={p_2?.pick} aria-expanded={p_2?.aria} style={dcCss(`text-align:left;background:${dcStr(p_2?.bg)};border:0;border-bottom:1px solid #2a2925;border-right:1px solid #2a2925;color:#ece9e0;min-height:88px;padding:14px 14px 16px;cursor:pointer`)} className="scp-hover-m">
                       <span style={dcCss(`display:block;font-size:14px;color:${dcStr(p_2?.nc)}`)}>
                         {dcText(p_2?.n)}
                       </span>

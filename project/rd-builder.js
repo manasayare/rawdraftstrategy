@@ -50,13 +50,7 @@
     const sents = String(text || "").trim().split(/(?<=[.?!])\s+/); const q = sents.find(x => /\?|\b(which|whether|should|decide|choose|figure out|how (do|should|can))\b/i.test(x)) || sents[0] || ""; b.question = q.length > 140 ? q.slice(0, 137) + "..." : q;
     return b;
   }
-  async function extractAI(text) {
-    const base = extract(text);
-    try { if (!window.claude || !window.claude.complete) return base;
-      const out = await window.claude.complete(`Extract a workshop brief from this text. Reply with JSON only, keys optional: question (one sentence), outcome (one of: Decision, Direction, Ideas, Prototype, Research evidence, Plan, Alignment, Priorities, Strategy), time (one of: 90 min, Half day, 1 day, 2 days, 3 to 5 days, Multiple sessions), people (one of: 1, 2 to 5, 6 to 10, 11 to 20, 20+), who (array from: Founders, Leadership, Product, Design, Engineering, Research, Sales, Marketing, Operations, Customers, External stakeholders), owner (Yes, No, Joins final part), format (In person, Remote, Hybrid), evidence (array from: Customer research, Analytics, Market research, Internal data, Existing strategy, Prototype, Nothing yet), notes (short string of constraints). Only include what the text states or clearly implies.\n\nText: ${text}`);
-      const j = JSON.parse(String(out).replace(/^[^{]*/, "").replace(/[^}]*$/, "")); return Object.assign(base, j);
-    } catch (e) { return base; }
-  }
+  async function extractAI(text) { return extract(text); }
   let uid = 0; const id = () => "b" + Date.now().toString(36) + (uid++);
   function block(role, alt) { const R = ROLES[role]; const it = alt ? (RD.items.find(x => x.id === alt) || null) : find(R[1]); return { id: id(), role, label: R[0], ref: it ? it.id : null, title: it ? it.title : (role === "breaks" ? "Break" : R[0]), mins: R[2], locked: false }; }
   function recommend(b) {
@@ -203,7 +197,6 @@
   const ASK = [[/cut|shorter|trim|less time|too long/, "cut"], [/remote|online|zoom|distributed/, "remote"], [/\d{2,} people|large group|bigger group|more people/, "big"], [/exec|leadership|board|c-suite|ceo/, "exec"], [/pre-?work|async|before the session/, "prework"], [/break/, "break"], [/decision|decide/, "decision"], [/evidence|customer|research/, "evidence"], [/diverg|more ideas|wider/, "diverge"], [/converg|narrow|choose/, "converge"], [/easier|first.time|beginner|simpl/, "easy"], [/split|two half|2 half|half.days/, "halves"], [/concrete|tangible|output/, "concrete"], [/follow|next step/, "commit"], [/stress|check|review/, "stress"], [/fit/, "fit"]];
   async function ask(text) { const t = String(text || "").toLowerCase(), m = t.match(/(\d+)\s*(min|minutes)/), h = t.match(/(\d+)\s*hours?/), nn = m ? +m[1] : h ? +h[1] * 60 : 30;
     for (const [re, c] of ASK) if (re.test(t)) return { cmd: c, n: c === "cut" ? nn : undefined };
-    try { if (window.claude && window.claude.complete) { const out = String(await window.claude.complete("A workshop designer asked: \"" + text + "\". Choose the single best matching command from: cut, fit, remote, big, exec, prework, break, decision, evidence, diverge, converge, easy, halves, concrete, commit, stress. Reply with the command word only, or none.")).trim().toLowerCase().replace(/[^a-z]/g, ""); if (ASK.some(a => a[1] === out)) return { cmd: out, n: out === "cut" ? nn : undefined }; } } catch (e) {}
     return null; }
   const TEMPLATES = [
     ["90-minute Product Decision Workshop", { question: "Which product direction should we commit to next?", outcome: "Decision", time: "90 min", people: "2 to 5", who: ["Product", "Design", "Engineering"], owner: "Yes", format: "In person", evidence: ["Customer research"] }],

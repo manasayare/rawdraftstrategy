@@ -167,9 +167,9 @@ class Component extends DCLogic {
 
       ...cycVals, cycHost: this.cycHost,
 
-      heroText: S.heroText, onHeroText: e => this.setState({ heroText: e.target.value }), onHeroKey: e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); this.go("#/builder" + (S.heroText.trim() ? "?q=" + encodeURIComponent(S.heroText.trim()) : "")); } },
-      heroGo: e => { e && e.preventDefault && e.preventDefault(); this.go("#/builder" + (S.heroText.trim() ? "?q=" + encodeURIComponent(S.heroText.trim()) : "")); },
-      heroStarts: [["Choose a product direction", "We have several possible product directions and need to choose one."], ["Align a leadership team", "Our leadership team cannot agree on priorities."], ["Make sense of research", "I need to make sense of a set of customer interviews."], ["Explore an opportunity", "We want to explore whether a new opportunity is worth pursuing."], ["Plan a strategy session", "I need to plan a strategy session with our team."], ["Test an idea", "We have an idea and need to find out whether people actually need it."]].map(([l, t]) => ({ l, pick: () => this.setState({ heroText: t }) })),
+      heroText: S.heroText, onHeroText: e => this.setState({ heroText: e.target.value }),
+      heroGo: e => { e && e.preventDefault && e.preventDefault(); this.go("#/library" + (S.heroText.trim() ? "?q=" + encodeURIComponent(S.heroText.trim()) : "")); },
+      heroStarts: [["Icebreakers", "icebreaker"], ["Decision making", "decision"], ["Prioritisation", "prioritisation"], ["Customer research", "interview"], ["Futures", "futures"], ["Retrospectives", "retrospective"]].map(([l, t]) => ({ l, pick: () => this.go("#/library?q=" + encodeURIComponent(t)) })),
       heroVisD: S.w >= 1100 ? "block" : "none", prevCols: S.w >= 900 ? "minmax(0,1fr) minmax(0,2fr) minmax(0,1.1fr)" : "minmax(0,1fr)", prevSide: S.w >= 900 ? "flex" : "none", sysCols: S.w >= 900 ? "minmax(0,1fr) 28px minmax(0,1fr) 28px minmax(0,1fr)" : "minmax(0,1fr)", sysArrow: S.w >= 900 ? "flex" : "none",
       homeTpls: window.RDB && RDB.TPL ? [0, 1, 2, 3, 4, 5].map(i => { const t = RDB.TPL[i]; const mins = t.seq.filter(x => x[0] !== "§" && x[0] !== "day").reduce((a2, x) => a2 + (x[1] || 0), 0), days = t.seq.filter(x => x[0] === "day").length + 1; return { name: t.name, href: "#/builder?tpl=" + i, rot: [-.5, .4, -.3, .6, -.4, .3][i] + "deg", time: days > 1 ? days + " days" : (mins >= 60 ? Math.floor(mins / 60) + "h" + (mins % 60 ? " " + (mins % 60) + "m" : "") : mins + " min"), people: ["3 to 8", "2 to 6", "4 to 10", "6 to 12", "5 to 8", "6 to 16"][i], out: ["A recorded decision", "A positioning direction and its assumptions", "Patterns and opportunities", "Agreed priorities with owners", "A tested product direction", "Scenarios and strategic implications"][i] }; }) : [],
       homeSprints: ready ? RDL.refs(["foundation-sprint", "product-strategy-sprint", "ai-product-strategy-sprint", "foresight-sprint"]) : [],
@@ -195,13 +195,13 @@ Component.prototype.template = function (V) {
               <span style={{"color":"#c9c5ba"}}>
                 {"Live"}
               </span>
-              {" · Builder, Library, Run mode, Agenda PDF"}
+              {" · Library, Builder, Run mode, Agenda PDF"}
             </span>
             <span>
               <span style={{"color":"#c9c5ba"}}>
-                {"Next"}
+                {"Free"}
               </span>
-              {" · Accounts and saving, agent connector"}
+              {" · No account needed"}
             </span>
           </span>
           <span style={{"marginLeft":"auto","whiteSpace":"nowrap"}}>
@@ -324,13 +324,13 @@ Component.prototype.template = function (V) {
                     {"Build the workshop you actually need."}
                   </h1>
                   <p style={{"margin":"clamp(16px,2vw,24px) 0 0","maxWidth":"46ch","fontSize":"clamp(17px,1.4vw,20px)","lineHeight":"1.45","color":"#c9c5ba"}}>
-                    {"Describe the problem, the people and the time. Builder uses the Raw Draft Library to create a workshop or Sprint you can edit, run and adapt."}
+                    {"A library of 850+ methods, exercises and frameworks, and a Builder to turn them into a workshop or Sprint you can export and run."}
                   </p>
                   <form onSubmit={V.heroGo} style={{"marginTop":"clamp(22px,3vw,36px)","background":"#111110","border":"1px solid #4a4843","padding":"14px 16px 12px"}}>
                     <label htmlFor="rd-hero-q" style={{"display":"block","fontSize":"13px","color":"#8f8b80"}}>
-                      {"What are you trying to figure out?"}
+                      {"Search the Library"}
                     </label>
-                    <textarea id="rd-hero-q" value={V.heroText ?? ""} onChange={V.onHeroText} onKeyDown={V.onHeroKey} rows="2" placeholder="We need to decide which customer segment to focus on." style={{"display":"block","width":"100%","marginTop":"6px","background":"none","border":"0","outline":"none","color":"#ece9e0","padding":"0","fontFamily":"'Satoshi',sans-serif","fontSize":"clamp(18px,1.6vw,22px)","lineHeight":"1.4","resize":"none"}}></textarea>
+                    <input id="rd-hero-q" type="search" value={V.heroText ?? ""} onChange={V.onHeroText} placeholder="Icebreakers, decision making, futures, retrospectives…" style={{"display":"block","width":"100%","marginTop":"6px","background":"none","border":"0","outline":"none","color":"#ece9e0","padding":"0","fontFamily":"'Satoshi',sans-serif","fontSize":"clamp(18px,1.6vw,22px)","lineHeight":"1.4"}} />
                     <div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginTop":"10px"}}>
                       {dcList(V.heroStarts).map((h_3, $i3) => (
                         <React.Fragment key={$i3}>
@@ -342,14 +342,14 @@ Component.prototype.template = function (V) {
                     </div>
                   </form>
                   <div style={{"display":"flex","flexWrap":"wrap","alignItems":"center","gap":"12px 16px","marginTop":"16px"}}>
-                    <button onClick={V.heroGo} style={{"whiteSpace":"nowrap","background":"#ff4b23","color":"#0b0b0a","border":"0","minHeight":"54px","padding":"0 24px","cursor":"pointer","fontSize":"17px","fontWeight":"500"}} className="scp-hover-4">
+                    <a href="/builder" style={{"whiteSpace":"nowrap","display":"inline-flex","alignItems":"center","background":"#ff4b23","color":"#0b0b0a","minHeight":"54px","padding":"0 24px","textDecoration":"none","fontSize":"17px","fontWeight":"500"}} className="scp-hover-2">
                       {"Build a workshop"}
-                    </button>
-                    <a href="/work-with-us" style={{"whiteSpace":"nowrap","display":"inline-flex","alignItems":"center","minHeight":"54px","border":"1px solid #4a4843","color":"#ece9e0","padding":"0 22px","textDecoration":"none","fontSize":"17px"}} className="scp-hover-5">
+                    </a>
+                    <a href="/work-with-us" style={{"whiteSpace":"nowrap","display":"inline-flex","alignItems":"center","minHeight":"54px","border":"1px solid #4a4843","color":"#ece9e0","padding":"0 22px","textDecoration":"none","fontSize":"17px"}} className="scp-hover-4">
                       {"Book a workshop"}
                     </a>
                     <span style={{"fontSize":"14px","color":"#8f8b80"}}>
-                      {"Free to start. No account until you want to save."}
+                      {"Free. No account. Workshops save in your browser."}
                     </span>
                   </div>
                 </div>
@@ -451,10 +451,10 @@ Component.prototype.template = function (V) {
                       {"01"}
                     </div>
                     <div style={{"marginTop":"6px","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(20px,1.8vw,26px)","lineHeight":"1.1"}}>
-                      {"Describe the problem."}
+                      {"Start from a template."}
                     </div>
                     <p style={{"margin":"8px 0 0","fontSize":"15px","lineHeight":"1.5","color":"#c9c5ba"}}>
-                      {"Type it the way you would say it, or pick what you need."}
+                      {"Or start blank. Every template opens as an editable copy."}
                     </p>
                   </div>
                   <div style={{"borderTop":"2px solid #ece9e0","paddingTop":"12px"}}>
@@ -462,10 +462,10 @@ Component.prototype.template = function (V) {
                       {"02"}
                     </div>
                     <div style={{"marginTop":"6px","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(20px,1.8vw,26px)","lineHeight":"1.1"}}>
-                      {"Builder structures it."}
+                      {"Pull in methods."}
                     </div>
                     <p style={{"margin":"8px 0 0","fontSize":"15px","lineHeight":"1.5","color":"#c9c5ba"}}>
-                      {"It works out the outcome, people, time, evidence and who decides."}
+                      {"Drag exercises, frameworks and research methods from the Library."}
                     </p>
                   </div>
                   <div style={{"borderTop":"2px solid #ece9e0","paddingTop":"12px"}}>
@@ -473,10 +473,10 @@ Component.prototype.template = function (V) {
                       {"03"}
                     </div>
                     <div style={{"marginTop":"6px","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(20px,1.8vw,26px)","lineHeight":"1.1"}}>
-                      {"Build the workshop."}
+                      {"Shape the timing."}
                     </div>
                     <p style={{"margin":"8px 0 0","fontSize":"15px","lineHeight":"1.5","color":"#c9c5ba"}}>
-                      {"Drag methods from the Library, reorder them, change timing, add your own blocks."}
+                      {"Reorder, resize, add breaks, days and your own blocks. Checks flag what will not work."}
                     </p>
                   </div>
                   <div style={{"borderTop":"2px solid #ece9e0","paddingTop":"12px"}}>
@@ -484,14 +484,14 @@ Component.prototype.template = function (V) {
                       {"04"}
                     </div>
                     <div style={{"marginTop":"6px","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(20px,1.8vw,26px)","lineHeight":"1.1"}}>
-                      {"Run it."}
+                      {"Export or run it."}
                     </div>
                     <p style={{"margin":"8px 0 0","fontSize":"15px","lineHeight":"1.5","color":"#c9c5ba"}}>
-                      {"Use the agenda, instructions, assets and facilitator notes. A live Run mode is in development."}
+                      {"Agenda PDF, CSV or JSON to send round. Run mode keeps time and notes on the day."}
                     </p>
                   </div>
                 </div>
-                <div role="img" aria-label="Builder preview: Library on the left, a workshop timeline in the middle, Builder suggestions on the right" style={dcCss(`margin-top:clamp(28px,4vw,52px);border:1px solid #2a2925;background-color:#0f0f0e;padding:clamp(12px,1.6vw,20px);display:grid;grid-template-columns:${dcStr(V.prevCols)};gap:16px`)}>
+                <div role="img" aria-label="Builder preview: Library on the left, a workshop timeline in the middle, checks and export on the right" style={dcCss(`margin-top:clamp(28px,4vw,52px);border:1px solid #2a2925;background-color:#0f0f0e;padding:clamp(12px,1.6vw,20px);display:grid;grid-template-columns:${dcStr(V.prevCols)};gap:16px`)}>
                   <div style={dcCss(`display:${dcStr(V.prevSide)};flex-direction:column;gap:8px;min-width:0`)}>
                     <div style={{"fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"16px"}}>
                       {"Library"}
@@ -698,7 +698,7 @@ Component.prototype.template = function (V) {
                   </div>
                   <div style={dcCss(`display:${dcStr(V.prevSide)};flex-direction:column;gap:10px;min-width:0`)}>
                     <div style={{"fontSize":"11px","letterSpacing":".06em","color":"#8f8b80"}}>
-                      {"BUILDER IS WATCHING"}
+                      {"CHECKS"}
                     </div>
                     <div style={{"border":"1px dashed #ff4b23","padding":"9px 11px","fontSize":"13px","lineHeight":"1.4"}}>
                       <span style={{"color":"#ff4b23"}}>
@@ -708,30 +708,30 @@ Component.prototype.template = function (V) {
                         {" Brief them on options first."}
                       </span>
                     </div>
-                    <div style={{"border":"1px solid #ff4b23","background":"#140f0d","padding":"10px 11px"}}>
-                      <div style={{"fontSize":"11px","letterSpacing":".06em","color":"#ff4b23"}}>
-                        {"PROPOSED CHANGE"}
-                      </div>
-                      <div style={{"marginTop":"4px","fontSize":"13px","color":"#8f8b80","textDecoration":"line-through"}}>
-                        {"Evidence Review · 30 min"}
-                      </div>
-                      <div style={{"fontSize":"13px"}}>
-                        {"Evidence Review · 20 min"}
-                      </div>
-                      <div style={{"marginTop":"4px","fontSize":"12px","color":"#8f8b80"}}>
-                        {"Fits the CEO's hour."}
-                      </div>
-                      <div style={{"display":"flex","gap":"6px","marginTop":"8px"}}>
-                        <span style={{"background":"#ff4b23","color":"#0b0b0a","padding":"4px 9px","fontSize":"12px"}}>
-                          {"Accept"}
-                        </span>
-                        <span style={{"display":"inline-block","whiteSpace":"nowrap","lineHeight":"1.35","border":"1px solid #4a4843","padding":"4px 9px","fontSize":"12px"}}>
-                          {"Reject"}
-                        </span>
-                      </div>
+                    <div style={{"border":"1px dashed #34332e","padding":"9px 11px","fontSize":"13px","lineHeight":"1.4"}}>
+                      <span style={{"color":"#ece9e0"}}>
+                        {"Three demanding activities in a row."}
+                      </span>
+                      <span style={{"color":"#8f8b80"}}>
+                        {" Add a break before Generate Options."}
+                      </span>
                     </div>
-                    <div style={{"borderBottom":"1px solid #4a4843","padding":"6px 0","fontSize":"13px","color":"#8f8b80"}}>
-                      {"Ask Builder… make it 90 minutes shorter"}
+                    <div style={{"fontSize":"11px","letterSpacing":".06em","color":"#8f8b80","marginTop":"4px"}}>
+                      {"EXPORT"}
+                    </div>
+                    <div style={{"display":"flex","flexWrap":"wrap","gap":"6px"}}>
+                      <span style={{"background":"#ece9e0","color":"#0b0b0a","padding":"4px 9px","fontSize":"12px"}}>
+                        {"Agenda PDF"}
+                      </span>
+                      <span style={{"display":"inline-block","whiteSpace":"nowrap","lineHeight":"1.35","border":"1px solid #4a4843","padding":"4px 9px","fontSize":"12px"}}>
+                        {".csv"}
+                      </span>
+                      <span style={{"display":"inline-block","whiteSpace":"nowrap","lineHeight":"1.35","border":"1px solid #4a4843","padding":"4px 9px","fontSize":"12px"}}>
+                        {".json"}
+                      </span>
+                    </div>
+                    <div style={{"background":"#ff4b23","color":"#0b0b0a","padding":"7px 10px","fontSize":"13px","fontWeight":"500","textAlign":"center"}}>
+                      {"Run workshop"}
                     </div>
                   </div>
                 </div>
@@ -756,7 +756,7 @@ Component.prototype.template = function (V) {
                         {"Build from scratch"}
                       </div>
                       <div style={{"padding":"10px 0","borderBottom":"1px solid #2a2925","fontSize":"16px"}}>
-                        {"Start by describing the problem"}
+                        {"Search 850+ methods in the Library"}
                       </div>
                       <div style={{"padding":"10px 0","borderBottom":"1px solid #2a2925","fontSize":"16px"}}>
                         {"Start from a template"}
@@ -771,7 +771,7 @@ Component.prototype.template = function (V) {
                         {"Export the agenda and notes"}
                       </div>
                     </div>
-                    <a href="/builder" style={{"whiteSpace":"nowrap","alignSelf":"flex-start","display":"inline-flex","alignItems":"center","minHeight":"50px","marginTop":"22px","background":"#ece9e0","color":"#0b0b0a","padding":"0 20px","textDecoration":"none","fontSize":"16px","fontWeight":"500"}} className="scp-hover-6">
+                    <a href="/builder" style={{"whiteSpace":"nowrap","alignSelf":"flex-start","display":"inline-flex","alignItems":"center","minHeight":"50px","marginTop":"22px","background":"#ece9e0","color":"#0b0b0a","padding":"0 20px","textDecoration":"none","fontSize":"16px","fontWeight":"500"}} className="scp-hover-5">
                       {"Open Builder"}
                     </a>
                   </div>
@@ -841,7 +841,7 @@ Component.prototype.template = function (V) {
                       {"Combine them into a workshop."}
                     </div>
                     <p style={{"margin":"8px 0 0","fontSize":"14px","lineHeight":"1.45","color":"#c9c5ba"}}>
-                      {"Builder picks and sequences them. You drag, retime and replace."}
+                      {"Sequence them on a timeline. Drag, retime and replace."}
                     </p>
                   </div>
                   <div aria-hidden="true" style={dcCss(`display:${dcStr(V.sysArrow)};align-items:center;justify-content:center;color:#ff4b23;font-size:22px`)}>
@@ -897,7 +897,7 @@ Component.prototype.template = function (V) {
                     {"Prompts"}
                   </span>
                 </div>
-                <a href="/library" style={{"whiteSpace":"nowrap","display":"inline-flex","alignItems":"center","minHeight":"48px","marginTop":"22px","border":"1px solid #4a4843","color":"#ece9e0","padding":"0 18px","textDecoration":"none","fontSize":"16px"}} className="scp-hover-5">
+                <a href="/library" style={{"whiteSpace":"nowrap","display":"inline-flex","alignItems":"center","minHeight":"48px","marginTop":"22px","border":"1px solid #4a4843","color":"#ece9e0","padding":"0 18px","textDecoration":"none","fontSize":"16px"}} className="scp-hover-4">
                   {"Browse the Library"}
                 </a>
               </section>
@@ -907,13 +907,13 @@ Component.prototype.template = function (V) {
                     {"Things you can build"}
                   </h2>
                   <a href="/builder" style={{"whiteSpace":"nowrap","fontSize":"16px"}}>
-                    {"Or describe your own →"}
+                    {"Or start blank →"}
                   </a>
                 </div>
                 <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fill,minmax(min(100%,280px),1fr))","gap":"14px","marginTop":"clamp(24px,3vw,40px)"}}>
                   {dcList(V.homeTpls).map((t_4, $i4) => (
                     <React.Fragment key={$i4}>
-                      <a href={dcHref(t_4?.href)} style={dcCss(`display:flex;flex-direction:column;background:#1a1917;border:1px solid #34332e;padding:16px 18px 18px;color:#ece9e0;text-decoration:none;transform:rotate(${dcStr(t_4?.rot)});transition:transform .2s,border-color .2s`)} className="scp-hover-7">
+                      <a href={dcHref(t_4?.href)} style={dcCss(`display:flex;flex-direction:column;background:#1a1917;border:1px solid #34332e;padding:16px 18px 18px;color:#ece9e0;text-decoration:none;transform:rotate(${dcStr(t_4?.rot)});transition:transform .2s,border-color .2s`)} className="scp-hover-6">
                         <span style={{"fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"22px","lineHeight":"1.08"}}>
                           {dcText(t_4?.name)}
                         </span>
@@ -1014,7 +1014,7 @@ Component.prototype.template = function (V) {
                 <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fill,minmax(min(100%,280px),1fr))","gap":"16px"}}>
                   {dcList(V.homeWork).map((w_6, $i6) => (
                     <React.Fragment key={$i6}>
-                      <a href={dcHref(w_6?.href)} style={{"display":"flex","flexDirection":"column","background":"#0f0f0e","border":"1px solid #2a2925","color":"#ece9e0","textDecoration":"none","transition":"border-color .2s"}} className="scp-hover-8">
+                      <a href={dcHref(w_6?.href)} style={{"display":"flex","flexDirection":"column","background":"#0f0f0e","border":"1px solid #2a2925","color":"#ece9e0","textDecoration":"none","transition":"border-color .2s"}} className="scp-hover-7">
                         <rd-ascii key={[w_6?.shape, w_6?.seed].join("|")} shape={w_6?.shape} seed={w_6?.seed} style={{"display":"block","position":"relative","overflow":"hidden","width":"100%","aspectRatio":"16/10","borderBottom":"1px solid #2a2925"}}></rd-ascii>
                         <span style={{"display":"flex","flexDirection":"column","gap":"8px","padding":"18px 18px 20px","flex":"1"}}>
                           <span style={{"fontSize":"14px","color":"#8f8b80"}}>

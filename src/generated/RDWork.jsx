@@ -102,7 +102,7 @@ Component.prototype.template = function (V) {
                   {"Eight quick questions, about two minutes. At the end you get a recommended format and a way to book it."}
                 </p>
                 <div style={{"display":"flex","flexWrap":"wrap","alignItems":"center","gap":"12px 18px","marginTop":"28px"}}>
-                  <button onClick={V.begin} style={{"whiteSpace":"nowrap","background":"#ff4b23","color":"#0b0b0a","border":"0","minHeight":"54px","padding":"0 26px","cursor":"pointer","fontSize":"18px","fontWeight":"500"}} className="scp-hover-4">
+                  <button onClick={V.begin} style={{"whiteSpace":"nowrap","background":"#ff4b23","color":"#0b0b0a","border":"0","minHeight":"54px","padding":"0 26px","cursor":"pointer","fontSize":"18px","fontWeight":"500"}} className="scp-hover-h">
                     {"Start"}
                   </button>
                   <span style={{"fontSize":"14px","color":"#8f8b80"}}>
@@ -138,7 +138,7 @@ Component.prototype.template = function (V) {
                 <div role={V.groupRole} aria-labelledby="rdq-title" style={{"display":"flex","flexDirection":"column","gap":"8px","marginTop":"26px","maxWidth":"560px"}}>
                   {dcList(V.opts).map((o_0, $i0) => (
                     <React.Fragment key={$i0}>
-                      <button role={o_0?.role} aria-checked={o_0?.aria} onClick={o_0?.pick} style={dcCss(`display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:${dcStr(o_0?.bg)};color:#ece9e0;border:1px solid ${dcStr(o_0?.bd)};min-height:52px;padding:8px 14px 8px 8px;cursor:pointer;font-size:clamp(17px,1.5vw,19px);line-height:1.3;transition:background .15s,border-color .15s`)} className="scp-hover-e">
+                      <button role={o_0?.role} aria-checked={o_0?.aria} onClick={o_0?.pick} style={dcCss(`display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:${dcStr(o_0?.bg)};color:#ece9e0;border:1px solid ${dcStr(o_0?.bd)};min-height:52px;padding:8px 14px 8px 8px;cursor:pointer;font-size:clamp(17px,1.5vw,19px);line-height:1.3;transition:background .15s,border-color .15s`)} className="scp-hover-b">
                         <span style={dcCss(`flex:none;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid ${dcStr(o_0?.kbd)};background:${dcStr(o_0?.kbg)};color:${dcStr(o_0?.kfg)};font-size:13px;font-weight:600`)}>
                           {dcText(o_0?.key)}
                         </span>

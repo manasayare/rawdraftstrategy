@@ -38,7 +38,7 @@ class Component extends DCLogic {
     const browseKeys = ["need", "goal", "type", "practice", "stage", "time", "output", "mode"].map(k => ({ label: LABEL[k], c: S.browse === k ? "#ff4b23" : "#ece9e0", bd: S.browse === k ? "#ff4b23" : "#4a4843", toggle: () => this.setState(s => ({ browse: s.browse === k ? null : k })) }));
     const browseOpts = S.browse ? OPTS[S.browse].map(([v, l]) => ({ label: l, n: cnt(S.browse, v), pick: () => this.setF(S.browse, v) })).filter(o => o.n > 0) : [];
     const gs = (k, v) => () => this.setF(k, v);
-    const startHere = [["Run a workshop", "Complete session formats with an agenda.", "type", "workshop"], ["Plan a sprint", "Structured multi-day engagements.", "type", "sprint"], ["Find an activity", "Something to use inside a session.", "type", "activity"], ["Learn a framework", "Understand a model and how to apply it.", "type", "framework"], ["Break the ice", "Short ways to open a session.", "type", "icebreaker"], ["Run a serious game", "Simulations, tabletop formats and games.", "type", "game"], ["Learn facilitation", "Guides, courses and resources.", null, "#/facilitation"], ["Explore futures methods", "Signals, scenarios and backcasting.", null, "#/futures"], ["Build a session", "Describe the problem. Builder assembles it from the Library.", null, "#/builder"]]
+    const startHere = [["Run a workshop", "Complete session formats with an agenda.", "type", "workshop"], ["Plan a sprint", "Structured multi-day engagements.", "type", "sprint"], ["Find an activity", "Something to use inside a session.", "type", "activity"], ["Learn a framework", "Understand a model and how to apply it.", "type", "framework"], ["Break the ice", "Short ways to open a session.", "type", "icebreaker"], ["Run a serious game", "Simulations, tabletop formats and games.", "type", "game"], ["Learn facilitation", "Guides, courses and resources.", null, "#/facilitation"], ["Explore futures methods", "Signals, scenarios and backcasting.", null, "#/futures"], ["Build a session", "Start from a template, then drag in methods from the Library.", null, "#/builder"]]
       .map(([t, d, k, v], i) => ({ t, d, visual: ["sticky_sequence", "sticky_timeline", "sticky_vote", "sticky_matrix", "cards_deck", "tokens_board", "sticky_cluster", "signal_constellation", "sticky_sequence"][i], seed: i + 2, href: k ? "#/library/" + L.TYPE[v].slug : v, pick: k ? e => { e.preventDefault(); this.setF(k, v); } : () => {} }));
     const arcKeys = ["open", "explore", "makesense", "create", "decide", "commit", "close"];
     const arc = arcKeys.map((k, i) => ({ n: "0" + (i + 1), label: L.STAGE_L[k], count: (c => c === 1 ? "1 item" : c + " items")(cnt("stage", k)), pick: gs("stage", k) })).filter(a => a.count !== "0 items");
@@ -133,7 +133,7 @@ Component.prototype.template = function (V) {
               <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fill,minmax(min(100%,260px),1fr))","gap":"16px","marginTop":"8px"}}>
                 {dcList(V.startHere).map((s_2, $i2) => (
                   <React.Fragment key={$i2}>
-                    <a href={dcHref(s_2?.href)} onClick={s_2?.pick} style={{"display":"flex","flexDirection":"column","background":"#0f0f0e","border":"1px solid #2a2925","color":"#ece9e0","textDecoration":"none","transition":"border-color .2s"}} className="scp-hover-8">
+                    <a href={dcHref(s_2?.href)} onClick={s_2?.pick} style={{"display":"flex","flexDirection":"column","background":"#0f0f0e","border":"1px solid #2a2925","color":"#ece9e0","textDecoration":"none","transition":"border-color .2s"}} className="scp-hover-7">
                       <rd-visual key={[s_2?.visual, s_2?.t, s_2?.t].join("|")} type={s_2?.visual} seed={s_2?.t} label={s_2?.t} style={{"display":"block","width":"100%","height":"clamp(112px,13vw,168px)","borderBottom":"1px solid #2a2925"}}></rd-visual>
                       <span style={{"display":"flex","flexDirection":"column","gap":"6px","padding":"16px 18px 20px"}}>
                         <span style={{"fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(22px,2vw,26px)","letterSpacing":"-.02em","lineHeight":"1.05"}}>
@@ -158,7 +158,7 @@ Component.prototype.template = function (V) {
               <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(min(100%,120px),1fr))","borderTop":"2px solid #ece9e0"}}>
                 {dcList(V.arc).map((a_3, $i3) => (
                   <React.Fragment key={$i3}>
-                    <button onClick={a_3?.pick} style={{"textAlign":"left","background":"none","border":"0","borderRight":"1px solid #2a2925","borderBottom":"1px solid #2a2925","color":"#ece9e0","padding":"16px 14px 18px","cursor":"pointer","alignSelf":"start","height":"100%"}} className="scp-hover-k">
+                    <button onClick={a_3?.pick} style={{"textAlign":"left","background":"none","border":"0","borderRight":"1px solid #2a2925","borderBottom":"1px solid #2a2925","color":"#ece9e0","padding":"16px 14px 18px","cursor":"pointer","alignSelf":"start","height":"100%"}} className="scp-hover-i">
                       <span style={{"display":"block","fontSize":"13px","color":"#5a5850"}}>
                         {dcText(a_3?.n)}
                       </span>
@@ -238,7 +238,7 @@ Component.prototype.template = function (V) {
               <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fill,minmax(min(100%,260px),1fr))","gap":"16px","marginTop":"8px"}}>
                 {dcList(V.curated).map((it_7, $i7) => (
                   <React.Fragment key={$i7}>
-                    <a href={dcHref(it_7?.href)} style={{"display":"flex","flexDirection":"column","background":"#0f0f0e","border":"1px solid #2a2925","color":"#ece9e0","textDecoration":"none","transition":"border-color .2s"}} className="scp-hover-8">
+                    <a href={dcHref(it_7?.href)} style={{"display":"flex","flexDirection":"column","background":"#0f0f0e","border":"1px solid #2a2925","color":"#ece9e0","textDecoration":"none","transition":"border-color .2s"}} className="scp-hover-7">
                       <rd-visual key={[it_7?.visual, it_7?.visualVariant, it_7?.vseed, it_7?.title].join("|")} type={it_7?.visual} variant={it_7?.visualVariant} seed={it_7?.vseed} label={it_7?.title} style={{"display":"block","width":"100%","height":"clamp(112px,13vw,168px)","borderBottom":"1px solid #2a2925"}}></rd-visual>
                       <span style={{"display":"flex","flexDirection":"column","gap":"8px","padding":"16px 18px 20px","flex":"1"}}>
                         <span style={{"fontSize":"14px","color":"#8f8b80"}}>

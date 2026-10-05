@@ -9,20 +9,22 @@ class Component extends DCLogic {
   ghostRef = React.createRef();
   load() { try { return JSON.parse(localStorage.getItem("rd-builder-2") || "null"); } catch (e) { return null; } }
   loadK(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
-  state = Object.assign((() => { const acct = this.loadK("rd-account"), ws = this.loadK("rd-workspace") || { workshops: [], current: null }, ses = this.loadK("rd-builder-session") || {};
+  state = Object.assign((() => { const acct = true, ws = this.loadK("rd-workspace") || { workshops: [], current: null }, ses = this.loadK("rd-builder-session") || {};
       const cur = acct && ws.current ? (ws.workshops || []).find(w => w.id === ws.current) : null;
       const base = { items: [], brief: {}, name: "Untitled workshop", start: "09:30", view: "timeline", hist: [], started: false, chat: [], wid: null };
       const own = cur ? { items: cur.items || [], brief: cur.brief || {}, name: cur.name, start: cur.start || "09:30", view: cur.view || "timeline", chat: cur.chat || [], wid: cur.id } : {};
-      const phase = acct ? (cur && ses.phase === "bench" ? "bench" : ses.phase === "chat" ? "chat" : "home") : "chat";
+      const phase = cur ? "bench" : "home";
       return Object.assign(base, acct ? own : { brief: ses.brief || {}, chat: ses.chat || [] }, acct && ses.phase === "chat" && ses.chat ? { chat: ses.chat, brief: ses.brief || {} } : {}, { account: acct, workshops: ws.workshops || [], phase, pendQ: ses.pendQ || null, asked: ses.asked || [], recShown: !!ses.recShown, seed: ses.seed || null }); })(),
     { chatText: "", gate: null, gateMode: "start", gateEmail: "", briefView: false, showConvo: false, morph: 0, open: null, sel: [], drag: null, drop: null, proposal: null, stress: false, notice: "", live: "", lib: { q: "", stage: "", time: "", people: "", format: "", output: "", type: "" }, filters: false, libPrev: null, libN: 24, sheet: null, center: "canvas", aiText: "", busy: false, ask: null, skipped: [], inferred: [], suggestFor: null, pendingAdd: null, alts: null, ctx: false, askText: "", asking: false, cmp: "90", copied: false, prompted: null,
       ready: !!(window.RDB && window.RD && window.RDL && window.RDB.TPL), w: window.innerWidth, rm: !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) });
   componentDidMount() {
     this.onR = () => this.setState({ w: window.innerWidth }); window.addEventListener("resize", this.onR);
     this.onK = e => { if (e.key === "Escape") { if (this.pd && this.pd.started) this.endDrag(true); else this.setState({ open: null, alts: null, sel: [], sheet: null }); } }; window.addEventListener("keydown", this.onK);
-    const go = () => { this.setState({ ready: true }); this.fromLib(); this.fromProps(); };
-    if (!this.state.ready) this.poll = setInterval(() => { if (window.RDB && window.RD && window.RDL && window.RDB.TPL) { clearInterval(this.poll); go(); } }, 40); else { this.fromLib(); this.fromProps(); }
+    const go = () => { this.setState({ ready: true }); this.fromLib(); this.fromProps(); this.firstVisit(); };
+    if (!this.state.ready) this.poll = setInterval(() => { if (window.RDB && window.RD && window.RDL && window.RDB.TPL) { clearInterval(this.poll); go(); } }, 40); else { this.fromLib(); this.fromProps(); this.firstVisit(); }
   }
+  // With nothing saved yet, open a blank canvas with the template picker showing.
+  firstVisit() { setTimeout(() => { if (this.state.phase === "home" && !(this.state.workshops || []).length) this.newWorkshop({}, { center: "tpl" }); }, 0); }
   componentWillUnmount() { window.removeEventListener("resize", this.onR); window.removeEventListener("keydown", this.onK); clearInterval(this.poll); this.unbind(); this.runStop(); }
   runEl(r) { r = r || this.state.run; return r ? r.acc + (r.t0 ? Date.now() - r.t0 : 0) : 0; }
   runStop() { clearInterval(this.runTick); this.runTick = null; if (this.runKey) window.removeEventListener("keydown", this.runKey, true); this.runKey = null; }
@@ -63,6 +65,7 @@ class Component extends DCLogic {
     return Object.assign(base, { runLive: !r.done, runDone: !!r.done, runCols: S.w >= 1000 ? "minmax(0,1fr) minmax(320px,400px)" : "minmax(0,1fr)",
       runWhere: [nD > 1 ? "Day " + c.day + " of " + nD : "", c.sec].filter(Boolean).join(" · "), runDriftL: !r.t0 && !el && !i ? "Not started" : Math.abs(dm) < 1 ? "On schedule" : dm > 0 ? dm + " min behind" : -dm + " min ahead", runDriftC: dm >= 5 ? "#ff4b23" : "#c9c5ba",
       runEndL: nD > 1 ? "" : "Ends " + clock(endM) + (endM !== start + totalPlan ? " (planned " + clock(start + totalPlan) + ")" : ""),
+      runRows: rows,
       runSegs: L.map((x, k) => ({ t: x.title, f: Math.max(1, plan(x)), bg: k < i || r.done ? "#8f8b80" : k === i ? "#ff4b23" : "#2a2925" })),
       runStatus: r.t0 ? (over ? "OVER TIME" : "RUNNING") : el ? "PAUSED" : "READY", runStatusC: over || r.t0 ? "#ff4b23" : "#8f8b80", runPos: "BLOCK " + (i + 1) + " OF " + L.length, runSec: (c.sec || "").toUpperCase(), runTitle: cur.title,
       runDigits: tStr.split("").map(ch => ({ c: ch, w: ch === ":" ? ".46em" : ch === "+" ? ".66em" : ".7em" })), runTimerAria: (over ? "Over by " : "Remaining ") + tStr.replace("+", ""),
@@ -96,7 +99,7 @@ class Component extends DCLogic {
   openTemplate(t) { if (!t) return; this.newWorkshop({ name: t.name, items: this.tplItems(t), brief: Object.assign({}, t.brief) }, { notice: t.name + " opened as an editable copy. Change anything." }); }
   fromProps() { if (!this.state.ready && !(window.RDB && window.RDB.TPL)) return; const q = this.props.q, tpl = this.props.tpl;
     const clean = () => { try { RDNav.replace("#/builder"); } catch (e) {} };
-    if (q && this.qDone !== q) { this.qDone = q; clean(); this.setState({ phase: "chat", chat: [], brief: {}, asked: [], pendQ: null, recShown: false, seed: null }, () => this.send(q)); }
+    if (q && this.qDone !== q) { this.qDone = q; clean(); if (this.state.phase !== "bench") { if ((this.state.workshops || []).length) this.openWs((this.state.workshops.find(w => w.id === this.state.wid) || this.state.workshops[this.state.workshops.length - 1]).id); else this.newWorkshop({}); } this.setState(s => ({ lib: Object.assign({}, s.lib, { q }), libN: 24 })); }
     if (tpl !== undefined && tpl !== null && tpl !== "" && this.tplDone !== tpl) { this.tplDone = tpl; clean(); const t = RDB.TPL[+tpl]; if (t) { if (this.state.account) this.openTemplate(t); else this.setState({ gate: { kind: "tpl", tpl: +tpl }, gateMode: "start" }); } } }
   CQ = { outcome: ["What needs to exist by the end?", "Builder picks the structure from this.", [["A decision", "Decision"], ["A direction", "Direction"], ["Ideas to test", "Ideas"], ["A prototype", "Prototype"], ["Alignment", "Alignment"], ["Priorities", "Priorities"], ["Not sure", ""]]],
     time: ["How much time do you have with the team?", "The whole session, not the prep.", [["90 min", "90 min"], ["Half day", "Half day"], ["1 day", "1 day"], ["2 days", "2 days"], ["Multiple sessions", "Multiple sessions"]]],
@@ -161,8 +164,8 @@ class Component extends DCLogic {
   fromLib() { const id = this.props.add; if (!id || this.added === id || !window.RDL || !window.RDB) return; this.added = id; const it = RDL.get(id); if (!it) return;
     const isF = ["workshop", "sprint", "playbook"].includes(it.type);
     if (!this.state.account) { this.setState({ phase: "chat", chat: [], brief: {}, asked: [], pendQ: null, recShown: false, seed: { id: it.id }, chatText: isF ? "We want to adapt " + it.title + " for " : "We want to use " + it.title + " to figure out " }); return; }
-    if (this.state.phase !== "bench") { this.newWorkshop({ name: isF ? it.title : "Untitled workshop", items: this.expand(it) }, { notice: "Added " + it.title + ". Drag more from the Library, or ask Builder." }); return; }
-    if (!this.state.items.some(x => x.kind === "block")) { const add = this.expand(it); this.commit(() => add, "Added " + it.title, { name: it.type === "workshop" || it.type === "sprint" ? it.title : this.state.name, notice: "Added " + it.title + ". Drag more from the Library, or open Build with AI to compose around it." }); }
+    if (this.state.phase !== "bench") { this.newWorkshop({ name: isF ? it.title : "Untitled workshop", items: this.expand(it) }, { notice: "Added " + it.title + ". Drag more from the Library." }); return; }
+    if (!this.state.items.some(x => x.kind === "block")) { const add = this.expand(it); this.commit(() => add, "Added " + it.title, { name: it.type === "workshop" || it.type === "sprint" ? it.title : this.state.name, notice: "Added " + it.title + ". Drag more from the Library." }); }
     else this.setState({ pendingAdd: id }); }
   insertItems(add, at, msg) { this.commit(items => { const pos = at == null ? items.filter(x => x.zone !== "after").length : at; items.splice(pos, 0, ...add); return items; }, msg); }
   addEnd(add, label) { const S = this.state; let at = null; if (S.sel.length) { const last = Math.max(...S.sel.map(id => S.items.findIndex(x => x.id === id))); if (last >= 0) { at = last + 1; add.forEach(a => a.zone = S.items[last].zone); } }
@@ -452,7 +455,7 @@ class Component extends DCLogic {
       hasConvo: ph === "bench" && convo.length > 0, convo, showConvo: S.showConvo, toggleConvo: () => this.setState(s2 => ({ showConvo: !s2.showConvo })), convoAria: S.showConvo ? "true" : "false", convoL: (S.showConvo ? "Hide conversation" : "View conversation") + " · " + convo.length
     });
     return Object.assign(v, {
-      pageBottom: wide ? "48px" : "96px", rDir: view === "blocks" ? "row" : "column", rWrap: view === "blocks" ? "wrap" : "nowrap", rGap: view === "blocks" ? "12px" : "8px", rAlign: view === "blocks" ? "stretch" : "stretch", liveMsg: S.live, modeL: S.center === "ai" ? "Build with AI" : S.center === "tpl" ? "Templates" : "Build",
+      pageBottom: wide ? "48px" : "96px", rDir: view === "blocks" ? "row" : "column", rWrap: view === "blocks" ? "wrap" : "nowrap", rGap: view === "blocks" ? "12px" : "8px", rAlign: view === "blocks" ? "stretch" : "stretch", liveMsg: S.live, modeL: S.center === "tpl" ? "Templates" : "Build",
       name: S.name, onName: e => this.setState({ name: e.target.value }), start: S.start, onStart: e => this.setState({ start: e.target.value || "09:30" }),
       totalL: hasBlocks ? hm(total) + (nDays > 1 ? " across " + nDays + " days" : " · ends " + clock(start + total)) : "Nothing planned yet", overL: !hasBlocks ? "" : over > 0 ? hm(over) + " over the " + hm(avail) + " available" : over < 0 ? hm(-over) + " spare of " + hm(avail) : avail && hasBlocks ? "Fits " + hm(avail) : "", overC: over > 0 ? "#ff4b23" : "#8f8b80",
       views: [["timeline", "Timeline"], ["blocks", "Blocks"], ["days", "Days"]].map(([kk, l]) => ({ l, aria: view === kk ? "true" : "false", bg: view === kk ? "#ece9e0" : "transparent", fg: view === kk ? "#0b0b0a" : "#ece9e0", pick: () => this.setState({ view: kk }) })),
@@ -465,7 +468,7 @@ class Component extends DCLogic {
       pendExisting: () => { const it = RDL.get(S.pendingAdd); this.setState({ pendingAdd: null }); if (it) this.addEnd(this.expand(it), it.title); }, pendNew: () => { const it = RDL.get(S.pendingAdd); this.setState({ pendingAdd: null }); if (it) this.commit(() => this.expand(it), "New workshop", { name: it.type === "workshop" || it.type === "sprint" ? it.title : "Untitled workshop", notice: "New workshop started with " + it.title + ". Undo brings the previous one back." }); },
       cols: wide ? "minmax(260px,300px) minmax(0,1fr) minmax(280px,330px)" : "minmax(0,1fr)", wide, isSheet: !wide,
       libPos: wide ? "sticky" : "fixed", libDisp: libShow ? "block" : "none", asPos: wide ? "sticky" : "fixed", asDisp: asShow ? "block" : "none", panTop: wide ? "84px" : "auto", panMax: wide ? "calc(100vh - 100px)" : "86vh", panBg: wide ? "transparent" : "#0f0f0e", panBd: wide ? "0" : "1px solid #4a4843", panPad: wide ? "0 4px 24px 0" : "16px 16px 28px", panShadow: wide ? "none" : "0 -24px 60px rgba(0,0,0,.7)",
-      closeSheet: () => this.setState({ sheet: null, open: wide ? S.open : null }), showBar: !wide && !dragging && ph === "bench", openLib: () => this.setState({ sheet: "lib", open: null }), openAssist: () => this.setState({ sheet: "assist" }), assistL: "Assist" + (ins.length ? " · " + ins.length : ""),
+      closeSheet: () => this.setState({ sheet: null, open: wide ? S.open : null }), showBar: !wide && !dragging && ph === "bench", openLib: () => this.setState({ sheet: "lib", open: null }), openAssist: () => this.setState({ sheet: "assist" }), assistL: "Checks & export" + (ins.length ? " · " + ins.length : ""),
       touchA: wide ? "none" : "auto",
       libQ: L.q, onLibQ: e => { const vq = e.target.value; this.setState(s => ({ lib: Object.assign({}, s.lib, { q: vq }), libN: 24 })); }, hasParsed: !!parsed, parsedL: parsed,
       toggleFilters: () => this.setState(s => ({ filters: !s.filters })), filtersAria: S.filters ? "true" : "false", filtersL: (S.filters ? "Hide filters" : "Filters") + (nF ? " · " + nF : ""), showFilters: S.filters, hasFilters: nF > 0 || !!L.q, clearFilters: () => this.setState(blank),
@@ -528,325 +531,23 @@ Component.prototype.template = function (V) {
         <div aria-live="polite" style={{"position":"absolute","width":"1px","height":"1px","overflow":"hidden","clip":"rect(0 0 0 0)"}}>
           {dcText(V.liveMsg)}
         </div>
-        {V.isChat ? (
-          <>
-            <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.chatCols)};gap:24px clamp(24px,4vw,64px);align-items:start;max-width:1320px`)}>
-              <div style={{"minWidth":"0"}}>
-                <div style={{"display":"flex","flexWrap":"wrap","justifyContent":"space-between","gap":"8px 16px","fontSize":"14px","color":"#8f8b80"}}>
-                  <span>
-                    {"Builder"}
-                  </span>
-                  <span style={{"display":"flex","gap":"18px"}}>
-                    {V.hasAccount ? (
-                      <>
-                        <button onClick={V.goHome} style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"14px","padding":"0","minHeight":"32px"}} className="scp-hover-1">
-                          {"Your workshops"}
-                        </button>
-                      </>
-                    ) : null}
-                    {V.chatStarted ? (
-                      <>
-                        <button onClick={V.chatReset} style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"14px","padding":"0","minHeight":"32px"}} className="scp-hover-1">
-                          {"Start over"}
-                        </button>
-                      </>
-                    ) : null}
-                  </span>
-                </div>
-                <h1 style={dcCss(`margin:14px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:${dcStr(V.chatH)};letter-spacing:-.04em;line-height:.92;max-width:14ch;transition:font-size .4s ease`)}>
-                  {"What are you trying to figure out?"}
-                </h1>
-                {V.hasSeedNote ? (
-                  <>
-                    <p style={{"margin":"16px 0 0","fontSize":"16px","color":"#c9c5ba"}}>
-                      {"Building around "}
-                      <a href={dcHref(V.seedHref)} style={{"color":"#ff4b23"}}>
-                        {dcText(V.seedTitle)}
-                      </a>
-                      {". Say what you want to use it for."}
-                    </p>
-                  </>
-                ) : null}
-                {V.chatEmpty ? (
-                  <>
-                    <form onSubmit={V.onChat} style={{"marginTop":"clamp(22px,3vw,36px)"}}>
-                      <textarea aria-label="Describe what you are trying to figure out" value={V.chatText ?? ""} onChange={V.onChatText} onKeyDown={V.onChatKey} rows="4" placeholder="We need to decide which customer segment to focus on." style={{"display":"block","width":"100%","background":"#111110","border":"1px solid #34332e","outline":"none","color":"#ece9e0","padding":"18px 20px","fontFamily":"'Satoshi',sans-serif","fontSize":"clamp(18px,1.6vw,22px)","lineHeight":"1.45","resize":"vertical"}} className="scp-focus-9"></textarea>
-                      <div style={{"display":"flex","flexWrap":"wrap","gap":"10px 18px","alignItems":"center","marginTop":"14px"}}>
-                        <button type="submit" disabled={V.busy} style={{"whiteSpace":"nowrap","background":"#ff4b23","color":"#0b0b0a","border":"0","minHeight":"52px","padding":"0 24px","cursor":"pointer","fontSize":"17px","fontWeight":"500"}}>
-                          {dcText(V.sendL)}
-                        </button>
-                        <span style={{"fontSize":"14px","color":"#8f8b80"}}>
-                          {"Say it the way you would to a colleague. No account needed to start."}
-                        </span>
-                      </div>
-                    </form>
-                    <div style={{"marginTop":"clamp(26px,3vw,40px)","fontSize":"12px","letterSpacing":".06em","color":"#8f8b80"}}>
-                      {"OR START FROM ONE OF THESE"}
-                    </div>
-                    <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fill,minmax(min(100%,250px),1fr))","gap":"12px","marginTop":"10px"}}>
-                      {dcList(V.starters).map((e_0, $i0) => (
-                        <React.Fragment key={$i0}>
-                          <button onClick={e_0?.pick} style={dcCss(`text-align:left;background:#1a1917;border:1px solid #34332e;color:#ece9e0;padding:14px 16px 16px;cursor:pointer;font-size:16px;line-height:1.4;transform:rotate(${dcStr(e_0?.rot)});transition:transform .2s,border-color .2s`)} className="scp-hover-a">
-                            {dcText(e_0?.t)}
-                          </button>
-                        </React.Fragment>
-                      ))}
-                    </div>
-                  </>
-                ) : null}
-                <div style={dcCss(`margin-top:${dcStr(V.convoTop)}`)}>
-                  {dcList(V.chatRows).map((m_1, $i1) => (
-                    <React.Fragment key={$i1}>
-                      {m_1?.isU ? (
-                        <>
-                          <div style={{"padding":"18px 0 14px","borderTop":"1px solid #2a2925"}}>
-                            <div style={{"fontSize":"12px","letterSpacing":".06em","color":"#8f8b80"}}>
-                              {"YOU"}
-                            </div>
-                            <div style={{"marginTop":"6px","fontSize":"clamp(18px,1.6vw,22px)","lineHeight":"1.45","maxWidth":"60ch"}}>
-                              {dcText(m_1?.t)}
-                            </div>
-                          </div>
-                        </>
-                      ) : null}
-                      {m_1?.isGot ? (
-                        <>
-                          <div style={{"display":"flex","flexWrap":"wrap","gap":"6px","alignItems":"center","padding":"4px 0 14px"}}>
-                            <span style={{"fontSize":"12px","letterSpacing":".06em","color":"#8f8b80","marginRight":"4px"}}>
-                              {"NOTED"}
-                            </span>
-                            {dcList(m_1?.rows).map((g_2, $i2) => (
-                              <React.Fragment key={$i2}>
-                                <span style={{"display":"inline-block","border":"1px solid #4a4843","padding":"4px 9px","fontSize":"13px","lineHeight":"1.35"}}>
-                                  <span style={{"color":"#8f8b80"}}>
-                                    {dcText(g_2?.k)}
-                                    {" "}
-                                  </span>
-                                  {dcText(g_2?.v)}
-                                </span>
-                              </React.Fragment>
-                            ))}
-                          </div>
-                        </>
-                      ) : null}
-                      {m_1?.isQ ? (
-                        <>
-                          <div style={dcCss(`padding:14px 0 22px;opacity:${dcStr(m_1?.op)}`)}>
-                            <div style={{"fontSize":"12px","letterSpacing":".06em","color":"#ff4b23"}}>
-                              {"BUILDER"}
-                            </div>
-                            <div style={{"marginTop":"6px","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(24px,2.6vw,36px)","letterSpacing":"-.02em","lineHeight":"1.05"}}>
-                              {dcText(m_1?.q)}
-                            </div>
-                            {m_1?.hasSub ? (
-                              <>
-                                <div style={{"marginTop":"6px","fontSize":"15px","color":"#8f8b80"}}>
-                                  {dcText(m_1?.sub)}
-                                </div>
-                              </>
-                            ) : null}
-                            <div role="group" aria-label={m_1?.q} style={{"display":"grid","gridTemplateColumns":"repeat(auto-fill,minmax(min(100%,170px),1fr))","gap":"10px","marginTop":"14px"}}>
-                              {dcList(m_1?.opts).map((o_3, $i3) => (
-                                <React.Fragment key={$i3}>
-                                  <button onClick={o_3?.pick} aria-pressed={o_3?.aria} disabled={o_3?.dis} style={dcCss(`text-align:left;background:${dcStr(o_3?.bg)};border:1px solid ${dcStr(o_3?.bd)};color:${dcStr(o_3?.fg)};min-height:64px;padding:12px 14px;cursor:pointer;font-family:'Clash Display',sans-serif;font-weight:500;font-size:18px;line-height:1.1;transform:rotate(${dcStr(o_3?.rot)});transition:transform .2s,border-color .2s`)} className="scp-hover-b">
-                                    {dcText(o_3?.l)}
-                                  </button>
-                                </React.Fragment>
-                              ))}
-                            </div>
-                            {m_1?.live ? (
-                              <>
-                                <div style={{"marginTop":"8px","fontSize":"13px","color":"#8f8b80"}}>
-                                  {"Pick one, or just type your answer below. You can do both."}
-                                </div>
-                              </>
-                            ) : null}
-                          </div>
-                        </>
-                      ) : null}
-                      {m_1?.isOld ? (
-                        <>
-                          <div style={{"padding":"6px 0 14px","fontSize":"14px","color":"#8f8b80"}}>
-                            {"Builder updated its recommendation. The latest version is below."}
-                          </div>
-                        </>
-                      ) : null}
-                      {m_1?.isNote ? (
-                        <>
-                          <div style={{"padding":"6px 0 14px","fontSize":"15px","color":"#c9c5ba"}}>
-                            {dcText(m_1?.t)}
-                          </div>
-                        </>
-                      ) : null}
-                      {m_1?.isRec ? (
-                        <>
-                          <div style={{"margin":"6px 0 18px","border":"1px solid #4a4843","backgroundColor":"#111110","backgroundImage":"linear-gradient(rgba(236,233,224,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(236,233,224,.04) 1px,transparent 1px)","backgroundSize":"40px 40px","padding":"clamp(18px,2.6vw,30px)"}}>
-                            <div style={{"fontSize":"12px","letterSpacing":".06em","color":"#8f8b80"}}>
-                              {"BASED ON WHAT YOU HAVE TOLD ME"}
-                            </div>
-                            <div style={{"marginTop":"12px","fontSize":"14px","color":"#ff4b23"}}>
-                              {"Recommended · "}
-                              {dcText(V.rec?.kind)}
-                            </div>
-                            <div style={{"marginTop":"4px","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(32px,4vw,58px)","letterSpacing":"-.035em","lineHeight":".95"}}>
-                              {dcText(V.rec?.name)}
-                            </div>
-                            <div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginTop":"14px"}}>
-                              {dcList(V.recChips).map((c_4, $i4) => (
-                                <React.Fragment key={$i4}>
-                                  <span style={dcCss(`display:inline-block;border:1px solid ${dcStr(c_4?.bd)};color:${dcStr(c_4?.c)};padding:4px 10px;font-size:14px;line-height:1.35`)}>
-                                    {dcText(c_4?.t)}
-                                  </span>
-                                </React.Fragment>
-                              ))}
-                            </div>
-                            <p style={{"margin":"14px 0 0","maxWidth":"62ch","fontSize":"16px","lineHeight":"1.5","color":"#c9c5ba"}}>
-                              {dcText(V.rec?.why)}
-                            </p>
-                            <div style={{"display":"flex","justifyContent":"space-between","gap":"12px","marginTop":"20px","fontSize":"12px","letterSpacing":".06em","color":"#8f8b80"}}>
-                              <span>
-                                {"SUGGESTED STRUCTURE"}
-                              </span>
-                              <span>
-                                {dcText(V.outlineL)}
-                              </span>
-                            </div>
-                            <div style={{"display":"flex","flexWrap":"wrap","gap":"8px","marginTop":"10px"}}>
-                              {dcList(V.outline).map((o_5, $i5) => (
-                                <React.Fragment key={$i5}>
-                                  <div style={dcCss(`background:#1a1917;border:1px solid #34332e;padding:10px 12px;min-width:118px;transform:rotate(${dcStr(o_5?.rot)})`)}>
-                                    <div style={{"fontSize":"12px","color":"#8f8b80"}}>
-                                      {dcText(o_5?.n)}
-                                      {" · "}
-                                      {dcText(o_5?.mins)}
-                                      {" min"}
-                                    </div>
-                                    <div style={{"marginTop":"3px","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"18px"}}>
-                                      {dcText(o_5?.l)}
-                                    </div>
-                                  </div>
-                                </React.Fragment>
-                              ))}
-                            </div>
-                            <div style={{"display":"flex","flexWrap":"wrap","alignItems":"center","gap":"10px 18px","marginTop":"22px"}}>
-                              <button onClick={V.openInBuilder} style={{"whiteSpace":"nowrap","background":"#ff4b23","color":"#0b0b0a","border":"0","minHeight":"52px","padding":"0 22px","cursor":"pointer","fontSize":"17px","fontWeight":"500"}}>
-                                {"Open in Builder"}
-                              </button>
-                              <span style={{"fontSize":"14px","color":"#8f8b80"}}>
-                                {"Or keep typing to change anything."}
-                              </span>
-                            </div>
-                            <p style={{"margin":"12px 0 0","fontSize":"13px","lineHeight":"1.45","color":"#8f8b80"}}>
-                              {"Each block comes from the Raw Draft Library. In Builder you can drag, replace, retime or delete any of it."}
-                            </p>
-                          </div>
-                        </>
-                      ) : null}
-                    </React.Fragment>
-                  ))}
-                  {V.busy ? (
-                    <>
-                      <div style={{"padding":"10px 0","fontSize":"15px","color":"#8f8b80"}}>
-                        {"Builder is reading it…"}
-                      </div>
-                    </>
-                  ) : null}
-                </div>
-                {V.chatStarted ? (
-                  <>
-                    <form onSubmit={V.onChat} style={{"position":"sticky","bottom":"0","zIndex":"5","display":"flex","gap":"10px","alignItems":"flex-end","background":"#0b0b0a","padding":"12px 0 16px","borderTop":"1px solid #34332e"}}>
-                      <textarea aria-label="Reply to Builder" value={V.chatText ?? ""} onChange={V.onChatText} onKeyDown={V.onChatKey} rows="2" placeholder={V.replyPh} style={{"flex":"1 1 auto","minWidth":"0","background":"#111110","border":"1px solid #34332e","outline":"none","color":"#ece9e0","padding":"12px 14px","fontFamily":"'Satoshi',sans-serif","fontSize":"16px","lineHeight":"1.4","resize":"none"}} className="scp-focus-9"></textarea>
-                      <button type="submit" disabled={V.busy} style={{"whiteSpace":"nowrap","background":"#ece9e0","color":"#0b0b0a","border":"0","minHeight":"50px","padding":"0 18px","cursor":"pointer","fontSize":"15px","fontWeight":"500"}}>
-                        {"Send"}
-                      </button>
-                    </form>
-                  </>
-                ) : null}
-              </div>
-              <aside aria-label="Current brief" style={dcCss(`position:${dcStr(V.briefPos)};top:84px;min-width:0;order:${dcStr(V.briefOrder)}`)}>
-                {V.briefToggle ? (
-                  <>
-                    <button onClick={V.toggleBriefView} aria-expanded={V.briefAria} style={{"display":"flex","justifyContent":"space-between","gap":"12px","width":"100%","textAlign":"left","background":"#111110","border":"1px solid #2a2925","color":"#ece9e0","minHeight":"48px","padding":"0 14px","cursor":"pointer","fontSize":"15px"}}>
-                      <span>
-                        {"View brief "}
-                        <span style={{"color":"#8f8b80"}}>
-                          {"· "}
-                          {dcText(V.briefN)}
-                        </span>
-                      </span>
-                      <span style={{"color":"#8f8b80"}}>
-                        {dcText(V.briefSign)}
-                      </span>
-                    </button>
-                  </>
-                ) : null}
-                {V.briefShown ? (
-                  <>
-                    <div style={dcCss(`border:1px solid #2a2925;padding:16px 18px;background:#0f0f0e;margin-top:${dcStr(V.briefMt)}`)}>
-                      <div style={{"fontSize":"12px","letterSpacing":".06em","color":"#8f8b80"}}>
-                        {"CURRENT BRIEF"}
-                      </div>
-                      {dcList(V.briefPanel).map((r_6, $i6) => (
-                        <React.Fragment key={$i6}>
-                          <button onClick={r_6?.edit} style={{"display":"block","width":"100%","textAlign":"left","background":"none","border":"0","borderBottom":"1px solid #1d1c1a","color":"#ece9e0","padding":"10px 0","cursor":"pointer"}} className="scp-hover-0">
-                            <span style={{"display":"block","fontSize":"11px","letterSpacing":".08em","color":"#8f8b80"}}>
-                              {dcText(r_6?.k)}
-                            </span>
-                            <span style={{"display":"block","marginTop":"2px","fontSize":"15px","lineHeight":"1.4"}}>
-                              {dcText(r_6?.v)}
-                            </span>
-                          </button>
-                        </React.Fragment>
-                      ))}
-                      {V.briefEmpty ? (
-                        <>
-                          <p style={{"margin":"10px 0 0","fontSize":"14px","lineHeight":"1.45","color":"#8f8b80"}}>
-                            {"Builder fills this in as you talk: the question, what must exist at the end, time, people, who decides and what you already know."}
-                          </p>
-                        </>
-                      ) : null}
-                      {V.briefMissing ? (
-                        <>
-                          <p style={{"margin":"10px 0 0","fontSize":"13px","lineHeight":"1.45","color":"#8f8b80"}}>
-                            {"Still open: "}
-                            {dcText(V.missingL)}
-                          </p>
-                        </>
-                      ) : null}
-                    </div>
-                  </>
-                ) : null}
-              </aside>
-            </div>
-          </>
-        ) : null}
         {V.isHomeW ? (
           <>
             <div style={{"maxWidth":"1100px"}}>
               <div style={{"display":"flex","flexWrap":"wrap","justifyContent":"space-between","gap":"8px 16px","fontSize":"14px","color":"#8f8b80"}}>
                 <span>
-                  {"Builder · "}
-                  {dcText(V.acctL)}
+                  {"Builder"}
                 </span>
-                <button onClick={V.signOut} style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"14px","padding":"0","minHeight":"32px"}} className="scp-hover-1">
-                  {"Sign out"}
-                </button>
+                <span>
+                  {"Saved in this browser"}
+                </span>
               </div>
               <h1 style={{"margin":"14px 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(40px,6vw,92px)","letterSpacing":"-.04em","lineHeight":".92"}}>
-                {"What are you working on?"}
+                {"Your workshops"}
               </h1>
-              <form onSubmit={V.onChat} style={{"marginTop":"24px","display":"flex","flexWrap":"wrap","gap":"10px"}}>
-                <input aria-label="Describe what you are working on" value={V.chatText ?? ""} onChange={V.onChatText} placeholder="Our leadership team cannot agree on product priorities." style={{"flex":"1 1 320px","minWidth":"0","background":"#111110","border":"1px solid #34332e","outline":"none","color":"#ece9e0","minHeight":"56px","padding":"0 16px","fontSize":"18px","fontFamily":"'Satoshi',sans-serif"}} className="scp-focus-9" />
-                <button type="submit" style={{"whiteSpace":"nowrap","background":"#ff4b23","color":"#0b0b0a","border":"0","minHeight":"56px","padding":"0 22px","cursor":"pointer","fontSize":"16px","fontWeight":"500"}}>
-                  {"Continue"}
-                </button>
-              </form>
               <div style={{"display":"flex","flexWrap":"wrap","gap":"10px","marginTop":"14px"}}>
                 <button onClick={V.newBlank} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #4a4843","color":"#ece9e0","minHeight":"44px","padding":"0 16px","cursor":"pointer","fontSize":"15px"}}>
                   {"Start blank"}
-                </button>
-                <button onClick={V.openAI} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #4a4843","color":"#ece9e0","minHeight":"44px","padding":"0 16px","cursor":"pointer","fontSize":"15px"}}>
-                  {"Build with AI"}
                 </button>
                 <button onClick={V.homeTpl} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #4a4843","color":"#ece9e0","minHeight":"44px","padding":"0 16px","cursor":"pointer","fontSize":"15px"}}>
                   {"Use a template"}
@@ -856,15 +557,15 @@ Component.prototype.template = function (V) {
                 {"RECENT"}
               </div>
               <div style={{"marginTop":"8px","borderTop":"1px solid #2a2925"}}>
-                {dcList(V.recent).map((r_7, $i7) => (
-                  <React.Fragment key={$i7}>
-                    <button onClick={r_7?.open} style={{"display":"grid","gridTemplateColumns":"minmax(0,1fr) auto","gap":"4px 20px","alignItems":"center","width":"100%","textAlign":"left","background":"none","border":"0","borderBottom":"1px solid #2a2925","color":"#ece9e0","minHeight":"64px","padding":"12px 0","cursor":"pointer"}} className="scp-hover-0">
+                {dcList(V.recent).map((r_0, $i0) => (
+                  <React.Fragment key={$i0}>
+                    <button onClick={r_0?.open} style={{"display":"grid","gridTemplateColumns":"minmax(0,1fr) auto","gap":"4px 20px","alignItems":"center","width":"100%","textAlign":"left","background":"none","border":"0","borderBottom":"1px solid #2a2925","color":"#ece9e0","minHeight":"64px","padding":"12px 0","cursor":"pointer"}} className="scp-hover-0">
                       <span>
                         <span style={{"display":"block","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"22px","lineHeight":"1.1"}}>
-                          {dcText(r_7?.name)}
+                          {dcText(r_0?.name)}
                         </span>
                         <span style={{"display":"block","marginTop":"3px","fontSize":"14px","color":"#8f8b80"}}>
-                          {dcText(r_7?.meta)}
+                          {dcText(r_0?.meta)}
                         </span>
                       </span>
                       <span style={{"fontSize":"14px","color":"#8f8b80"}}>
@@ -876,99 +577,10 @@ Component.prototype.template = function (V) {
                 {V.noRecent ? (
                   <>
                     <p style={{"margin":"12px 0 0","fontSize":"15px","color":"#8f8b80"}}>
-                      {"No workshops yet. Describe a problem above, or start blank."}
+                      {"No workshops yet. Start blank, or open a template."}
                     </p>
                   </>
                 ) : null}
-              </div>
-            </div>
-          </>
-        ) : null}
-        {V.isMorph ? (
-          <>
-            <div style={{"maxWidth":"900px"}}>
-              <div style={{"fontSize":"14px","color":"#8f8b80"}}>
-                {"Opening in Builder"}
-              </div>
-              <h1 style={{"margin":"10px 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(34px,4.6vw,64px)","letterSpacing":"-.035em","lineHeight":".95"}}>
-                {dcText(V.name)}
-              </h1>
-              <div style={dcCss(`display:flex;flex-direction:column;gap:${dcStr(V.morphGap)};margin-top:24px;transition:gap .6s ease`)}>
-                {dcList(V.morphRows).map((r_8, $i8) => (
-                  <React.Fragment key={$i8}>
-                    <div style={dcCss(`display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:12px;align-items:center;background:#1a1917;border:1px solid #34332e;padding:${dcStr(r_8?.pad)};transform:rotate(${dcStr(r_8?.rot)});transition:transform .7s cubic-bezier(.2,.7,.2,1) ${dcStr(r_8?.delay)},padding .7s cubic-bezier(.2,.7,.2,1) ${dcStr(r_8?.delay)}`)}>
-                      <span style={dcCss(`font-size:13px;color:#8f8b80;opacity:${dcStr(r_8?.op)};transition:opacity .5s ${dcStr(r_8?.delay)}`)}>
-                        {dcText(r_8?.time)}
-                      </span>
-                      <span style={{"minWidth":"0"}}>
-                        <span style={dcCss(`display:block;font-size:${dcStr(r_8?.ls)};color:${dcStr(r_8?.lc)};font-family:${dcStr(r_8?.lf)};font-weight:500;transition:font-size .6s ${dcStr(r_8?.delay)},color .6s ${dcStr(r_8?.delay)}`)}>
-                          {dcText(r_8?.label)}
-                        </span>
-                        <span style={dcCss(`display:block;font-family:'Clash Display',sans-serif;font-weight:500;font-size:19px;opacity:${dcStr(r_8?.op)};max-height:${dcStr(r_8?.mh)};overflow:hidden;transition:opacity .5s ${dcStr(r_8?.delay)},max-height .6s ${dcStr(r_8?.delay)}`)}>
-                          {dcText(r_8?.title)}
-                        </span>
-                      </span>
-                      <span style={dcCss(`font-size:14px;opacity:${dcStr(r_8?.op)};transition:opacity .5s ${dcStr(r_8?.delay)}`)}>
-                        {dcText(r_8?.mins)}
-                        {" min"}
-                      </span>
-                    </div>
-                  </React.Fragment>
-                ))}
-              </div>
-            </div>
-          </>
-        ) : null}
-        {V.hasGate ? (
-          <>
-            <div onClick={V.closeGate} style={{"position":"fixed","inset":"0","zIndex":"140","background":"rgba(5,5,4,.86)","display":"flex","alignItems":"center","justifyContent":"center","padding":"16px"}}>
-              <div role="dialog" aria-modal="true" aria-label={V.gateTitle} onClick={V.stopProp} style={{"width":"100%","maxWidth":"470px","background":"#0b0b0a","border":"1px solid #4a4843","padding":"clamp(22px,4vw,32px)"}}>
-                <div style={{"fontSize":"13px","color":"#ff4b23"}}>
-                  {dcText(V.gateKicker)}
-                </div>
-                <h2 style={{"margin":"8px 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(26px,3vw,34px)","letterSpacing":"-.02em","lineHeight":"1.05"}}>
-                  {dcText(V.gateTitle)}
-                </h2>
-                <p style={{"margin":"10px 0 0","fontSize":"15px","lineHeight":"1.5","color":"#c9c5ba"}}>
-                  {dcText(V.gateSub)}
-                </p>
-                {V.gateStart ? (
-                  <>
-                    <div style={{"display":"flex","flexDirection":"column","gap":"10px","marginTop":"20px"}}>
-                      <button onClick={V.authGoogle} style={{"whiteSpace":"nowrap","background":"#ece9e0","color":"#0b0b0a","border":"0","minHeight":"50px","cursor":"pointer","fontSize":"16px","fontWeight":"500"}}>
-                        {"Continue with Google"}
-                      </button>
-                      <button onClick={V.gateToEmail} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #4a4843","color":"#ece9e0","minHeight":"50px","cursor":"pointer","fontSize":"16px"}}>
-                        {"Continue with email"}
-                      </button>
-                      <button onClick={V.gateToSignin} style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"14px","padding":"0","minHeight":"32px","alignSelf":"flex-start","marginTop":"4px"}} className="scp-hover-1">
-                        {"Already have a workspace? Sign in"}
-                      </button>
-                    </div>
-                  </>
-                ) : null}
-                {V.gateEmailMode ? (
-                  <>
-                    <form onSubmit={V.authEmail} style={{"marginTop":"20px"}}>
-                      <label style={{"display":"block","fontSize":"13px","color":"#8f8b80"}}>
-                        {"Email"}
-                        <input type="email" required={true} value={V.gateEmail ?? ""} onChange={V.onGateEmail} placeholder="you@company.com" style={{"display":"block","width":"100%","marginTop":"6px","background":"#111110","border":"1px solid #34332e","outline":"none","color":"#ece9e0","minHeight":"48px","padding":"0 12px","fontSize":"16px","fontFamily":"'Satoshi',sans-serif"}} />
-                      </label>
-                      <button type="submit" style={{"whiteSpace":"nowrap","width":"100%","marginTop":"12px","background":"#ff4b23","color":"#0b0b0a","border":"0","minHeight":"50px","cursor":"pointer","fontSize":"16px","fontWeight":"500"}}>
-                        {dcText(V.gateEmailBtn)}
-                      </button>
-                      <button type="button" onClick={V.gateBack} style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"14px","padding":"0","minHeight":"32px","marginTop":"8px"}} className="scp-hover-1">
-                        {"Back"}
-                      </button>
-                    </form>
-                  </>
-                ) : null}
-                <p style={{"margin":"18px 0 0","fontSize":"12px","lineHeight":"1.45","color":"#8f8b80"}}>
-                  {"Prototype: accounts are simulated and stored in this browser."}
-                </p>
-                <button onClick={V.closeGate} style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"14px","padding":"0","minHeight":"32px","marginTop":"6px"}} className="scp-hover-1">
-                  {"Not now"}
-                </button>
               </div>
             </div>
           </>
@@ -985,7 +597,7 @@ Component.prototype.template = function (V) {
                     {dcText(V.modeL)}
                   </span>
                 </div>
-                <input aria-label="Workshop name" value={V.name ?? ""} onChange={V.onName} style={{"display":"block","width":"100%","marginTop":"4px","background":"none","border":"0","borderBottom":"1px solid transparent","outline":"none","color":"#ece9e0","padding":"2px 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(28px,3.4vw,46px)","letterSpacing":"-.03em","lineHeight":"1.05"}} className="scp-focus-c" />
+                <input aria-label="Workshop name" value={V.name ?? ""} onChange={V.onName} style={{"display":"block","width":"100%","marginTop":"4px","background":"none","border":"0","borderBottom":"1px solid transparent","outline":"none","color":"#ece9e0","padding":"2px 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(28px,3.4vw,46px)","letterSpacing":"-.03em","lineHeight":"1.05"}} className="scp-focus-8" />
                 <div style={{"display":"flex","flexWrap":"wrap","alignItems":"center","gap":"6px 16px","marginTop":"8px","fontSize":"15px"}}>
                   <label style={{"display":"inline-flex","alignItems":"center","gap":"6px","color":"#8f8b80"}}>
                     {"Starts "}
@@ -1001,29 +613,22 @@ Component.prototype.template = function (V) {
               </div>
               <div style={{"display":"flex","flexWrap":"wrap","gap":"8px 10px","alignItems":"center"}}>
                 <div role="group" aria-label="View" style={{"display":"flex","border":"1px solid #34332e"}}>
-                  {dcList(V.views).map((vw_9, $i9) => (
-                    <React.Fragment key={$i9}>
-                      <button onClick={vw_9?.pick} aria-pressed={vw_9?.aria} style={dcCss(`white-space:nowrap;background:${dcStr(vw_9?.bg)};color:${dcStr(vw_9?.fg)};border:0;min-height:38px;padding:0 12px;cursor:pointer;font-size:14px`)}>
-                        {dcText(vw_9?.l)}
+                  {dcList(V.views).map((vw_1, $i1) => (
+                    <React.Fragment key={$i1}>
+                      <button onClick={vw_1?.pick} aria-pressed={vw_1?.aria} style={dcCss(`white-space:nowrap;background:${dcStr(vw_1?.bg)};color:${dcStr(vw_1?.fg)};border:0;min-height:38px;padding:0 12px;cursor:pointer;font-size:14px`)}>
+                        {dcText(vw_1?.l)}
                       </button>
                     </React.Fragment>
                   ))}
                 </div>
-                {V.hasAccount ? (
-                  <>
-                    <button onClick={V.goHome} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","minHeight":"40px","padding":"0 12px","cursor":"pointer","fontSize":"14px"}} className="scp-hover-d">
-                      {"Workshops"}
-                    </button>
-                  </>
-                ) : null}
+                <button onClick={V.goHome} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","minHeight":"40px","padding":"0 12px","cursor":"pointer","fontSize":"14px"}} className="scp-hover-9">
+                  {"Workshops"}
+                </button>
                 <button onClick={V.undo} disabled={V.noUndo} style={dcCss(`white-space:nowrap;background:none;border:1px solid #34332e;color:${dcStr(V.undoFg)};min-height:40px;padding:0 12px;cursor:pointer;font-size:14px`)}>
                   {"Undo"}
                 </button>
-                <button onClick={V.openTpl} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","minHeight":"40px","padding":"0 12px","cursor":"pointer","fontSize":"14px"}} className="scp-hover-d">
+                <button onClick={V.openTpl} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","minHeight":"40px","padding":"0 12px","cursor":"pointer","fontSize":"14px"}} className="scp-hover-9">
                   {"Templates"}
-                </button>
-                <button onClick={V.openAI} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","minHeight":"40px","padding":"0 12px","cursor":"pointer","fontSize":"14px"}} className="scp-hover-d">
-                  {"Build with AI"}
                 </button>
                 <button onClick={V.newBlank} style={{"whiteSpace":"nowrap","background":"#ece9e0","border":"0","color":"#0b0b0a","minHeight":"40px","padding":"0 14px","cursor":"pointer","fontSize":"14px","fontWeight":"500"}}>
                   {"New workshop"}
@@ -1061,9 +666,9 @@ Component.prototype.template = function (V) {
                     </div>
                   </div>
                   <div style={{"display":"flex","height":"4px","gap":"2px","padding":"0 clamp(16px,3vw,36px)","marginTop":"10px"}}>
-                    {dcList(V.runSegs).map((sg_10, $i10) => (
-                      <React.Fragment key={$i10}>
-                        <div title={sg_10?.t} style={dcCss(`flex:${dcStr(sg_10?.f)} 1 0;background:${dcStr(sg_10?.bg)}`)}></div>
+                    {dcList(V.runSegs).map((sg_2, $i2) => (
+                      <React.Fragment key={$i2}>
+                        <div title={sg_2?.t} style={dcCss(`flex:${dcStr(sg_2?.f)} 1 0;background:${dcStr(sg_2?.bg)}`)}></div>
                       </React.Fragment>
                     ))}
                   </div>
@@ -1086,10 +691,10 @@ Component.prototype.template = function (V) {
                             {dcText(V.runTitle)}
                           </h1>
                           <div role="timer" aria-label={V.runTimerAria} style={dcCss(`display:flex;align-items:baseline;margin-top:clamp(28px,3.6vw,48px);font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(84px,13vw,208px);line-height:1;letter-spacing:0;color:${dcStr(V.runTimerC)}`)}>
-                            {dcList(V.runDigits).map((dg_11, $i11) => (
-                              <React.Fragment key={$i11}>
-                                <span style={dcCss(`display:inline-block;width:${dcStr(dg_11?.w)};text-align:center`)}>
-                                  {dcText(dg_11?.c)}
+                            {dcList(V.runDigits).map((dg_3, $i3) => (
+                              <React.Fragment key={$i3}>
+                                <span style={dcCss(`display:inline-block;width:${dcStr(dg_3?.w)};text-align:center`)}>
+                                  {dcText(dg_3?.c)}
                                 </span>
                               </React.Fragment>
                             ))}
@@ -1132,10 +737,10 @@ Component.prototype.template = function (V) {
                                         {"HOW TO RUN IT"}
                                       </div>
                                       <ol style={{"margin":"10px 0 0","paddingLeft":"20px","display":"flex","flexDirection":"column","gap":"6px","fontSize":"16px","lineHeight":"1.45"}}>
-                                        {dcList(V.runSteps).map((st_12, $i12) => (
-                                          <React.Fragment key={$i12}>
+                                        {dcList(V.runSteps).map((st_4, $i4) => (
+                                          <React.Fragment key={$i4}>
                                             <li>
-                                              {dcText(st_12)}
+                                              {dcText(st_4)}
                                             </li>
                                           </React.Fragment>
                                         ))}
@@ -1196,16 +801,16 @@ Component.prototype.template = function (V) {
                               </span>
                             </div>
                             <div role="group" aria-label="Note type" style={{"display":"flex","flexWrap":"wrap","gap":"4px","marginTop":"10px"}}>
-                              {dcList(V.noteTypes).map((nt_13, $i13) => (
-                                <React.Fragment key={$i13}>
-                                  <button onClick={nt_13?.pick} aria-pressed={nt_13?.aria} style={dcCss(`white-space:nowrap;background:${dcStr(nt_13?.bg)};color:${dcStr(nt_13?.fg)};border:1px solid ${dcStr(nt_13?.bd)};min-height:34px;padding:0 10px;cursor:pointer;font-size:13px`)}>
-                                    {dcText(nt_13?.l)}
+                              {dcList(V.noteTypes).map((nt_5, $i5) => (
+                                <React.Fragment key={$i5}>
+                                  <button onClick={nt_5?.pick} aria-pressed={nt_5?.aria} style={dcCss(`white-space:nowrap;background:${dcStr(nt_5?.bg)};color:${dcStr(nt_5?.fg)};border:1px solid ${dcStr(nt_5?.bd)};min-height:34px;padding:0 10px;cursor:pointer;font-size:13px`)}>
+                                    {dcText(nt_5?.l)}
                                   </button>
                                 </React.Fragment>
                               ))}
                             </div>
                             <form onSubmit={V.runAddNote} style={{"display":"flex","gap":"6px","marginTop":"8px"}}>
-                              <input aria-label={V.noteAria} value={V.runDraft ?? ""} onChange={V.onRunDraft} placeholder={V.notePh} style={{"flex":"1 1 auto","minWidth":"0","background":"#111110","border":"1px solid #34332e","color":"#ece9e0","minHeight":"44px","padding":"0 12px","font":"inherit","fontSize":"15px"}} className="scp-focus-9" />
+                              <input aria-label={V.noteAria} value={V.runDraft ?? ""} onChange={V.onRunDraft} placeholder={V.notePh} style={{"flex":"1 1 auto","minWidth":"0","background":"#111110","border":"1px solid #34332e","color":"#ece9e0","minHeight":"44px","padding":"0 12px","font":"inherit","fontSize":"15px"}} className="scp-focus-a" />
                               <button type="submit" style={{"whiteSpace":"nowrap","background":"#ece9e0","border":"0","color":"#0b0b0a","minHeight":"44px","padding":"0 16px","cursor":"pointer","fontSize":"14px","fontWeight":"500"}}>
                                 {"Add"}
                               </button>
@@ -1214,23 +819,23 @@ Component.prototype.template = function (V) {
                               {dcText(V.noteHint)}
                             </div>
                             <div style={{"marginTop":"10px","display":"flex","flexDirection":"column"}}>
-                              {dcList(V.curNotes).map((cn_14, $i14) => (
-                                <React.Fragment key={$i14}>
+                              {dcList(V.curNotes).map((cn_6, $i6) => (
+                                <React.Fragment key={$i6}>
                                   <div style={{"display":"grid","gridTemplateColumns":"86px minmax(0,1fr) auto","gap":"10px","alignItems":"baseline","padding":"9px 0","borderTop":"1px solid #1d1c1a"}}>
-                                    <span style={dcCss(`font-size:12px;letter-spacing:.04em;color:${dcStr(cn_14?.lc)}`)}>
-                                      {dcText(cn_14?.label)}
+                                    <span style={dcCss(`font-size:12px;letter-spacing:.04em;color:${dcStr(cn_6?.lc)}`)}>
+                                      {dcText(cn_6?.label)}
                                     </span>
                                     <span style={{"minWidth":"0","fontSize":"15px","lineHeight":"1.4"}}>
-                                      {dcText(cn_14?.text)}
-                                      {cn_14?.hasMeta ? (
+                                      {dcText(cn_6?.text)}
+                                      {cn_6?.hasMeta ? (
                                         <>
                                           <span style={{"display":"block","marginTop":"2px","fontSize":"12px","color":"#8f8b80"}}>
-                                            {dcText(cn_14?.meta)}
+                                            {dcText(cn_6?.meta)}
                                           </span>
                                         </>
                                       ) : null}
                                     </span>
-                                    <button onClick={cn_14?.remove} aria-label="Remove note" style={{"background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"16px","minWidth":"28px","minHeight":"28px","padding":"0"}} className="scp-hover-1">
+                                    <button onClick={cn_6?.remove} aria-label="Remove note" style={{"background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"16px","minWidth":"28px","minHeight":"28px","padding":"0"}} className="scp-hover-1">
                                       {"×"}
                                     </button>
                                   </div>
@@ -1248,31 +853,31 @@ Component.prototype.template = function (V) {
                               </span>
                             </div>
                             <div style={{"marginTop":"8px","borderTop":"1px solid #2a2925"}}>
-                              {dcList(V.runRows).map((rr_15, $i15) => (
-                                <React.Fragment key={$i15}>
-                                  {rr_15?.hasHead ? (
+                              {dcList(V.runRows).map((rr_7, $i7) => (
+                                <React.Fragment key={$i7}>
+                                  {rr_7?.hasHead ? (
                                     <>
                                       <div style={{"padding":"12px 0 4px","fontSize":"12px","letterSpacing":".06em","color":"#ff4b23"}}>
-                                        {dcText(rr_15?.head)}
+                                        {dcText(rr_7?.head)}
                                       </div>
                                     </>
                                   ) : null}
-                                  <button onClick={rr_15?.jump} aria-current={rr_15?.cur} style={dcCss(`display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:10px;align-items:baseline;width:100%;text-align:left;background:${dcStr(rr_15?.bg)};border:0;border-bottom:1px solid #1d1c1a;color:${dcStr(rr_15?.fg)};padding:10px 8px;cursor:pointer;font-family:'Satoshi',sans-serif;font-size:15px`)}>
-                                    <span style={dcCss(`font-variant-numeric:tabular-nums;color:${dcStr(rr_15?.tc)}`)}>
-                                      {dcText(rr_15?.time)}
+                                  <button onClick={rr_7?.jump} aria-current={rr_7?.cur} style={dcCss(`display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:10px;align-items:baseline;width:100%;text-align:left;background:${dcStr(rr_7?.bg)};border:0;border-bottom:1px solid #1d1c1a;color:${dcStr(rr_7?.fg)};padding:10px 8px;cursor:pointer;font-family:'Satoshi',sans-serif;font-size:15px`)}>
+                                    <span style={dcCss(`font-variant-numeric:tabular-nums;color:${dcStr(rr_7?.tc)}`)}>
+                                      {dcText(rr_7?.time)}
                                     </span>
                                     <span style={{"minWidth":"0"}}>
-                                      {dcText(rr_15?.title)}
-                                      {rr_15?.hasN ? (
+                                      {dcText(rr_7?.title)}
+                                      {rr_7?.hasN ? (
                                         <>
                                           <span style={{"marginLeft":"8px","fontSize":"12px","color":"#8f8b80"}}>
-                                            {dcText(rr_15?.n)}
+                                            {dcText(rr_7?.n)}
                                           </span>
                                         </>
                                       ) : null}
                                     </span>
-                                    <span style={dcCss(`white-space:nowrap;font-size:13px;color:${dcStr(rr_15?.mc)};font-variant-numeric:tabular-nums`)}>
-                                      {dcText(rr_15?.mins)}
+                                    <span style={dcCss(`white-space:nowrap;font-size:13px;color:${dcStr(rr_7?.mc)};font-variant-numeric:tabular-nums`)}>
+                                      {dcText(rr_7?.mins)}
                                     </span>
                                   </button>
                                 </React.Fragment>
@@ -1299,42 +904,36 @@ Component.prototype.template = function (V) {
                           <button onClick={V.pdfAgenda} style={{"whiteSpace":"nowrap","background":"#ff4b23","border":"0","color":"#0b0b0a","minHeight":"48px","padding":"0 18px","cursor":"pointer","fontSize":"15px","fontWeight":"500"}}>
                             {"Session notes PDF"}
                           </button>
-                          <button onClick={V.openClaude} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","cursor":"pointer","minHeight":"48px","padding":"0 16px","fontSize":"15px"}}>
-                            {"Write up with Claude ↗"}
-                          </button>
-                          <button onClick={V.openGpt} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","cursor":"pointer","minHeight":"48px","padding":"0 16px","fontSize":"15px"}}>
-                            {"Write up with ChatGPT ↗"}
-                          </button>
-                          <button onClick={V.copyCtx} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","cursor":"pointer","minHeight":"48px","padding":"0 16px","fontSize":"15px"}}>
-                            {dcText(V.ctxL)}
+                          <button onClick={V.copyAgenda} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","cursor":"pointer","minHeight":"48px","padding":"0 16px","fontSize":"15px"}}>
+                            {dcText(V.copyL)}
                           </button>
                         </div>
                         {V.hasSumGroups ? (
                           <>
                             <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(min(100%,300px),1fr))","gap":"28px 40px","marginTop":"36px"}}>
-                              {dcList(V.sumGroups).map((sgp_16, $i16) => (
-                                <React.Fragment key={$i16}>
+                              {dcList(V.sumGroups).map((sgp_8, $i8) => (
+                                <React.Fragment key={$i8}>
                                   <div>
-                                    <div style={dcCss(`display:flex;justify-content:space-between;gap:10px;font-size:12px;letter-spacing:.06em;color:${dcStr(sgp_16?.lc)}`)}>
+                                    <div style={dcCss(`display:flex;justify-content:space-between;gap:10px;font-size:12px;letter-spacing:.06em;color:${dcStr(sgp_8?.lc)}`)}>
                                       <span>
-                                        {dcText(sgp_16?.label)}
+                                        {dcText(sgp_8?.label)}
                                       </span>
                                       <span style={{"color":"#8f8b80"}}>
-                                        {dcText(sgp_16?.n)}
+                                        {dcText(sgp_8?.n)}
                                       </span>
                                     </div>
-                                    {dcList(sgp_16?.entries).map((en_17, $i17) => (
-                                      <React.Fragment key={$i17}>
+                                    {dcList(sgp_8?.entries).map((en_9, $i9) => (
+                                      <React.Fragment key={$i9}>
                                         <div style={{"padding":"10px 0","borderTop":"1px solid #1d1c1a"}}>
                                           <div style={{"fontSize":"15px","lineHeight":"1.4"}}>
-                                            {dcText(en_17?.text)}
+                                            {dcText(en_9?.text)}
                                           </div>
                                           <div style={{"marginTop":"2px","fontSize":"12px","color":"#8f8b80"}}>
-                                            {dcText(en_17?.meta)}
+                                            {dcText(en_9?.meta)}
                                           </div>
-                                          {en_17?.isOff ? (
+                                          {en_9?.isOff ? (
                                             <>
-                                              <input aria-label="Type up this offline capture" value={en_17?.typed ?? ""} onChange={en_17?.onTyped} placeholder="Type up the key points when you have them" style={{"display":"block","width":"100%","marginTop":"8px","background":"#111110","border":"1px solid #34332e","color":"#ece9e0","minHeight":"40px","padding":"0 10px","font":"inherit","fontSize":"14px"}} />
+                                              <input aria-label="Type up this offline capture" value={en_9?.typed ?? ""} onChange={en_9?.onTyped} placeholder="Type up the key points when you have them" style={{"display":"block","width":"100%","marginTop":"8px","background":"#111110","border":"1px solid #34332e","color":"#ece9e0","minHeight":"40px","padding":"0 10px","font":"inherit","fontSize":"14px"}} />
                                             </>
                                           ) : null}
                                         </div>
@@ -1357,20 +956,20 @@ Component.prototype.template = function (V) {
                           {"TIMING"}
                         </div>
                         <div style={{"marginTop":"8px","borderTop":"1px solid #2a2925"}}>
-                          {dcList(V.runSum).map((sr_18, $i18) => (
-                            <React.Fragment key={$i18}>
+                          {dcList(V.runSum).map((sr_10, $i10) => (
+                            <React.Fragment key={$i10}>
                               <div style={{"display":"grid","gridTemplateColumns":"minmax(0,1fr) 64px 64px 52px","gap":"10px","padding":"8px 0","borderBottom":"1px solid #1d1c1a","fontSize":"14px","fontVariantNumeric":"tabular-nums"}}>
                                 <span style={{"minWidth":"0"}}>
-                                  {dcText(sr_18?.title)}
+                                  {dcText(sr_10?.title)}
                                 </span>
                                 <span style={{"textAlign":"right","color":"#8f8b80"}}>
-                                  {dcText(sr_18?.plan)}
+                                  {dcText(sr_10?.plan)}
                                 </span>
                                 <span style={{"textAlign":"right"}}>
-                                  {dcText(sr_18?.act)}
+                                  {dcText(sr_10?.act)}
                                 </span>
-                                <span style={dcCss(`text-align:right;color:${dcStr(sr_18?.dc)}`)}>
-                                  {dcText(sr_18?.diff)}
+                                <span style={dcCss(`text-align:right;color:${dcStr(sr_10?.dc)}`)}>
+                                  {dcText(sr_10?.diff)}
                                 </span>
                               </div>
                             </React.Fragment>
@@ -1448,7 +1047,7 @@ Component.prototype.template = function (V) {
                     </>
                   ) : null}
                 </div>
-                <input aria-label="Search the Library" value={V.libQ ?? ""} onChange={V.onLibQ} placeholder="icebreaker for 12 people" style={{"display":"block","width":"100%","marginTop":"10px","background":"#111110","border":"1px solid #34332e","outline":"none","color":"#ece9e0","minHeight":"44px","padding":"0 12px","fontFamily":"'Satoshi',sans-serif","fontSize":"15px"}} className="scp-focus-9" />
+                <input aria-label="Search the Library" value={V.libQ ?? ""} onChange={V.onLibQ} placeholder="icebreaker for 12 people" style={{"display":"block","width":"100%","marginTop":"10px","background":"#111110","border":"1px solid #34332e","outline":"none","color":"#ece9e0","minHeight":"44px","padding":"0 12px","fontFamily":"'Satoshi',sans-serif","fontSize":"15px"}} className="scp-focus-a" />
                 {V.hasParsed ? (
                   <>
                     <div style={{"marginTop":"6px","fontSize":"13px","color":"#8f8b80"}}>
@@ -1476,26 +1075,26 @@ Component.prototype.template = function (V) {
                         {"Type"}
                       </span>
                       <select value={V.libType ?? ""} onChange={V.onLibType} style={{"width":"100%","marginTop":"4px","background":"#111110","border":"1px solid #2a2925","color":"#ece9e0","minHeight":"38px","padding":"0 8px","fontFamily":"'Satoshi',sans-serif","fontSize":"14px"}}>
-                        {dcList(V.typeOpts).map((o_19, $i19) => (
-                          <React.Fragment key={$i19}>
-                            <option value={o_19?.v ?? ""}>
-                              {dcText(o_19?.l)}
+                        {dcList(V.typeOpts).map((o_11, $i11) => (
+                          <React.Fragment key={$i11}>
+                            <option value={o_11?.v ?? ""}>
+                              {dcText(o_11?.l)}
                             </option>
                           </React.Fragment>
                         ))}
                       </select>
                     </label>
-                    {dcList(V.filterRows).map((fr_20, $i20) => (
-                      <React.Fragment key={$i20}>
-                        <div role="group" aria-label={fr_20?.k} style={{"marginTop":"10px"}}>
+                    {dcList(V.filterRows).map((fr_12, $i12) => (
+                      <React.Fragment key={$i12}>
+                        <div role="group" aria-label={fr_12?.k} style={{"marginTop":"10px"}}>
                           <div style={{"fontSize":"12px","color":"#8f8b80"}}>
-                            {dcText(fr_20?.k)}
+                            {dcText(fr_12?.k)}
                           </div>
                           <div style={{"display":"flex","flexWrap":"wrap","gap":"5px","marginTop":"5px"}}>
-                            {dcList(fr_20?.opts).map((o_21, $i21) => (
-                              <React.Fragment key={$i21}>
-                                <button onClick={o_21?.pick} aria-pressed={o_21?.aria} style={dcCss(`white-space:nowrap;background:${dcStr(o_21?.bg)};color:${dcStr(o_21?.fg)};border:1px solid ${dcStr(o_21?.bd)};min-height:30px;padding:0 8px;cursor:pointer;font-size:13px`)}>
-                                  {dcText(o_21?.l)}
+                            {dcList(fr_12?.opts).map((o_13, $i13) => (
+                              <React.Fragment key={$i13}>
+                                <button onClick={o_13?.pick} aria-pressed={o_13?.aria} style={dcCss(`white-space:nowrap;background:${dcStr(o_13?.bg)};color:${dcStr(o_13?.fg)};border:1px solid ${dcStr(o_13?.bd)};min-height:30px;padding:0 8px;cursor:pointer;font-size:13px`)}>
+                                  {dcText(o_13?.l)}
                                 </button>
                               </React.Fragment>
                             ))}
@@ -1509,11 +1108,11 @@ Component.prototype.template = function (V) {
                   {"STRUCTURE"}
                 </div>
                 <div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginTop":"6px"}}>
-                  {dcList(V.structs).map((st_22, $i22) => (
-                    <React.Fragment key={$i22}>
-                      <button onPointerDown={st_22?.down} onClick={st_22?.add} aria-label={st_22?.aria} style={dcCss(`white-space:nowrap;touch-action:${dcStr(V.touchA)};background:#1a1917;border:1px dashed #5a5850;color:#ece9e0;min-height:36px;padding:0 10px;cursor:grab;font-size:13px`)} className="scp-hover-e">
+                  {dcList(V.structs).map((st_14, $i14) => (
+                    <React.Fragment key={$i14}>
+                      <button onPointerDown={st_14?.down} onClick={st_14?.add} aria-label={st_14?.aria} style={dcCss(`white-space:nowrap;touch-action:${dcStr(V.touchA)};background:#1a1917;border:1px dashed #5a5850;color:#ece9e0;min-height:36px;padding:0 10px;cursor:grab;font-size:13px`)} className="scp-hover-b">
                         {"+ "}
-                        {dcText(st_22?.l)}
+                        {dcText(st_14?.l)}
                       </button>
                     </React.Fragment>
                   ))}
@@ -1533,25 +1132,25 @@ Component.prototype.template = function (V) {
                       ) : null}
                     </div>
                     <div style={{"display":"flex","flexDirection":"column","gap":"8px","marginTop":"8px"}}>
-                      {dcList(V.sug).map((r_23, $i23) => (
-                        <React.Fragment key={$i23}>
-                          <div onPointerDown={r_23?.down} style={dcCss(`touch-action:${dcStr(V.touchA)};background:#1a1917;border:1px solid #4a4843;padding:10px 12px;cursor:grab;user-select:none`)} className="scp-hover-d">
+                      {dcList(V.sug).map((r_15, $i15) => (
+                        <React.Fragment key={$i15}>
+                          <div onPointerDown={r_15?.down} style={dcCss(`touch-action:${dcStr(V.touchA)};background:#1a1917;border:1px solid #4a4843;padding:10px 12px;cursor:grab;user-select:none`)} className="scp-hover-9">
                             <div style={{"display":"flex","justifyContent":"space-between","gap":"8px","fontSize":"12px","color":"#8f8b80"}}>
                               <span>
-                                {dcText(r_23?.tag)}
+                                {dcText(r_15?.tag)}
                               </span>
                               <span>
-                                {dcText(r_23?.time)}
+                                {dcText(r_15?.time)}
                               </span>
                             </div>
                             <div style={{"marginTop":"3px","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"17px","lineHeight":"1.1"}}>
-                              {dcText(r_23?.title)}
+                              {dcText(r_15?.title)}
                             </div>
                             <div style={{"marginTop":"4px","fontSize":"13px","lineHeight":"1.4","color":"#c9c5ba"}}>
-                              {dcText(r_23?.why)}
+                              {dcText(r_15?.why)}
                             </div>
-                            <button onClick={r_23?.add} style={{"whiteSpace":"nowrap","marginTop":"6px","background":"none","border":"0","color":"#ece9e0","cursor":"pointer","fontSize":"13px","padding":"0","minHeight":"28px"}} className="scp-hover-0">
-                              {dcText(r_23?.addL)}
+                            <button onClick={r_15?.add} style={{"whiteSpace":"nowrap","marginTop":"6px","background":"none","border":"0","color":"#ece9e0","cursor":"pointer","fontSize":"13px","padding":"0","minHeight":"28px"}} className="scp-hover-0">
+                              {dcText(r_15?.addL)}
                             </button>
                           </div>
                         </React.Fragment>
@@ -1568,53 +1167,53 @@ Component.prototype.template = function (V) {
                   </span>
                 </div>
                 <div style={{"display":"flex","flexDirection":"column","gap":"8px","marginTop":"8px"}}>
-                  {dcList(V.res).map((r_24, $i24) => (
-                    <React.Fragment key={$i24}>
-                      <div onPointerDown={r_24?.down} style={dcCss(`touch-action:${dcStr(V.touchA)};background:#1a1917;border:1px solid #34332e;padding:10px 12px;cursor:grab;user-select:none;transform:rotate(${dcStr(r_24?.rot)});transition:border-color .15s`)} className="scp-hover-d">
+                  {dcList(V.res).map((r_16, $i16) => (
+                    <React.Fragment key={$i16}>
+                      <div onPointerDown={r_16?.down} style={dcCss(`touch-action:${dcStr(V.touchA)};background:#1a1917;border:1px solid #34332e;padding:10px 12px;cursor:grab;user-select:none;transform:rotate(${dcStr(r_16?.rot)});transition:border-color .15s`)} className="scp-hover-9">
                         <div style={{"display":"flex","justifyContent":"space-between","gap":"8px","fontSize":"12px","color":"#8f8b80"}}>
                           <span>
-                            {dcText(r_24?.tag)}
+                            {dcText(r_16?.tag)}
                           </span>
                           <span>
-                            {dcText(r_24?.time)}
+                            {dcText(r_16?.time)}
                           </span>
                         </div>
-                        <button onClick={r_24?.preview} aria-expanded={r_24?.aria} style={{"display":"block","width":"100%","textAlign":"left","marginTop":"3px","background":"none","border":"0","padding":"0","color":"#ece9e0","cursor":"pointer","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"17px","lineHeight":"1.1"}} className="scp-hover-0">
-                          {dcText(r_24?.title)}
+                        <button onClick={r_16?.preview} aria-expanded={r_16?.aria} style={{"display":"block","width":"100%","textAlign":"left","marginTop":"3px","background":"none","border":"0","padding":"0","color":"#ece9e0","cursor":"pointer","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"17px","lineHeight":"1.1"}} className="scp-hover-0">
+                          {dcText(r_16?.title)}
                         </button>
-                        <div style={dcCss(`margin-top:4px;font-size:13px;line-height:1.4;color:#c9c5ba;display:-webkit-box;-webkit-line-clamp:${dcStr(r_24?.clamp)};-webkit-box-orient:vertical;overflow:hidden`)}>
-                          {dcText(r_24?.short)}
+                        <div style={dcCss(`margin-top:4px;font-size:13px;line-height:1.4;color:#c9c5ba;display:-webkit-box;-webkit-line-clamp:${dcStr(r_16?.clamp)};-webkit-box-orient:vertical;overflow:hidden`)}>
+                          {dcText(r_16?.short)}
                         </div>
-                        {r_24?.hasOut ? (
+                        {r_16?.hasOut ? (
                           <>
                             <div style={{"marginTop":"5px","fontSize":"12px","color":"#8f8b80"}}>
                               {"OUTPUT "}
                               <span style={{"color":"#c9c5ba"}}>
-                                {dcText(r_24?.out)}
+                                {dcText(r_16?.out)}
                               </span>
                             </div>
                           </>
                         ) : null}
-                        {r_24?.open ? (
+                        {r_16?.open ? (
                           <>
                             <div style={{"marginTop":"8px","paddingTop":"8px","borderTop":"1px solid #2a2925","fontSize":"13px","lineHeight":"1.45","color":"#c9c5ba"}}>
-                              {r_24?.hasUse ? (
+                              {r_16?.hasUse ? (
                                 <>
                                   <div>
                                     <span style={{"color":"#8f8b80"}}>
                                       {"Use when "}
                                     </span>
-                                    {dcText(r_24?.use)}
+                                    {dcText(r_16?.use)}
                                   </div>
                                 </>
                               ) : null}
-                              {r_24?.hasSteps ? (
+                              {r_16?.hasSteps ? (
                                 <>
                                   <ol style={{"margin":"6px 0 0","paddingLeft":"18px"}}>
-                                    {dcList(r_24?.steps).map((s_25, $i25) => (
-                                      <React.Fragment key={$i25}>
+                                    {dcList(r_16?.steps).map((s_17, $i17) => (
+                                      <React.Fragment key={$i17}>
                                         <li>
-                                          {dcText(s_25)}
+                                          {dcText(s_17)}
                                         </li>
                                       </React.Fragment>
                                     ))}
@@ -1625,16 +1224,16 @@ Component.prototype.template = function (V) {
                                 <span style={{"color":"#8f8b80"}}>
                                   {"Source "}
                                 </span>
-                                {dcText(r_24?.source)}
+                                {dcText(r_16?.source)}
                               </div>
-                              <a href={dcHref(r_24?.href)} style={{"display":"inline-flex","marginTop":"6px","color":"#ff4b23"}}>
+                              <a href={dcHref(r_16?.href)} style={{"display":"inline-flex","marginTop":"6px","color":"#ff4b23"}}>
                                 {"Full Library page"}
                               </a>
                             </div>
                           </>
                         ) : null}
-                        <button onClick={r_24?.add} style={{"whiteSpace":"nowrap","marginTop":"6px","background":"none","border":"0","color":"#ece9e0","cursor":"pointer","fontSize":"13px","padding":"0","minHeight":"28px"}} className="scp-hover-0">
-                          {dcText(r_24?.addL)}
+                        <button onClick={r_16?.add} style={{"whiteSpace":"nowrap","marginTop":"6px","background":"none","border":"0","color":"#ece9e0","cursor":"pointer","fontSize":"13px","padding":"0","minHeight":"28px"}} className="scp-hover-0">
+                          {dcText(r_16?.addL)}
                         </button>
                       </div>
                     </React.Fragment>
@@ -1656,117 +1255,6 @@ Component.prototype.template = function (V) {
                 ) : null}
               </aside>
               <main style={{"minWidth":"0"}}>
-                {V.isAI ? (
-                  <>
-                    <div style={{"background":"#111110","border":"1px solid #2a2925","padding":"clamp(18px,3vw,36px)"}}>
-                      <div style={{"display":"flex","justifyContent":"space-between","gap":"12px","fontSize":"14px","color":"#8f8b80"}}>
-                        <span>
-                          {"Build with AI · "}
-                          {dcText(V.aiStep)}
-                        </span>
-                        <button onClick={V.closeCenter} style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#c9c5ba","cursor":"pointer","fontSize":"14px","padding":"0"}}>
-                          {"Back to the canvas"}
-                        </button>
-                      </div>
-                      {V.aiAsk ? (
-                        <>
-                          <h2 style={{"margin":"14px 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(32px,4vw,60px)","letterSpacing":"-.035em","lineHeight":".95","maxWidth":"14ch"}}>
-                            {"What are you trying to figure out?"}
-                          </h2>
-                          <textarea aria-label="Describe what you are trying to figure out" value={V.aiText ?? ""} onChange={V.onAiText} rows="4" placeholder="We need to choose a positioning direction with 6 people in 3 hours." style={{"display":"block","width":"100%","marginTop":"20px","background":"#0b0b0a","border":"1px solid #34332e","outline":"none","color":"#ece9e0","padding":"16px 18px","fontFamily":"'Satoshi',sans-serif","fontSize":"clamp(17px,1.5vw,20px)","lineHeight":"1.45","resize":"vertical"}} className="scp-focus-9"></textarea>
-                          <div style={{"display":"flex","flexWrap":"wrap","gap":"10px 18px","alignItems":"center","marginTop":"14px"}}>
-                            <button onClick={V.aiGo} disabled={V.busy} style={{"whiteSpace":"nowrap","background":"#ff4b23","color":"#0b0b0a","border":"0","minHeight":"50px","padding":"0 22px","cursor":"pointer","fontSize":"16px","fontWeight":"500"}}>
-                              {dcText(V.aiGoL)}
-                            </button>
-                            <span style={{"fontSize":"14px","color":"#8f8b80"}}>
-                              {"The draft lands on the same canvas. Nothing is locked."}
-                            </span>
-                          </div>
-                          <div style={{"display":"flex","flexDirection":"column","marginTop":"22px","borderTop":"1px solid #2a2925"}}>
-                            {dcList(V.examples).map((e_26, $i26) => (
-                              <React.Fragment key={$i26}>
-                                <button onClick={e_26?.pick} style={{"textAlign":"left","background":"none","border":"0","borderBottom":"1px solid #2a2925","color":"#c9c5ba","minHeight":"46px","padding":"10px 0","cursor":"pointer","fontSize":"15px"}} className="scp-hover-1">
-                                  {"“"}
-                                  {dcText(e_26?.t)}
-                                  {"”"}
-                                </button>
-                              </React.Fragment>
-                            ))}
-                          </div>
-                        </>
-                      ) : null}
-                      {V.aiBrief ? (
-                        <>
-                          <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.briefCols)};gap:24px 36px;align-items:start;margin-top:14px`)}>
-                            <div>
-                              <h2 style={{"margin":"0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(28px,3.4vw,48px)","letterSpacing":"-.03em","lineHeight":"1"}}>
-                                {dcText(V.askTitle)}
-                              </h2>
-                              <p style={{"margin":"10px 0 0","fontSize":"15px","color":"#8f8b80"}}>
-                                {dcText(V.askSub)}
-                              </p>
-                              <div role="group" aria-label={V.askTitle} style={{"display":"flex","flexWrap":"wrap","gap":"8px","marginTop":"16px"}}>
-                                {dcList(V.askOpts).map((o_27, $i27) => (
-                                  <React.Fragment key={$i27}>
-                                    <button onClick={o_27?.pick} aria-pressed={o_27?.aria} style={dcCss(`white-space:nowrap;background:${dcStr(o_27?.bg)};color:${dcStr(o_27?.fg)};border:1px solid ${dcStr(o_27?.bd)};min-height:46px;padding:0 14px;cursor:pointer;font-size:15px`)} className="scp-hover-e">
-                                      {dcText(o_27?.l)}
-                                    </button>
-                                  </React.Fragment>
-                                ))}
-                              </div>
-                              <input aria-label="Additional context" value={V.notes ?? ""} onChange={V.onNotes} placeholder="Anything else? CEO can only join the last hour." style={{"display":"block","width":"100%","marginTop":"18px","background":"none","border":"0","borderBottom":"1px solid #4a4843","outline":"none","color":"#ece9e0","padding":"10px 0","fontSize":"16px"}} />
-                              <div style={{"display":"flex","flexWrap":"wrap","gap":"10px 18px","alignItems":"center","marginTop":"20px"}}>
-                                <button onClick={V.aiBuild} style={{"whiteSpace":"nowrap","background":"#ff4b23","color":"#0b0b0a","border":"0","minHeight":"50px","padding":"0 22px","cursor":"pointer","fontSize":"16px","fontWeight":"500"}}>
-                                  {"Build the first draft"}
-                                </button>
-                                {V.hasSkip ? (
-                                  <>
-                                    <button onClick={V.skipQ} style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#8f8b80","minHeight":"44px","cursor":"pointer","fontSize":"14px","padding":"0","borderBottom":"1px solid #4a4843"}}>
-                                      {"Skip this question"}
-                                    </button>
-                                  </>
-                                ) : null}
-                              </div>
-                              {V.replaces ? (
-                                <>
-                                  <p style={{"margin":"10px 0 0","fontSize":"14px","color":"#8f8b80"}}>
-                                    {"This replaces what is on the canvas. Undo brings it back."}
-                                  </p>
-                                </>
-                              ) : null}
-                            </div>
-                            <div style={{"border":"1px solid #2a2925","padding":"16px 18px","background":"#0b0b0a"}}>
-                              <div style={{"fontSize":"13px","color":"#8f8b80"}}>
-                                {"Brief so far"}
-                              </div>
-                              {dcList(V.briefRows).map((r_28, $i28) => (
-                                <React.Fragment key={$i28}>
-                                  <button onClick={r_28?.edit} style={{"display":"grid","gridTemplateColumns":"100px minmax(0,1fr) auto","gap":"10px","width":"100%","textAlign":"left","background":"none","border":"0","borderBottom":"1px solid #1d1c1a","color":"#ece9e0","padding":"9px 0","cursor":"pointer","fontSize":"14px"}} className="scp-hover-0">
-                                    <span style={{"color":"#8f8b80"}}>
-                                      {dcText(r_28?.k)}
-                                    </span>
-                                    <span style={dcCss(`color:${dcStr(r_28?.c)}`)}>
-                                      {dcText(r_28?.v)}
-                                    </span>
-                                    <span style={{"fontSize":"12px","color":"#8f8b80"}}>
-                                      {dcText(r_28?.tag)}
-                                    </span>
-                                  </button>
-                                </React.Fragment>
-                              ))}
-                              <div style={{"marginTop":"12px","fontSize":"13px","color":"#8f8b80"}}>
-                                {"Builder is leaning towards"}
-                              </div>
-                              <div style={{"marginTop":"3px","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"20px","lineHeight":"1.1"}}>
-                                {dcText(V.lean)}
-                              </div>
-                            </div>
-                          </div>
-                        </>
-                      ) : null}
-                    </div>
-                  </>
-                ) : null}
                 {V.isTpl ? (
                   <>
                     <div style={{"background":"#111110","border":"1px solid #2a2925","padding":"clamp(18px,3vw,32px)"}}>
@@ -1779,17 +1267,17 @@ Component.prototype.template = function (V) {
                         </button>
                       </div>
                       <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fill,minmax(min(100%,240px),1fr))","gap":"14px","marginTop":"16px"}}>
-                        {dcList(V.tpls).map((t_29, $i29) => (
-                          <React.Fragment key={$i29}>
-                            <button onClick={t_29?.pick} style={dcCss(`text-align:left;background:#1a1917;border:1px solid #34332e;color:#ece9e0;padding:14px 16px 16px;cursor:pointer;transform:rotate(${dcStr(t_29?.rot)});transition:transform .2s,border-color .2s`)} className="scp-hover-f">
+                        {dcList(V.tpls).map((t_18, $i18) => (
+                          <React.Fragment key={$i18}>
+                            <button onClick={t_18?.pick} style={dcCss(`text-align:left;background:#1a1917;border:1px solid #34332e;color:#ece9e0;padding:14px 16px 16px;cursor:pointer;transform:rotate(${dcStr(t_18?.rot)});transition:transform .2s,border-color .2s`)} className="scp-hover-c">
                               <span style={{"display":"block","fontSize":"12px","color":"#8f8b80"}}>
-                                {dcText(t_29?.meta)}
+                                {dcText(t_18?.meta)}
                               </span>
                               <span style={{"display":"block","marginTop":"10px","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"20px","lineHeight":"1.05"}}>
-                                {dcText(t_29?.name)}
+                                {dcText(t_18?.name)}
                               </span>
                               <span style={{"display":"block","marginTop":"6px","fontSize":"14px","lineHeight":"1.4","color":"#c9c5ba"}}>
-                                {dcText(t_29?.d)}
+                                {dcText(t_18?.d)}
                               </span>
                             </button>
                           </React.Fragment>
@@ -1807,35 +1295,35 @@ Component.prototype.template = function (V) {
                 ) : null}
                 {V.isCanvas ? (
                   <>
-                    {dcList(V.zones).map((z_30, $i30) => (
-                      <React.Fragment key={$i30}>
+                    {dcList(V.zones).map((z_19, $i19) => (
+                      <React.Fragment key={$i19}>
                         <div style={{"marginBottom":"14px"}}>
                           <div style={{"display":"flex","flexWrap":"wrap","justifyContent":"space-between","gap":"4px 16px","marginBottom":"8px"}}>
-                            <span style={dcCss(`font-size:12px;letter-spacing:.06em;color:${dcStr(z_30?.lc)}`)}>
-                              {dcText(z_30?.label)}
+                            <span style={dcCss(`font-size:12px;letter-spacing:.06em;color:${dcStr(z_19?.lc)}`)}>
+                              {dcText(z_19?.label)}
                             </span>
                             <span style={{"fontSize":"13px","color":"#8f8b80"}}>
-                              {dcText(z_30?.meta)}
+                              {dcText(z_19?.meta)}
                             </span>
                           </div>
-                          <div style={dcCss(`background-color:${dcStr(z_30?.bg)};background-image:${dcStr(z_30?.grid)};background-size:40px 40px;border:1px ${dcStr(z_30?.bs)} #2a2925;padding:${dcStr(z_30?.pad)};overflow-x:${dcStr(z_30?.ox)}`)}>
-                            <div style={dcCss(`display:${dcStr(z_30?.dDisp)};grid-auto-flow:${dcStr(z_30?.dFlow)};grid-auto-columns:${dcStr(z_30?.dCols)};flex-direction:column;gap:${dcStr(z_30?.dGap)}`)}>
-                              {dcList(z_30?.days).map((d_31, $i31) => (
-                                <React.Fragment key={$i31}>
-                                  <div data-dayend={d_31?.end} data-dzone={z_30?.key} style={dcCss(`min-width:0;min-height:${dcStr(d_31?.minH)}`)}>
-                                    {d_31?.showHead ? (
+                          <div style={dcCss(`background-color:${dcStr(z_19?.bg)};background-image:${dcStr(z_19?.grid)};background-size:40px 40px;border:1px ${dcStr(z_19?.bs)} #2a2925;padding:${dcStr(z_19?.pad)};overflow-x:${dcStr(z_19?.ox)}`)}>
+                            <div style={dcCss(`display:${dcStr(z_19?.dDisp)};grid-auto-flow:${dcStr(z_19?.dFlow)};grid-auto-columns:${dcStr(z_19?.dCols)};flex-direction:column;gap:${dcStr(z_19?.dGap)}`)}>
+                              {dcList(z_19?.days).map((d_20, $i20) => (
+                                <React.Fragment key={$i20}>
+                                  <div data-dayend={d_20?.end} data-dzone={z_19?.key} style={dcCss(`min-width:0;min-height:${dcStr(d_20?.minH)}`)}>
+                                    {d_20?.showHead ? (
                                       <>
                                         <div style={{"display":"flex","flexWrap":"wrap","justifyContent":"space-between","alignItems":"baseline","gap":"4px 14px","paddingBottom":"8px","marginBottom":"10px","borderBottom":"1px solid #4a4843"}}>
                                           <span style={{"fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"20px"}}>
-                                            {dcText(d_31?.label)}
+                                            {dcText(d_20?.label)}
                                           </span>
                                           <span style={{"display":"flex","gap":"12px","alignItems":"baseline","fontSize":"13px","color":"#8f8b80"}}>
                                             <span>
-                                              {dcText(d_31?.meta)}
+                                              {dcText(d_20?.meta)}
                                             </span>
-                                            {d_31?.canRemove ? (
+                                            {d_20?.canRemove ? (
                                               <>
-                                                <button onClick={d_31?.remove} aria-label={d_31?.removeL} style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"13px","padding":"0"}} className="scp-hover-0">
+                                                <button onClick={d_20?.remove} aria-label={d_20?.removeL} style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"13px","padding":"0"}} className="scp-hover-0">
                                                   {"Merge into previous day"}
                                                 </button>
                                               </>
@@ -1844,10 +1332,10 @@ Component.prototype.template = function (V) {
                                         </div>
                                       </>
                                     ) : null}
-                                    {d_31?.isEmpty ? (
+                                    {d_20?.isEmpty ? (
                                       <>
-                                        <div style={dcCss(`border:1px dashed ${dcStr(d_31?.emptyBd)};padding:${dcStr(d_31?.emptyPad)};text-align:${dcStr(d_31?.emptyAlign)};transition:border-color .15s`)}>
-                                          {d_31?.hero ? (
+                                        <div style={dcCss(`border:1px dashed ${dcStr(d_20?.emptyBd)};padding:${dcStr(d_20?.emptyPad)};text-align:${dcStr(d_20?.emptyAlign)};transition:border-color .15s`)}>
+                                          {d_20?.hero ? (
                                             <>
                                               <div style={{"fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(30px,3.6vw,52px)","letterSpacing":"-.03em","lineHeight":"1"}}>
                                                 {"Build your workshop."}
@@ -1859,9 +1347,6 @@ Component.prototype.template = function (V) {
                                                 <button onClick={V.startBlank} style={{"whiteSpace":"nowrap","background":"#ece9e0","color":"#0b0b0a","border":"0","minHeight":"46px","padding":"0 18px","cursor":"pointer","fontSize":"15px","fontWeight":"500"}}>
                                                   {"Start blank"}
                                                 </button>
-                                                <button onClick={V.openAI} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #4a4843","color":"#ece9e0","minHeight":"46px","padding":"0 18px","cursor":"pointer","fontSize":"15px"}}>
-                                                  {"Build with AI"}
-                                                </button>
                                                 <button onClick={V.openTpl} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #4a4843","color":"#ece9e0","minHeight":"46px","padding":"0 18px","cursor":"pointer","fontSize":"15px"}}>
                                                   {"Use a template"}
                                                 </button>
@@ -1870,20 +1355,20 @@ Component.prototype.template = function (V) {
                                                 {"Or browse by stage"}
                                               </div>
                                               <div style={{"display":"flex","flexWrap":"wrap","justifyContent":"center","gap":"6px","marginTop":"8px"}}>
-                                                {dcList(V.cats).map((c_32, $i32) => (
-                                                  <React.Fragment key={$i32}>
-                                                    <button onClick={c_32?.pick} style={{"whiteSpace":"nowrap","background":"#1a1917","border":"1px solid #34332e","color":"#ece9e0","minHeight":"36px","padding":"0 12px","cursor":"pointer","fontSize":"14px"}} className="scp-hover-d">
-                                                      {dcText(c_32?.l)}
+                                                {dcList(V.cats).map((c_21, $i21) => (
+                                                  <React.Fragment key={$i21}>
+                                                    <button onClick={c_21?.pick} style={{"whiteSpace":"nowrap","background":"#1a1917","border":"1px solid #34332e","color":"#ece9e0","minHeight":"36px","padding":"0 12px","cursor":"pointer","fontSize":"14px"}} className="scp-hover-9">
+                                                      {dcText(c_21?.l)}
                                                     </button>
                                                   </React.Fragment>
                                                 ))}
                                               </div>
                                             </>
                                           ) : null}
-                                          {d_31?.quiet ? (
+                                          {d_20?.quiet ? (
                                             <>
                                               <span style={{"fontSize":"14px","color":"#8f8b80"}}>
-                                                {dcText(d_31?.emptyMsg)}
+                                                {dcText(d_20?.emptyMsg)}
                                               </span>
                                             </>
                                           ) : null}
@@ -1891,26 +1376,26 @@ Component.prototype.template = function (V) {
                                       </>
                                     ) : null}
                                     <div style={dcCss(`display:flex;flex-direction:${dcStr(V.rDir)};flex-wrap:${dcStr(V.rWrap)};gap:${dcStr(V.rGap)};align-items:${dcStr(V.rAlign)}`)}>
-                                      {dcList(d_31?.rows).map((r_33, $i33) => (
-                                        <React.Fragment key={$i33}>
-                                          <div data-first={r_33?.first} data-last={r_33?.last} data-zone={z_30?.key} style={dcCss(`display:flex;flex-direction:${dcStr(r_33?.wDir)};align-items:stretch;flex:${dcStr(r_33?.wFlex)};width:${dcStr(r_33?.wW)};max-width:100%`)}>
-                                            <div aria-hidden="true" style={dcCss(`flex:0 0 auto;width:${dcStr(r_33?.gapW)};height:${dcStr(r_33?.gapH)};border:${dcStr(r_33?.gapBd)};background:${dcStr(r_33?.gapBg)};transition:${dcStr(V.trans)};box-sizing:border-box`)}></div>
+                                      {dcList(d_20?.rows).map((r_22, $i22) => (
+                                        <React.Fragment key={$i22}>
+                                          <div data-first={r_22?.first} data-last={r_22?.last} data-zone={z_19?.key} style={dcCss(`display:flex;flex-direction:${dcStr(r_22?.wDir)};align-items:stretch;flex:${dcStr(r_22?.wFlex)};width:${dcStr(r_22?.wW)};max-width:100%`)}>
+                                            <div aria-hidden="true" style={dcCss(`flex:0 0 auto;width:${dcStr(r_22?.gapW)};height:${dcStr(r_22?.gapH)};border:${dcStr(r_22?.gapBd)};background:${dcStr(r_22?.gapBg)};transition:${dcStr(V.trans)};box-sizing:border-box`)}></div>
                                             <div style={{"flex":"1 1 auto","minWidth":"0","display":"flex","flexDirection":"column"}}>
-                                              {dcList(r_33?.notes).map((n_34, $i34) => (
-                                                <React.Fragment key={$i34}>
-                                                  <div style={dcCss(`display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px;align-items:center;border:1px dashed ${dcStr(n_34?.bd)};background:#0b0b0a;padding:8px 12px;margin-bottom:6px`)}>
+                                              {dcList(r_22?.notes).map((n_23, $i23) => (
+                                                <React.Fragment key={$i23}>
+                                                  <div style={dcCss(`display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px;align-items:center;border:1px dashed ${dcStr(n_23?.bd)};background:#0b0b0a;padding:8px 12px;margin-bottom:6px`)}>
                                                     <span style={{"fontSize":"14px","lineHeight":"1.4","minWidth":"0","flex":"1 1 240px"}}>
-                                                      <span style={dcCss(`color:${dcStr(n_34?.c)}`)}>
-                                                        {dcText(n_34?.t)}
+                                                      <span style={dcCss(`color:${dcStr(n_23?.c)}`)}>
+                                                        {dcText(n_23?.t)}
                                                       </span>
                                                       <span style={{"color":"#8f8b80"}}>
                                                         {" "}
-                                                        {dcText(n_34?.fix)}
+                                                        {dcText(n_23?.fix)}
                                                       </span>
                                                     </span>
-                                                    {n_34?.hasCmd ? (
+                                                    {n_23?.hasCmd ? (
                                                       <>
-                                                        <button onClick={n_34?.run} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #4a4843","color":"#ece9e0","minHeight":"32px","padding":"0 10px","cursor":"pointer","fontSize":"13px"}}>
+                                                        <button onClick={n_23?.run} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #4a4843","color":"#ece9e0","minHeight":"32px","padding":"0 10px","cursor":"pointer","fontSize":"13px"}}>
                                                           {"Propose fix"}
                                                         </button>
                                                       </>
@@ -1918,132 +1403,132 @@ Component.prototype.template = function (V) {
                                                   </div>
                                                 </React.Fragment>
                                               ))}
-                                              {r_33?.isSection ? (
+                                              {r_22?.isSection ? (
                                                 <>
-                                                  <div onPointerDown={r_33?.sec?.down} style={dcCss(`display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:1px solid ${dcStr(r_33?.sec?.bd)};opacity:${dcStr(r_33?.sec?.op)}`)}>
+                                                  <div onPointerDown={r_22?.sec?.down} style={dcCss(`display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:1px solid ${dcStr(r_22?.sec?.bd)};opacity:${dcStr(r_22?.sec?.op)}`)}>
                                                     <span data-handle="1" aria-hidden="true" style={{"touchAction":"none","color":"#5a5850","cursor":"grab","fontSize":"15px","letterSpacing":"-2px","userSelect":"none","padding":"4px 2px"}}>
                                                       {"⋮⋮"}
                                                     </span>
-                                                    <input aria-label="Section name" value={r_33?.sec?.title ?? ""} onChange={r_33?.sec?.onTitle} style={{"flex":"1 1 auto","minWidth":"0","background":"none","border":"0","outline":"none","color":"#ece9e0","fontSize":"13px","letterSpacing":".1em","textTransform":"uppercase","padding":"4px 0"}} className="scp-focus-g" />
+                                                    <input aria-label="Section name" value={r_22?.sec?.title ?? ""} onChange={r_22?.sec?.onTitle} style={{"flex":"1 1 auto","minWidth":"0","background":"none","border":"0","outline":"none","color":"#ece9e0","fontSize":"13px","letterSpacing":".1em","textTransform":"uppercase","padding":"4px 0"}} className="scp-focus-d" />
                                                     <span style={{"fontSize":"13px","color":"#8f8b80","whiteSpace":"nowrap"}}>
-                                                      {dcText(r_33?.sec?.meta)}
+                                                      {dcText(r_22?.sec?.meta)}
                                                     </span>
-                                                    <button onClick={r_33?.sec?.up} aria-label={r_33?.sec?.upL} style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"14px","minWidth":"28px","minHeight":"28px","padding":"0"}} className="scp-hover-1">
+                                                    <button onClick={r_22?.sec?.up} aria-label={r_22?.sec?.upL} style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"14px","minWidth":"28px","minHeight":"28px","padding":"0"}} className="scp-hover-1">
                                                       {"↑"}
                                                     </button>
-                                                    <button onClick={r_33?.sec?.down2} aria-label={r_33?.sec?.downL} style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"14px","minWidth":"28px","minHeight":"28px","padding":"0"}} className="scp-hover-1">
+                                                    <button onClick={r_22?.sec?.down2} aria-label={r_22?.sec?.downL} style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"14px","minWidth":"28px","minHeight":"28px","padding":"0"}} className="scp-hover-1">
                                                       {"↓"}
                                                     </button>
-                                                    <button onClick={r_33?.sec?.remove} aria-label={r_33?.sec?.removeL} style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"15px","minWidth":"28px","minHeight":"28px","padding":"0"}} className="scp-hover-0">
+                                                    <button onClick={r_22?.sec?.remove} aria-label={r_22?.sec?.removeL} style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"15px","minWidth":"28px","minHeight":"28px","padding":"0"}} className="scp-hover-0">
                                                       {"×"}
                                                     </button>
                                                   </div>
                                                 </>
                                               ) : null}
-                                              {r_33?.isGroup ? (
+                                              {r_22?.isGroup ? (
                                                 <>
-                                                  <div style={dcCss(`display:grid;grid-template-columns:${dcStr(r_33?.gridCols)};gap:8px 10px;align-items:start`)}>
-                                                    {r_33?.showTime ? (
+                                                  <div style={dcCss(`display:grid;grid-template-columns:${dcStr(r_22?.gridCols)};gap:8px 10px;align-items:start`)}>
+                                                    {r_22?.showTime ? (
                                                       <>
                                                         <div style={{"paddingTop":"12px","fontSize":"13px","color":"#8f8b80","fontVariantNumeric":"tabular-nums"}}>
-                                                          {dcText(r_33?.timeL)}
+                                                          {dcText(r_22?.timeL)}
                                                         </div>
                                                       </>
                                                     ) : null}
                                                     <div style={{"minWidth":"0"}}>
-                                                      {r_33?.isPar ? (
+                                                      {r_22?.isPar ? (
                                                         <>
                                                           <div style={{"display":"flex","justifyContent":"space-between","gap":"10px","fontSize":"12px","letterSpacing":".06em","color":"#8f8b80","marginBottom":"6px"}}>
                                                             <span>
                                                               {"PARALLEL · "}
-                                                              {dcText(r_33?.parN)}
+                                                              {dcText(r_22?.parN)}
                                                               {" GROUPS"}
                                                             </span>
                                                             <span>
-                                                              {dcText(r_33?.parMins)}
+                                                              {dcText(r_22?.parMins)}
                                                               {" min, longest lane"}
                                                             </span>
                                                           </div>
                                                         </>
                                                       ) : null}
-                                                      <div style={dcCss(`display:grid;grid-template-columns:${dcStr(r_33?.laneCols)};gap:8px;border-left:${dcStr(r_33?.parBd)};padding-left:${dcStr(r_33?.parPad)}`)}>
-                                                        {dcList(r_33?.lanes).map((c_35, $i35) => (
-                                                          <React.Fragment key={$i35}>
-                                                            <div data-lane={c_35?.id} style={{"position":"relative","minWidth":"0"}}>
-                                                              <div role="button" tabIndex="0" aria-label={c_35?.aria} aria-pressed={c_35?.selAria} onPointerDown={c_35?.down} onClick={c_35?.click} onKeyDown={c_35?.key} style={dcCss(`position:relative;display:flex;flex-direction:column;min-height:${dcStr(c_35?.h)};background:${dcStr(c_35?.bg)};border:1px ${dcStr(c_35?.bs)} ${dcStr(c_35?.bd)};box-shadow:${dcStr(c_35?.shadow)};opacity:${dcStr(c_35?.op)};cursor:grab;user-select:none;outline:none;transition:${dcStr(V.transCard)}`)} className="scp-focus-h">
+                                                      <div style={dcCss(`display:grid;grid-template-columns:${dcStr(r_22?.laneCols)};gap:8px;border-left:${dcStr(r_22?.parBd)};padding-left:${dcStr(r_22?.parPad)}`)}>
+                                                        {dcList(r_22?.lanes).map((c_24, $i24) => (
+                                                          <React.Fragment key={$i24}>
+                                                            <div data-lane={c_24?.id} style={{"position":"relative","minWidth":"0"}}>
+                                                              <div role="button" tabIndex="0" aria-label={c_24?.aria} aria-pressed={c_24?.selAria} onPointerDown={c_24?.down} onClick={c_24?.click} onKeyDown={c_24?.key} style={dcCss(`position:relative;display:flex;flex-direction:column;min-height:${dcStr(c_24?.h)};background:${dcStr(c_24?.bg)};border:1px ${dcStr(c_24?.bs)} ${dcStr(c_24?.bd)};box-shadow:${dcStr(c_24?.shadow)};opacity:${dcStr(c_24?.op)};cursor:grab;user-select:none;outline:none;transition:${dcStr(V.transCard)}`)} className="scp-focus-e">
                                                                 <div style={{"display":"flex","alignItems":"center","gap":"8px","padding":"8px 8px 0 8px"}}>
                                                                   <span data-handle="1" aria-hidden="true" style={{"touchAction":"none","color":"#5a5850","fontSize":"14px","letterSpacing":"-2px","padding":"2px"}}>
                                                                     {"⋮⋮"}
                                                                   </span>
-                                                                  <button onClick={c_35?.selToggle} aria-label={c_35?.selL} aria-pressed={c_35?.selAria} style={dcCss(`white-space:nowrap;flex:0 0 auto;width:16px;height:16px;background:${dcStr(c_35?.selBg)};border:1px solid ${dcStr(c_35?.selBd)};cursor:pointer;padding:0`)}></button>
+                                                                  <button onClick={c_24?.selToggle} aria-label={c_24?.selL} aria-pressed={c_24?.selAria} style={dcCss(`white-space:nowrap;flex:0 0 auto;width:16px;height:16px;background:${dcStr(c_24?.selBg)};border:1px solid ${dcStr(c_24?.selBd)};cursor:pointer;padding:0`)}></button>
                                                                   <span style={{"flex":"1 1 auto","minWidth":"0","display":"flex","flexWrap":"wrap","gap":"2px 8px","fontSize":"12px","color":"#8f8b80"}}>
-                                                                    <span style={dcCss(`color:${dcStr(c_35?.lc)}`)}>
-                                                                      {dcText(c_35?.label)}
+                                                                    <span style={dcCss(`color:${dcStr(c_24?.lc)}`)}>
+                                                                      {dcText(c_24?.label)}
                                                                     </span>
                                                                     <span>
-                                                                      {dcText(c_35?.tag)}
+                                                                      {dcText(c_24?.tag)}
                                                                     </span>
                                                                   </span>
                                                                   <span style={{"fontSize":"13px","color":"#ece9e0","whiteSpace":"nowrap"}}>
-                                                                    {dcText(c_35?.mins)}
+                                                                    {dcText(c_24?.mins)}
                                                                     {" min"}
                                                                   </span>
-                                                                  <button onClick={c_35?.up} aria-label={c_35?.upL} style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"14px","minWidth":"24px","minHeight":"26px","padding":"0"}} className="scp-hover-1">
+                                                                  <button onClick={c_24?.up} aria-label={c_24?.upL} style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"14px","minWidth":"24px","minHeight":"26px","padding":"0"}} className="scp-hover-1">
                                                                     {"↑"}
                                                                   </button>
-                                                                  <button onClick={c_35?.dn} aria-label={c_35?.dnL} style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"14px","minWidth":"24px","minHeight":"26px","padding":"0"}} className="scp-hover-1">
+                                                                  <button onClick={c_24?.dn} aria-label={c_24?.dnL} style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"14px","minWidth":"24px","minHeight":"26px","padding":"0"}} className="scp-hover-1">
                                                                     {"↓"}
                                                                   </button>
                                                                 </div>
-                                                                <div style={dcCss(`padding:4px 12px 0 30px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:${dcStr(c_35?.ts)};line-height:1.08;letter-spacing:-.01em`)}>
-                                                                  {dcText(c_35?.title)}
+                                                                <div style={dcCss(`padding:4px 12px 0 30px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:${dcStr(c_24?.ts)};line-height:1.08;letter-spacing:-.01em`)}>
+                                                                  {dcText(c_24?.title)}
                                                                 </div>
-                                                                {c_35?.showMeta ? (
+                                                                {c_24?.showMeta ? (
                                                                   <>
                                                                     <div style={{"padding":"3px 12px 0 30px","fontSize":"12px","color":"#8f8b80"}}>
-                                                                      {dcText(c_35?.meta)}
+                                                                      {dcText(c_24?.meta)}
                                                                     </div>
                                                                   </>
                                                                 ) : null}
-                                                                {c_35?.showFlow ? (
+                                                                {c_24?.showFlow ? (
                                                                   <>
                                                                     <div style={{"display":"flex","flexWrap":"wrap","gap":"5px","padding":"7px 12px 0 30px","fontSize":"12px"}}>
-                                                                      {dcList(c_35?.uses).map((u_36, $i36) => (
-                                                                        <React.Fragment key={$i36}>
-                                                                          <span style={dcCss(`border:1px solid ${dcStr(u_36?.bd)};color:${dcStr(u_36?.c)};padding:2px 6px`)}>
-                                                                            {dcText(u_36?.t)}
+                                                                      {dcList(c_24?.uses).map((u_25, $i25) => (
+                                                                        <React.Fragment key={$i25}>
+                                                                          <span style={dcCss(`border:1px solid ${dcStr(u_25?.bd)};color:${dcStr(u_25?.c)};padding:2px 6px`)}>
+                                                                            {dcText(u_25?.t)}
                                                                           </span>
                                                                         </React.Fragment>
                                                                       ))}
-                                                                      {dcList(c_35?.makes).map((m_37, $i37) => (
-                                                                        <React.Fragment key={$i37}>
+                                                                      {dcList(c_24?.makes).map((m_26, $i26) => (
+                                                                        <React.Fragment key={$i26}>
                                                                           <span style={{"background":"#26251f","color":"#c9c5ba","padding":"3px 7px"}}>
                                                                             {"→ "}
-                                                                            {dcText(m_37)}
+                                                                            {dcText(m_26)}
                                                                           </span>
                                                                         </React.Fragment>
                                                                       ))}
                                                                     </div>
                                                                   </>
                                                                 ) : null}
-                                                                {c_35?.hasPend ? (
+                                                                {c_24?.hasPend ? (
                                                                   <>
                                                                     <div style={{"padding":"6px 12px 0 30px","fontSize":"13px","color":"#ff4b23"}}>
                                                                       {"Proposed: "}
-                                                                      {dcText(c_35?.pend)}
+                                                                      {dcText(c_24?.pend)}
                                                                     </div>
                                                                   </>
                                                                 ) : null}
                                                                 <div style={{"flex":"1 1 auto","minHeight":"8px"}}></div>
-                                                                {c_35?.canResize ? (
+                                                                {c_24?.canResize ? (
                                                                   <>
-                                                                    <div onPointerDown={c_35?.rs} aria-hidden="true" title="Drag to change duration" style={{"touchAction":"none","height":"12px","cursor":"ns-resize","display":"flex","alignItems":"center","justifyContent":"center"}}>
+                                                                    <div onPointerDown={c_24?.rs} aria-hidden="true" title="Drag to change duration" style={{"touchAction":"none","height":"12px","cursor":"ns-resize","display":"flex","alignItems":"center","justifyContent":"center"}}>
                                                                       <span style={{"width":"28px","height":"3px","borderTop":"1px solid #5a5850","borderBottom":"1px solid #5a5850"}}></span>
                                                                     </div>
                                                                   </>
                                                                 ) : null}
                                                               </div>
-                                                              {c_35?.parOn ? (
+                                                              {c_24?.parOn ? (
                                                                 <>
                                                                   <div aria-hidden="true" style={{"position":"absolute","top":"0","bottom":"0","right":"-6px","width":"44%","border":"1px dashed #ff4b23","background":"rgba(255,75,35,.08)","display":"flex","alignItems":"center","justifyContent":"center","fontSize":"13px","color":"#ff4b23","pointerEvents":"none"}}>
                                                                     {"Run in parallel"}
@@ -2062,13 +1547,13 @@ Component.prototype.template = function (V) {
                                           </div>
                                         </React.Fragment>
                                       ))}
-                                      <div aria-hidden="true" style={dcCss(`flex:0 0 auto;width:${dcStr(d_31?.gapW)};height:${dcStr(d_31?.gapH)};border:${dcStr(d_31?.gapBd)};background:${dcStr(d_31?.gapBg)};transition:${dcStr(V.trans)};box-sizing:border-box`)}></div>
+                                      <div aria-hidden="true" style={dcCss(`flex:0 0 auto;width:${dcStr(d_20?.gapW)};height:${dcStr(d_20?.gapH)};border:${dcStr(d_20?.gapBd)};background:${dcStr(d_20?.gapBg)};transition:${dcStr(V.trans)};box-sizing:border-box`)}></div>
                                     </div>
                                   </div>
                                 </React.Fragment>
                               ))}
                             </div>
-                            {z_30?.isLive ? (
+                            {z_19?.isLive ? (
                               <>
                                 <button onClick={V.addDay} style={{"whiteSpace":"nowrap","marginTop":"12px","background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"14px","padding":"0","minHeight":"32px"}} className="scp-hover-1">
                                   {"+ Add a day"}
@@ -2103,14 +1588,14 @@ Component.prototype.template = function (V) {
                           {"Close"}
                         </button>
                       </div>
-                      <input aria-label="Block title" value={V.D?.title ?? ""} onChange={V.D?.onTitle} style={{"display":"block","width":"100%","marginTop":"6px","background":"none","border":"0","borderBottom":"1px solid #34332e","outline":"none","color":"#ece9e0","padding":"4px 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"24px","lineHeight":"1.1"}} className="scp-focus-i" />
+                      <input aria-label="Block title" value={V.D?.title ?? ""} onChange={V.D?.onTitle} style={{"display":"block","width":"100%","marginTop":"6px","background":"none","border":"0","borderBottom":"1px solid #34332e","outline":"none","color":"#ece9e0","padding":"4px 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"24px","lineHeight":"1.1"}} className="scp-focus-f" />
                       {V.D?.isCustom ? (
                         <>
                           <div style={{"display":"flex","flexWrap":"wrap","gap":"5px","marginTop":"8px"}}>
-                            {dcList(V.D?.presets).map((p_38, $i38) => (
-                              <React.Fragment key={$i38}>
-                                <button onClick={p_38?.pick} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#c9c5ba","minHeight":"30px","padding":"0 8px","cursor":"pointer","fontSize":"13px"}} className="scp-hover-d">
-                                  {dcText(p_38?.l)}
+                            {dcList(V.D?.presets).map((p_27, $i27) => (
+                              <React.Fragment key={$i27}>
+                                <button onClick={p_27?.pick} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#c9c5ba","minHeight":"30px","padding":"0 8px","cursor":"pointer","fontSize":"13px"}} className="scp-hover-9">
+                                  {dcText(p_27?.l)}
                                 </button>
                               </React.Fragment>
                             ))}
@@ -2137,10 +1622,10 @@ Component.prototype.template = function (V) {
                           </div>
                         </>
                       ) : null}
-                      {dcList(V.D?.warns).map((wn_39, $i39) => (
-                        <React.Fragment key={$i39}>
+                      {dcList(V.D?.warns).map((wn_28, $i28) => (
+                        <React.Fragment key={$i28}>
                           <div style={{"marginTop":"8px","padding":"8px 10px","border":"1px dashed #ff4b23","fontSize":"14px","lineHeight":"1.4","color":"#ece9e0"}}>
-                            {dcText(wn_39)}
+                            {dcText(wn_28)}
                           </div>
                         </React.Fragment>
                       ))}
@@ -2149,10 +1634,10 @@ Component.prototype.template = function (V) {
                           {"Participant mode"}
                         </div>
                         <div style={{"display":"flex","flexWrap":"wrap","gap":"5px","marginTop":"5px"}}>
-                          {dcList(V.D?.modes).map((o_40, $i40) => (
-                            <React.Fragment key={$i40}>
-                              <button onClick={o_40?.pick} aria-pressed={o_40?.aria} style={dcCss(`white-space:nowrap;background:${dcStr(o_40?.bg)};color:${dcStr(o_40?.fg)};border:1px solid ${dcStr(o_40?.bd)};min-height:32px;padding:0 9px;cursor:pointer;font-size:13px`)}>
-                                {dcText(o_40?.l)}
+                          {dcList(V.D?.modes).map((o_29, $i29) => (
+                            <React.Fragment key={$i29}>
+                              <button onClick={o_29?.pick} aria-pressed={o_29?.aria} style={dcCss(`white-space:nowrap;background:${dcStr(o_29?.bg)};color:${dcStr(o_29?.fg)};border:1px solid ${dcStr(o_29?.bd)};min-height:32px;padding:0 9px;cursor:pointer;font-size:13px`)}>
+                                {dcText(o_29?.l)}
                               </button>
                             </React.Fragment>
                           ))}
@@ -2172,18 +1657,18 @@ Component.prototype.template = function (V) {
                           </div>
                         </>
                       ) : null}
-                      {dcList(V.D?.fields).map((f_41, $i41) => (
-                        <React.Fragment key={$i41}>
+                      {dcList(V.D?.fields).map((f_30, $i30) => (
+                        <React.Fragment key={$i30}>
                           <label style={{"display":"block","marginTop":"12px"}}>
                             <span style={{"display":"flex","justifyContent":"space-between","gap":"8px","fontSize":"12px","color":"#8f8b80"}}>
                               <span>
-                                {dcText(f_41?.k)}
+                                {dcText(f_30?.k)}
                               </span>
                               <span>
-                                {dcText(f_41?.src)}
+                                {dcText(f_30?.src)}
                               </span>
                             </span>
-                            <textarea value={f_41?.v ?? ""} onChange={f_41?.on} rows={f_41?.rows} placeholder={f_41?.ph} style={{"display":"block","width":"100%","marginTop":"4px","background":"#111110","border":"1px solid #2a2925","color":"#ece9e0","padding":"8px 10px","fontFamily":"'Satoshi',sans-serif","fontSize":"14px","lineHeight":"1.45","resize":"vertical"}}></textarea>
+                            <textarea value={f_30?.v ?? ""} onChange={f_30?.on} rows={f_30?.rows} placeholder={f_30?.ph} style={{"display":"block","width":"100%","marginTop":"4px","background":"#111110","border":"1px solid #2a2925","color":"#ece9e0","padding":"8px 10px","fontFamily":"'Satoshi',sans-serif","fontSize":"14px","lineHeight":"1.45","resize":"vertical"}}></textarea>
                           </label>
                         </React.Fragment>
                       ))}
@@ -2191,10 +1676,10 @@ Component.prototype.template = function (V) {
                         <label style={{"fontSize":"12px","color":"#8f8b80"}}>
                           {"Move to section"}
                           <select value="" onChange={V.D?.toSection} style={{"display":"block","width":"100%","marginTop":"4px","background":"#111110","border":"1px solid #2a2925","color":"#ece9e0","minHeight":"36px","padding":"0 6px","fontSize":"13px","fontFamily":"'Satoshi',sans-serif"}}>
-                            {dcList(V.D?.secOpts).map((o_42, $i42) => (
-                              <React.Fragment key={$i42}>
-                                <option value={o_42?.v ?? ""}>
-                                  {dcText(o_42?.l)}
+                            {dcList(V.D?.secOpts).map((o_31, $i31) => (
+                              <React.Fragment key={$i31}>
+                                <option value={o_31?.v ?? ""}>
+                                  {dcText(o_31?.l)}
                                 </option>
                               </React.Fragment>
                             ))}
@@ -2203,10 +1688,10 @@ Component.prototype.template = function (V) {
                         <label style={{"fontSize":"12px","color":"#8f8b80"}}>
                           {"Move to"}
                           <select value="" onChange={V.D?.toPlace} style={{"display":"block","width":"100%","marginTop":"4px","background":"#111110","border":"1px solid #2a2925","color":"#ece9e0","minHeight":"36px","padding":"0 6px","fontSize":"13px","fontFamily":"'Satoshi',sans-serif"}}>
-                            {dcList(V.D?.placeOpts).map((o_43, $i43) => (
-                              <React.Fragment key={$i43}>
-                                <option value={o_43?.v ?? ""}>
-                                  {dcText(o_43?.l)}
+                            {dcList(V.D?.placeOpts).map((o_32, $i32) => (
+                              <React.Fragment key={$i32}>
+                                <option value={o_32?.v ?? ""}>
+                                  {dcText(o_32?.l)}
                                 </option>
                               </React.Fragment>
                             ))}
@@ -2240,22 +1725,22 @@ Component.prototype.template = function (V) {
                             <div style={{"fontSize":"13px","color":"#8f8b80"}}>
                               {"Alternatives fitted to this workshop"}
                             </div>
-                            {dcList(V.D?.alts).map((a_44, $i44) => (
-                              <React.Fragment key={$i44}>
+                            {dcList(V.D?.alts).map((a_33, $i33) => (
+                              <React.Fragment key={$i33}>
                                 <div style={{"padding":"9px 0","borderBottom":"1px solid #2a2925"}}>
                                   <div style={{"display":"flex","justifyContent":"space-between","gap":"10px","alignItems":"baseline"}}>
-                                    <a href={dcHref(a_44?.href)} style={{"color":"#ece9e0","fontWeight":"500","fontSize":"15px","textDecoration":"none"}} className="scp-hover-0">
-                                      {dcText(a_44?.title)}
+                                    <a href={dcHref(a_33?.href)} style={{"color":"#ece9e0","fontWeight":"500","fontSize":"15px","textDecoration":"none"}} className="scp-hover-0">
+                                      {dcText(a_33?.title)}
                                     </a>
-                                    <button onClick={a_44?.pick} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #4a4843","color":"#ece9e0","minHeight":"32px","padding":"0 10px","cursor":"pointer","fontSize":"13px"}}>
+                                    <button onClick={a_33?.pick} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #4a4843","color":"#ece9e0","minHeight":"32px","padding":"0 10px","cursor":"pointer","fontSize":"13px"}}>
                                       {"Use"}
                                     </button>
                                   </div>
                                   <div style={{"marginTop":"2px","fontSize":"12px","color":"#8f8b80"}}>
-                                    {dcText(a_44?.meta)}
+                                    {dcText(a_33?.meta)}
                                   </div>
                                   <div style={{"marginTop":"3px","fontSize":"13px","lineHeight":"1.4","color":"#c9c5ba"}}>
-                                    {dcText(a_44?.why)}
+                                    {dcText(a_33?.why)}
                                   </div>
                                 </div>
                               </React.Fragment>
@@ -2282,17 +1767,17 @@ Component.prototype.template = function (V) {
                               </span>
                               {dcText(V.D?.why)}
                             </div>
-                            {dcList(V.D?.lists).map((l_45, $i45) => (
-                              <React.Fragment key={$i45}>
+                            {dcList(V.D?.lists).map((l_34, $i34) => (
+                              <React.Fragment key={$i34}>
                                 <div style={{"marginTop":"10px"}}>
                                   <div style={{"fontSize":"12px","color":"#8f8b80"}}>
-                                    {dcText(l_45?.k)}
+                                    {dcText(l_34?.k)}
                                   </div>
                                   <ul style={{"margin":"3px 0 0","paddingLeft":"18px","fontSize":"14px","lineHeight":"1.45"}}>
-                                    {dcList(l_45?.items).map((s_46, $i46) => (
-                                      <React.Fragment key={$i46}>
+                                    {dcList(l_34?.items).map((s_35, $i35) => (
+                                      <React.Fragment key={$i35}>
                                         <li>
-                                          {dcText(s_46)}
+                                          {dcText(s_35)}
                                         </li>
                                       </React.Fragment>
                                     ))}
@@ -2301,10 +1786,10 @@ Component.prototype.template = function (V) {
                               </React.Fragment>
                             ))}
                             <div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginTop":"12px"}}>
-                              {dcList(V.D?.assets).map((a_47, $i47) => (
-                                <React.Fragment key={$i47}>
-                                  <a href={dcHref(a_47?.href)} style={{"whiteSpace":"nowrap","display":"inline-flex","alignItems":"center","minHeight":"34px","border":"1px solid #34332e","color":"#ece9e0","padding":"0 10px","fontSize":"13px","textDecoration":"none"}}>
-                                    {dcText(a_47?.title)}
+                              {dcList(V.D?.assets).map((a_36, $i36) => (
+                                <React.Fragment key={$i36}>
+                                  <a href={dcHref(a_36?.href)} style={{"whiteSpace":"nowrap","display":"inline-flex","alignItems":"center","minHeight":"34px","border":"1px solid #34332e","color":"#ece9e0","padding":"0 10px","fontSize":"13px","textDecoration":"none"}}>
+                                    {dcText(a_36?.title)}
                                   </a>
                                 </React.Fragment>
                               ))}
@@ -2326,10 +1811,10 @@ Component.prototype.template = function (V) {
                               <>
                                 <div style={{"marginTop":"8px","fontSize":"13px","color":"#8f8b80"}}>
                                   {"Related: "}
-                                  {dcList(V.D?.related).map((r_48, $i48) => (
-                                    <React.Fragment key={$i48}>
-                                      <a href={dcHref(r_48?.href)} style={{"color":"#c9c5ba","marginRight":"10px"}}>
-                                        {dcText(r_48?.title)}
+                                  {dcList(V.D?.related).map((r_37, $i37) => (
+                                    <React.Fragment key={$i37}>
+                                      <a href={dcHref(r_37?.href)} style={{"color":"#c9c5ba","marginRight":"10px"}}>
+                                        {dcText(r_37?.title)}
                                       </a>
                                     </React.Fragment>
                                   ))}
@@ -2359,22 +1844,22 @@ Component.prototype.template = function (V) {
                             </button>
                           </div>
                           <div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginTop":"10px"}}>
-                            {dcList(V.selActs).map((a_49, $i49) => (
-                              <React.Fragment key={$i49}>
-                                <button onClick={a_49?.run} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","minHeight":"34px","padding":"0 9px","cursor":"pointer","fontSize":"13px"}} className="scp-hover-e">
-                                  {dcText(a_49?.l)}
+                            {dcList(V.selActs).map((a_38, $i38) => (
+                              <React.Fragment key={$i38}>
+                                <button onClick={a_38?.run} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","minHeight":"34px","padding":"0 9px","cursor":"pointer","fontSize":"13px"}} className="scp-hover-b">
+                                  {dcText(a_38?.l)}
                                 </button>
                               </React.Fragment>
                             ))}
                           </div>
                           <div style={{"marginTop":"12px","fontSize":"12px","letterSpacing":".06em","color":"#8f8b80"}}>
-                            {"ASK BUILDER ABOUT THESE"}
+                            {"ADJUST THESE"}
                           </div>
                           <div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginTop":"6px"}}>
-                            {dcList(V.selAI).map((a_50, $i50) => (
-                              <React.Fragment key={$i50}>
-                                <button onClick={a_50?.run} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","minHeight":"34px","padding":"0 9px","cursor":"pointer","fontSize":"13px"}} className="scp-hover-j">
-                                  {dcText(a_50?.l)}
+                            {dcList(V.selAI).map((a_39, $i39) => (
+                              <React.Fragment key={$i39}>
+                                <button onClick={a_39?.run} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","minHeight":"34px","padding":"0 9px","cursor":"pointer","fontSize":"13px"}} className="scp-hover-g">
+                                  {dcText(a_39?.l)}
                                 </button>
                               </React.Fragment>
                             ))}
@@ -2425,39 +1910,39 @@ Component.prototype.template = function (V) {
                               </div>
                             </>
                           ) : null}
-                          {dcList(V.P?.rows).map((c_51, $i51) => (
-                            <React.Fragment key={$i51}>
+                          {dcList(V.P?.rows).map((c_40, $i40) => (
+                            <React.Fragment key={$i40}>
                               <div style={{"display":"grid","gridTemplateColumns":"24px minmax(0,1fr)","gap":"10px","padding":"10px 0","borderBottom":"1px solid #2a2925"}}>
-                                <button role="checkbox" aria-checked={c_51?.aria} aria-label={c_51?.ariaL} onClick={c_51?.toggle} style={dcCss(`white-space:nowrap;width:22px;height:22px;background:${dcStr(c_51?.cb)};border:1px solid ${dcStr(c_51?.cbd)};color:#0b0b0a;cursor:pointer;font-size:13px;line-height:1;padding:0`)}>
-                                  {dcText(c_51?.mark)}
+                                <button role="checkbox" aria-checked={c_40?.aria} aria-label={c_40?.ariaL} onClick={c_40?.toggle} style={dcCss(`white-space:nowrap;width:22px;height:22px;background:${dcStr(c_40?.cb)};border:1px solid ${dcStr(c_40?.cbd)};color:#0b0b0a;cursor:pointer;font-size:13px;line-height:1;padding:0`)}>
+                                  {dcText(c_40?.mark)}
                                 </button>
-                                <div style={dcCss(`min-width:0;opacity:${dcStr(c_51?.op)}`)}>
+                                <div style={dcCss(`min-width:0;opacity:${dcStr(c_40?.op)}`)}>
                                   <div style={{"display":"flex","justifyContent":"space-between","gap":"10px","fontSize":"12px","letterSpacing":".04em"}}>
                                     <span style={{"color":"#ff4b23"}}>
-                                      {dcText(c_51?.label)}
+                                      {dcText(c_40?.label)}
                                     </span>
                                     <span style={{"color":"#8f8b80"}}>
-                                      {dcText(c_51?.saved)}
+                                      {dcText(c_40?.saved)}
                                     </span>
                                   </div>
-                                  {c_51?.hasOld ? (
+                                  {c_40?.hasOld ? (
                                     <>
                                       <div style={{"marginTop":"3px","fontSize":"14px","color":"#8f8b80","textDecoration":"line-through"}}>
-                                        {dcText(c_51?.old)}
+                                        {dcText(c_40?.old)}
                                       </div>
                                     </>
                                   ) : null}
                                   <div style={{"marginTop":"2px","fontSize":"14px"}}>
-                                    {dcText(c_51?.nw)}
+                                    {dcText(c_40?.nw)}
                                   </div>
                                   <div style={{"marginTop":"3px","fontSize":"13px","lineHeight":"1.4","color":"#c9c5ba"}}>
-                                    {dcText(c_51?.why)}
+                                    {dcText(c_40?.why)}
                                   </div>
-                                  {c_51?.hasImpact ? (
+                                  {c_40?.hasImpact ? (
                                     <>
                                       <div style={{"marginTop":"2px","fontSize":"13px","lineHeight":"1.4","color":"#8f8b80"}}>
                                         {"Downstream: "}
-                                        {dcText(c_51?.impact)}
+                                        {dcText(c_40?.impact)}
                                       </div>
                                     </>
                                   ) : null}
@@ -2499,7 +1984,7 @@ Component.prototype.template = function (V) {
                     {V.ctxOpen ? (
                       <>
                         <p style={{"margin":"8px 0 0","fontSize":"13px","lineHeight":"1.45","color":"#8f8b80"}}>
-                          {"Optional. Builder uses it to check what you build."}
+                          {"Optional. Used by the checks below."}
                         </p>
                         <label style={{"display":"block","marginTop":"8px"}}>
                           <span style={{"fontSize":"12px","color":"#8f8b80"}}>
@@ -2508,17 +1993,17 @@ Component.prototype.template = function (V) {
                           <textarea value={V.question ?? ""} onChange={V.onQuestion} rows="2" placeholder="What must this workshop figure out?" style={{"display":"block","width":"100%","marginTop":"4px","background":"#111110","border":"1px solid #2a2925","color":"#ece9e0","padding":"8px 10px","fontFamily":"'Satoshi',sans-serif","fontSize":"14px","lineHeight":"1.4","resize":"vertical"}}></textarea>
                         </label>
                         <div style={{"display":"grid","gridTemplateColumns":"1fr 1fr","gap":"8px"}}>
-                          {dcList(V.ctxEdits).map((f_52, $i52) => (
-                            <React.Fragment key={$i52}>
+                          {dcList(V.ctxEdits).map((f_41, $i41) => (
+                            <React.Fragment key={$i41}>
                               <label style={{"display":"block","marginTop":"8px","minWidth":"0"}}>
                                 <span style={{"fontSize":"12px","color":"#8f8b80"}}>
-                                  {dcText(f_52?.k)}
+                                  {dcText(f_41?.k)}
                                 </span>
-                                <select value={f_52?.v ?? ""} onChange={f_52?.change} style={{"width":"100%","marginTop":"4px","background":"#111110","border":"1px solid #2a2925","color":"#ece9e0","minHeight":"36px","padding":"0 6px","fontFamily":"'Satoshi',sans-serif","fontSize":"13px"}}>
-                                  {dcList(f_52?.opts).map((o_53, $i53) => (
-                                    <React.Fragment key={$i53}>
-                                      <option value={o_53?.v ?? ""}>
-                                        {dcText(o_53?.l)}
+                                <select value={f_41?.v ?? ""} onChange={f_41?.change} style={{"width":"100%","marginTop":"4px","background":"#111110","border":"1px solid #2a2925","color":"#ece9e0","minHeight":"36px","padding":"0 6px","fontFamily":"'Satoshi',sans-serif","fontSize":"13px"}}>
+                                  {dcList(f_41?.opts).map((o_42, $i42) => (
+                                    <React.Fragment key={$i42}>
+                                      <option value={o_42?.v ?? ""}>
+                                        {dcText(o_42?.l)}
                                       </option>
                                     </React.Fragment>
                                   ))}
@@ -2531,24 +2016,24 @@ Component.prototype.template = function (V) {
                     ) : null}
                     <div style={{"marginTop":"22px","display":"flex","justifyContent":"space-between","gap":"10px","fontSize":"12px","letterSpacing":".06em","color":"#8f8b80"}}>
                       <span>
-                        {"BUILDER IS WATCHING"}
+                        {"CHECKS"}
                       </span>
                       <span>
                         {dcText(V.obsCount)}
                       </span>
                     </div>
-                    {dcList(V.obs).map((o_54, $i54) => (
-                      <React.Fragment key={$i54}>
+                    {dcList(V.obs).map((o_43, $i43) => (
+                      <React.Fragment key={$i43}>
                         <div style={{"padding":"10px 0","borderBottom":"1px solid #2a2925"}}>
-                          <div style={dcCss(`font-size:14px;line-height:1.4;color:${dcStr(o_54?.c)}`)}>
-                            {dcText(o_54?.t)}
+                          <div style={dcCss(`font-size:14px;line-height:1.4;color:${dcStr(o_43?.c)}`)}>
+                            {dcText(o_43?.t)}
                           </div>
                           <div style={{"marginTop":"3px","fontSize":"13px","lineHeight":"1.4","color":"#8f8b80"}}>
-                            {dcText(o_54?.fix)}
+                            {dcText(o_43?.fix)}
                           </div>
-                          {o_54?.hasCmd ? (
+                          {o_43?.hasCmd ? (
                             <>
-                              <button onClick={o_54?.run} style={{"whiteSpace":"nowrap","marginTop":"6px","background":"none","border":"1px solid #4a4843","color":"#ece9e0","minHeight":"32px","padding":"0 10px","cursor":"pointer","fontSize":"13px"}}>
+                              <button onClick={o_43?.run} style={{"whiteSpace":"nowrap","marginTop":"6px","background":"none","border":"1px solid #4a4843","color":"#ece9e0","minHeight":"32px","padding":"0 10px","cursor":"pointer","fontSize":"13px"}}>
                                 {"Propose fix"}
                               </button>
                             </>
@@ -2563,82 +2048,54 @@ Component.prototype.template = function (V) {
                         </p>
                       </>
                     ) : null}
-                    {V.hasConvo ? (
-                      <>
-                        <div style={{"marginTop":"22px"}}>
-                          <button onClick={V.toggleConvo} aria-expanded={V.convoAria} style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#c9c5ba","cursor":"pointer","fontSize":"14px","padding":"0","minHeight":"32px"}} className="scp-hover-1">
-                            {dcText(V.convoL)}
-                          </button>
-                          {V.showConvo ? (
-                            <>
-                              <div style={{"marginTop":"6px","maxHeight":"300px","overflow":"auto","borderLeft":"1px solid #34332e","paddingLeft":"12px"}}>
-                                {dcList(V.convo).map((m_55, $i55) => (
-                                  <React.Fragment key={$i55}>
-                                    <div style={dcCss(`padding:5px 0;font-size:13px;line-height:1.45;color:${dcStr(m_55?.c)}`)}>
-                                      {dcText(m_55?.t)}
-                                    </div>
-                                  </React.Fragment>
-                                ))}
-                              </div>
-                            </>
-                          ) : null}
-                        </div>
-                      </>
-                    ) : null}
                     <div style={{"marginTop":"22px","fontSize":"12px","letterSpacing":".06em","color":"#8f8b80"}}>
                       {"ADJUST THE WHOLE WORKSHOP"}
                     </div>
                     <div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginTop":"8px"}}>
-                      {dcList(V.cmds).map((c_56, $i56) => (
-                        <React.Fragment key={$i56}>
-                          <button onClick={c_56?.run} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","minHeight":"34px","padding":"0 9px","cursor":"pointer","fontSize":"13px"}} className="scp-hover-e">
-                            {dcText(c_56?.l)}
+                      {dcList(V.cmds).map((c_44, $i44) => (
+                        <React.Fragment key={$i44}>
+                          <button onClick={c_44?.run} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","minHeight":"34px","padding":"0 9px","cursor":"pointer","fontSize":"13px"}} className="scp-hover-b">
+                            {dcText(c_44?.l)}
                           </button>
                         </React.Fragment>
                       ))}
                     </div>
-                    <form onSubmit={V.onAsk} style={{"display":"flex","marginTop":"10px","borderBottom":"1px solid #4a4843"}}>
-                      <input aria-label="Ask Builder" value={V.askText ?? ""} onChange={V.onAskText} placeholder="Ask Builder… make this fit into 3 hours" style={{"flex":"1 1 auto","minWidth":"0","background":"none","border":"0","outline":"none","color":"#ece9e0","padding":"10px 0","fontSize":"14px"}} />
-                      <button type="submit" style={{"whiteSpace":"nowrap","background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"14px","padding":"0 0 0 10px","minHeight":"42px"}}>
-                        {dcText(V.askBtn)}
-                      </button>
-                    </form>
                     <button onClick={V.runStress} style={{"whiteSpace":"nowrap","marginTop":"22px","width":"100%","background":"#ece9e0","color":"#0b0b0a","border":"0","minHeight":"46px","cursor":"pointer","fontSize":"15px","fontWeight":"500"}}>
                       {dcText(V.stressL)}
                     </button>
                     {V.hasStress ? (
                       <>
-                        {dcList(V.stressGroups).map((g_57, $i57) => (
-                          <React.Fragment key={$i57}>
+                        {dcList(V.stressGroups).map((g_45, $i45) => (
+                          <React.Fragment key={$i45}>
                             <div style={{"marginTop":"14px"}}>
-                              <div style={dcCss(`font-size:12px;letter-spacing:.06em;color:${dcStr(g_57?.c)}`)}>
-                                {dcText(g_57?.k)}
+                              <div style={dcCss(`font-size:12px;letter-spacing:.06em;color:${dcStr(g_45?.c)}`)}>
+                                {dcText(g_45?.k)}
                               </div>
-                              {dcList(g_57?.rows).map((s_58, $i58) => (
-                                <React.Fragment key={$i58}>
+                              {dcList(g_45?.rows).map((s_46, $i46) => (
+                                <React.Fragment key={$i46}>
                                   <div style={{"padding":"9px 0","borderBottom":"1px solid #1d1c1a"}}>
                                     <div style={{"display":"flex","justifyContent":"space-between","gap":"10px","fontSize":"12px","color":"#8f8b80"}}>
                                       <span>
-                                        {dcText(s_58?.k)}
+                                        {dcText(s_46?.k)}
                                       </span>
                                       <span>
-                                        {dcText(s_58?.q)}
+                                        {dcText(s_46?.q)}
                                       </span>
                                     </div>
                                     <div style={{"marginTop":"3px","fontSize":"14px","lineHeight":"1.4"}}>
-                                      {dcText(s_58?.msg)}
+                                      {dcText(s_46?.msg)}
                                     </div>
-                                    {s_58?.bad ? (
+                                    {s_46?.bad ? (
                                       <>
                                         <div style={{"marginTop":"2px","fontSize":"13px","color":"#8f8b80"}}>
                                           {"Suggested fix: "}
-                                          {dcText(s_58?.fix)}
+                                          {dcText(s_46?.fix)}
                                         </div>
                                       </>
                                     ) : null}
-                                    {s_58?.hasFix ? (
+                                    {s_46?.hasFix ? (
                                       <>
-                                        <button onClick={s_58?.apply} style={{"whiteSpace":"nowrap","marginTop":"6px","background":"none","border":"1px solid #4a4843","color":"#ece9e0","minHeight":"32px","padding":"0 10px","cursor":"pointer","fontSize":"13px"}}>
+                                        <button onClick={s_46?.apply} style={{"whiteSpace":"nowrap","marginTop":"6px","background":"none","border":"1px solid #4a4843","color":"#ece9e0","minHeight":"32px","padding":"0 10px","cursor":"pointer","fontSize":"13px"}}>
                                           {"Propose fix"}
                                         </button>
                                       </>
@@ -2668,55 +2125,22 @@ Component.prototype.template = function (V) {
                         {".json"}
                       </button>
                     </div>
-                    <div style={{"marginTop":"24px","fontSize":"12px","letterSpacing":".06em","color":"#8f8b80"}}>
-                      {"YOUR AI AGENT"}
-                    </div>
-                    <div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginTop":"8px"}}>
-                      <button onClick={V.openClaude} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","cursor":"pointer","minHeight":"36px","padding":"0 10px","fontSize":"13px"}}>
-                        {"Claude ↗"}
-                      </button>
-                      <button onClick={V.openGpt} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","cursor":"pointer","minHeight":"36px","padding":"0 10px","fontSize":"13px"}}>
-                        {"ChatGPT ↗"}
-                      </button>
-                      <button onClick={V.copyCtx} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","cursor":"pointer","minHeight":"36px","padding":"0 10px","fontSize":"13px"}}>
-                        {dcText(V.ctxL)}
-                      </button>
-                    </div>
-                    <p style={{"margin":"6px 0 0","fontSize":"12px","lineHeight":"1.45","color":"#8f8b80"}}>
-                      {"Sends the brief, agenda and any session notes. Copy works with any agent."}
-                    </p>
-                    <button onClick={V.toggleAgent} aria-expanded={V.agentAria} style={{"whiteSpace":"nowrap","background":"none","border":"0","padding":"0","marginTop":"8px","color":"#ff4b23","cursor":"pointer","fontSize":"13px","minHeight":"28px"}}>
-                      {dcText(V.agentToggleL)}
-                    </button>
-                    {V.agentOpen ? (
-                      <>
-                        <textarea aria-label="Paste your AI agent's reply" value={V.agentPaste ?? ""} onChange={V.onAgentPaste} rows="4" placeholder="Paste the agent's reply. Builder reads its agenda block." style={{"display":"block","width":"100%","boxSizing":"border-box","marginTop":"4px","background":"#111110","border":"1px solid #34332e","color":"#ece9e0","padding":"10px","font":"inherit","fontSize":"13px","lineHeight":"1.45","resize":"vertical"}}></textarea>
-                        <div style={{"display":"flex","flexWrap":"wrap","alignItems":"center","gap":"6px 12px","marginTop":"6px"}}>
-                          <button onClick={V.applyAgent} style={{"whiteSpace":"nowrap","background":"#ff4b23","border":"0","color":"#0b0b0a","minHeight":"36px","padding":"0 12px","cursor":"pointer","fontSize":"13px","fontWeight":"500"}}>
-                            {"Apply to canvas"}
-                          </button>
-                          <span style={dcCss(`font-size:12px;color:${dcStr(V.agentMsgC)}`)}>
-                            {dcText(V.agentMsg)}
-                          </span>
-                        </div>
-                      </>
-                    ) : null}
                     <p style={{"margin":"16px 0 0","fontSize":"13px","lineHeight":"1.45","color":"#8f8b80"}}>
-                      {"Stored in this browser. An account will add saving, multiple workshops and collaboration."}
+                      {"Saved in this browser. Export the agenda to share it."}
                     </p>
                     {V.hasMethods ? (
                       <>
                         <div style={{"marginTop":"20px","fontSize":"12px","letterSpacing":".06em","color":"#8f8b80"}}>
                           {"METHODS IN THIS WORKSHOP"}
                         </div>
-                        {dcList(V.methods).map((m_59, $i59) => (
-                          <React.Fragment key={$i59}>
-                            <a href={dcHref(m_59?.href)} style={{"display":"flex","justifyContent":"space-between","gap":"10px","padding":"7px 0","borderBottom":"1px solid #1d1c1a","color":"#ece9e0","textDecoration":"none","fontSize":"14px"}} className="scp-hover-0">
+                        {dcList(V.methods).map((m_47, $i47) => (
+                          <React.Fragment key={$i47}>
+                            <a href={dcHref(m_47?.href)} style={{"display":"flex","justifyContent":"space-between","gap":"10px","padding":"7px 0","borderBottom":"1px solid #1d1c1a","color":"#ece9e0","textDecoration":"none","fontSize":"14px"}} className="scp-hover-0">
                               <span>
-                                {dcText(m_59?.title)}
+                                {dcText(m_47?.title)}
                               </span>
                               <span style={{"color":"#8f8b80"}}>
-                                {dcText(m_59?.kind)}
+                                {dcText(m_47?.kind)}
                               </span>
                             </a>
                           </React.Fragment>

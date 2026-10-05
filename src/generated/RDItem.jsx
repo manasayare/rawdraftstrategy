@@ -234,12 +234,12 @@ Component.prototype.template = function (V) {
                   </>
                 ) : null}
                 <div data-noprint="1" style={{"display":"flex","flexWrap":"wrap","gap":"12px 20px","alignItems":"center","marginTop":"28px"}}>
-                  <a href={dcHref(V.builderHref)} style={{"display":"inline-flex","alignItems":"center","minHeight":"46px","border":"1px solid #4a4843","color":"#ece9e0","padding":"0 16px","textDecoration":"none","fontSize":"16px"}} className="scp-hover-5">
+                  <a href={dcHref(V.builderHref)} style={{"display":"inline-flex","alignItems":"center","minHeight":"46px","border":"1px solid #4a4843","color":"#ece9e0","padding":"0 16px","textDecoration":"none","fontSize":"16px"}} className="scp-hover-4">
                     {dcText(V.builderLabel)}
                   </a>
                   {V.hasRun ? (
                     <>
-                      <button onClick={V.goRun} style={{"background":"#ff4b23","color":"#0b0b0a","border":"0","padding":"0 18px","minHeight":"46px","cursor":"pointer","fontSize":"16px","fontWeight":"500"}} className="scp-hover-4">
+                      <button onClick={V.goRun} style={{"background":"#ff4b23","color":"#0b0b0a","border":"0","padding":"0 18px","minHeight":"46px","cursor":"pointer","fontSize":"16px","fontWeight":"500"}} className="scp-hover-h">
                         {dcText(V.runLabel)}
                       </button>
                     </>

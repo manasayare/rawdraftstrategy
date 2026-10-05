@@ -46,7 +46,7 @@ class Component extends DCLogic {
         ...(() => { const B = Component.BOARD, wide = S.w >= 900, mid = S.w >= 560, cols = wide ? 12 : mid ? 6 : 2, r = wide ? 1 : mid ? .6 : .3;
           const tape = i => ["18px", "42%", "60%", "24px", "50%"][i % 5];
           return { areaCols: "repeat(" + cols + ",minmax(0,1fr))", valCols: wide ? "repeat(12,minmax(0,1fr))" : "minmax(0,1fr)", areaPad: wide ? "20px 22px 26px" : "16px 16px 20px", valPad: wide ? "24px 26px 30px" : "20px 18px 24px",
-            areas: Component.AREAS.map(([k, g, d, q], i) => ({ k, g, d, q, href: "#/builder?q=" + encodeURIComponent(q), open: !!S.aOpen[i], sign: S.aOpen[i] ? "−" : "+", aria: S.aOpen[i] ? "true" : "false", toggle: () => this.setState(st => ({ aOpen: Object.assign({}, st.aOpen, { [i]: !st.aOpen[i] }) })), n: String(i + 1).padStart(2, "0"), gc: i === 0 ? "#ff4b23" : "#8f8b80", span: wide ? B.span[i] : mid ? 3 : 2, mt: wide ? B.mt[i] + "px" : mid ? (i % 2 ? "14px" : "0px") : "0px", rot: B.rot[i] * r + "deg", tape: tape(i), tapeRot: (i % 2 ? 3 : -4) + "deg", fs: mid ? "clamp(22px,2.2vw,32px)" : "19px" })),
+            areas: Component.AREAS.map(([k, g, d, q], i) => ({ k, g, d, q, href: "#/library?q=" + encodeURIComponent(k.split(" ")[0]), open: !!S.aOpen[i], sign: S.aOpen[i] ? "−" : "+", aria: S.aOpen[i] ? "true" : "false", toggle: () => this.setState(st => ({ aOpen: Object.assign({}, st.aOpen, { [i]: !st.aOpen[i] }) })), n: String(i + 1).padStart(2, "0"), gc: i === 0 ? "#ff4b23" : "#8f8b80", span: wide ? B.span[i] : mid ? 3 : 2, mt: wide ? B.mt[i] + "px" : mid ? (i % 2 ? "14px" : "0px") : "0px", rot: B.rot[i] * r + "deg", tape: tape(i), tapeRot: (i % 2 ? 3 : -4) + "deg", fs: mid ? "clamp(22px,2.2vw,32px)" : "19px" })),
             values: Component.VALUES.map(([k, d], i) => ({ k, d, n: String(i + 1).padStart(2, "0"), span: 6, mt: wide ? [0, 30, 8, 22][i] + "px" : "0px", rot: [.8, -1, -.5, .9][i] * (wide ? 1 : .3) + "deg", tape: tape(i + 2), tapeRot: (i % 2 ? -3 : 4) + "deg" })) }; })(),
         faqs: Component.FAQ.map(([q, ans], i) => { const open = !!S.faq[i]; return { q, a: ans, open, aria: open ? "true" : "false", sign: open ? "−" : "+", toggle: () => this.setState(st => ({ faq: Object.assign({}, st.faq, { [i]: !st.faq[i] }) })) }; }),
         links: [["LinkedIn", (RD.links || {}).linkedin, "_blank"], ["Substack", (RD.links || {}).substack, "_blank"], ["Book a workshop", "#/work-with-us", "_self"]].filter(l => l[1]).map(([label, href, target]) => ({ label, href, target })) });
@@ -706,7 +706,7 @@ Component.prototype.template = function (V) {
                   <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.areaCols)};gap:clamp(14px,2vw,28px) clamp(14px,2vw,24px);align-items:start`)}>
                     {dcList(V.areas).map((a_22, $i22) => (
                       <React.Fragment key={$i22}>
-                        <div data-card="1" tabIndex="0" style={dcCss(`grid-column:span ${dcStr(a_22?.span)};margin-top:${dcStr(a_22?.mt)};position:relative;background:#1a1917;border:1px solid #34332e;padding:${dcStr(V.areaPad)};transform:rotate(${dcStr(a_22?.rot)});transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;box-shadow:0 1px 0 rgba(0,0,0,.4);outline:none`)} className="scp-hover-l scp-focus-m">
+                        <div data-card="1" tabIndex="0" style={dcCss(`grid-column:span ${dcStr(a_22?.span)};margin-top:${dcStr(a_22?.mt)};position:relative;background:#1a1917;border:1px solid #34332e;padding:${dcStr(V.areaPad)};transform:rotate(${dcStr(a_22?.rot)});transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;box-shadow:0 1px 0 rgba(0,0,0,.4);outline:none`)} className="scp-hover-j scp-focus-k">
                           <span aria-hidden="true" style={dcCss(`position:absolute;top:-6px;left:${dcStr(a_22?.tape)};width:38px;height:12px;background:rgba(236,233,224,.13);transform:rotate(${dcStr(a_22?.tapeRot)})`)}></span>
                           <div style={{"display":"flex","justifyContent":"space-between","gap":"12px","fontSize":"13px","color":"#8f8b80"}}>
                             <span>
@@ -738,7 +738,7 @@ Component.prototype.template = function (V) {
                                 {"”"}
                               </p>
                               <a href={dcHref(a_22?.href)} style={{"display":"inline-flex","alignItems":"center","minHeight":"36px","marginTop":"4px","fontSize":"14px","whiteSpace":"nowrap"}}>
-                                {"Build a workshop for this →"}
+                                {"Find methods for this →"}
                               </a>
                             </>
                           ) : null}
@@ -840,7 +840,7 @@ Component.prototype.template = function (V) {
                       <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.netCols)};gap:clamp(14px,2vw,28px) clamp(14px,2vw,24px);align-items:start`)}>
                         {dcList(g_25?.cards).map((x_26, $i26) => (
                           <React.Fragment key={$i26}>
-                            <div data-card="1" style={dcCss(`margin-top:${dcStr(x_26?.mt)};position:relative;background:#1a1917;border:1px solid #34332e;padding:20px 20px 22px;transform:rotate(${dcStr(x_26?.rot)});transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;box-shadow:0 1px 0 rgba(0,0,0,.4)`)} className="scp-hover-l">
+                            <div data-card="1" style={dcCss(`margin-top:${dcStr(x_26?.mt)};position:relative;background:#1a1917;border:1px solid #34332e;padding:20px 20px 22px;transform:rotate(${dcStr(x_26?.rot)});transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;box-shadow:0 1px 0 rgba(0,0,0,.4)`)} className="scp-hover-j">
                               <span aria-hidden="true" style={dcCss(`position:absolute;top:-6px;left:${dcStr(x_26?.tape)};width:38px;height:12px;background:rgba(236,233,224,.13);transform:rotate(${dcStr(x_26?.tapeRot)})`)}></span>
                               <div style={{"display":"flex","justifyContent":"space-between","alignItems":"flex-start","gap":"12px"}}>
                                 <div style={{"display":"flex","gap":"12px","alignItems":"center","minWidth":"0"}}>
@@ -855,7 +855,7 @@ Component.prototype.template = function (V) {
                                 </div>
                                 {x_26?.hasLink ? (
                                   <>
-                                    <a href={dcHref(x_26?.link)} target="_blank" rel="noopener" aria-label={x_26?.linkLabel} style={{"flex":"none","display":"inline-flex","alignItems":"center","justifyContent":"center","minWidth":"32px","height":"32px","border":"1px solid #4a4843","color":"#ece9e0","fontSize":"12px","fontWeight":"700","textDecoration":"none"}} className="scp-hover-j">
+                                    <a href={dcHref(x_26?.link)} target="_blank" rel="noopener" aria-label={x_26?.linkLabel} style={{"flex":"none","display":"inline-flex","alignItems":"center","justifyContent":"center","minWidth":"32px","height":"32px","border":"1px solid #4a4843","color":"#ece9e0","fontSize":"12px","fontWeight":"700","textDecoration":"none"}} className="scp-hover-g">
                                       {dcText(x_26?.glyph)}
                                     </a>
                                   </>
@@ -900,7 +900,7 @@ Component.prototype.template = function (V) {
                     <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fill,minmax(min(100%,180px),1fr))","borderTop":"1px solid #2a2925","borderLeft":"1px solid #2a2925"}}>
                       {dcList(V.worked).map((o_27, $i27) => (
                         <React.Fragment key={$i27}>
-                          <a href={dcHref(o_27?.url)} target="_blank" rel="noopener" style={{"display":"flex","alignItems":"center","justifyContent":"center","minHeight":"110px","padding":"16px","borderRight":"1px solid #2a2925","borderBottom":"1px solid #2a2925","color":"#8f8b80","opacity":".7","textDecoration":"none","fontSize":"16px","textAlign":"center"}} className="scp-hover-n">
+                          <a href={dcHref(o_27?.url)} target="_blank" rel="noopener" style={{"display":"flex","alignItems":"center","justifyContent":"center","minHeight":"110px","padding":"16px","borderRight":"1px solid #2a2925","borderBottom":"1px solid #2a2925","color":"#8f8b80","opacity":".7","textDecoration":"none","fontSize":"16px","textAlign":"center"}} className="scp-hover-l">
                             {dcText(o_27?.name)}
                           </a>
                         </React.Fragment>
