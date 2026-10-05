@@ -20,6 +20,7 @@ export default function ReviewView() {
   const [copied, setCopied] = useState("");
   const [tplName, setTplName] = useState(S.name);
   const [useActual, setUseActual] = useState(true);
+  const [hiddenLearn, setHiddenLearn] = useState<string[]>([]);
   if (!ss?.startedAt) return <p style={{ color: C.mute }}>Run the workshop first. Review fills itself from what you capture.</p>;
 
   const st = sessionStats(S.items, ss), wide = d.wide;
@@ -27,6 +28,8 @@ export default function ReviewView() {
   const flash = (k: string) => { setCopied(k); setTimeout(() => setCopied(""), 1500); };
   const goal = S.context?.brief.goal || S.brief.question;
   const add = (type: Capture["type"]) => store.setSession(s => ({ ...s, captures: s.captures.concat([{ id: "c" + Date.now().toString(36), type, text: "", at: Date.now(), status: type === "decision" ? undefined : "open" }]) }));
+  // Learning from this run: activities whose real length differed a lot from the plan.
+  const learned = st.blocks.map(x => ({ x, a: ss.actual[x.id] != null ? Math.round(ss.actual[x.id] / 60000) : null })).filter(({ x, a }) => a != null && !ss.skipped.includes(x.id) && Math.abs(a - mins(x)) >= Math.max(8, mins(x) * 0.3) && !hiddenLearn.includes(x.id)) as { x: typeof st.blocks[number]; a: number }[];
   const customs = S.items.filter(x => x.kind === "block" && (x.role === "custom" || x.custom) && !S.mylib.activities.some(a => a.title === x.title));
 
   const stat = (n: ReactNode, l: string, hot = false) => (
@@ -159,6 +162,26 @@ export default function ReviewView() {
               </>
             )}
           </div>
+          {learned.length > 0 && (
+            <div>
+              <Kicker>SUGGESTIONS FROM THIS RUN</Kicker>
+              <div style={{ marginTop: 6, borderTop: "1px solid " + C.rule }}>
+                {learned.map(({ x, a }) => {
+                  const r5 = Math.max(5, Math.round(a / 5) * 5);
+                  return (
+                    <div key={x.id} style={{ padding: "10px 0", borderBottom: "1px solid " + C.hair }}>
+                      <div style={{ fontSize: 14, lineHeight: 1.45 }}>{x.title} ran {a} min against {mins(x)} planned{S.brief.people ? ", with " + S.brief.people + " people" : ""}. Save a {r5}-minute default for next time?</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
+                        <button onClick={() => { store.saveActivity({ ...x, mins: r5 }); setHiddenLearn(h => h.concat([x.id])); }} style={outline({ minHeight: 32, padding: "0 10px", fontSize: 13, border: "1px solid " + C.edge })}>Update my version</button>
+                        <button onClick={() => { store.edit(x.id, { mins: r5 }); setHiddenLearn(h => h.concat([x.id])); }} style={outline({ minHeight: 32, padding: "0 10px", fontSize: 13 })}>Update this workshop</button>
+                        <button onClick={() => setHiddenLearn(h => h.concat([x.id]))} style={textBtn({ color: C.mute, fontSize: 12, minHeight: 32 })}>Keep as is</button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <div>
             <KickerRow left="TIMING" right={hm(st.actual) + " / " + hm(st.planned)} />
             <div style={{ marginTop: 8, borderTop: "1px solid " + C.rule }}>

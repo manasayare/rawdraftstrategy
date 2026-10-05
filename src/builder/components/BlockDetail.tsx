@@ -2,10 +2,11 @@
 // Configuration for the open block: title, length, mode, facilitation fields, moving, replacing,
 // and what the Library says about it.
 import type { CSSProperties } from "react";
-import { BIG_GROUPS, C, CUSTOM_PRESETS, MODES } from "../constants";
+import { C, CUSTOM_PRESETS, MODES } from "../constants";
 import { RDB, RDL } from "../engine";
 import { knownTime } from "../library";
 import { scriptFor } from "../run/script";
+import { SuggestionCard } from "./Suggestions";
 import { copyText } from "../exportDoc";
 import { mins, uid } from "../items";
 import { BLANK_FILTERS, type Item } from "../types";
@@ -19,12 +20,9 @@ export default function BlockDetail({ x }: { x: Item }) {
   const b = S.brief, wide = d.wide, B = RDB(), ROLES = B.ROLES;
   const it = x.ref ? RDL().get(x.ref) : undefined, deco = it ? RDL().deco(it) : undefined;
   const er = d.eb.find(y => y.id === x.id) || { role: x.role && ROLES[x.role] ? x.role : "custom", ref: x.ref, title: x.title };
-  const DD = B.detail(b, er), rec = it ? B.minsOf(it) : null, big = BIG_GROUPS.includes(b.people || ""), m = mins(x);
+  const DD = B.detail(b, er), rec = it ? B.minsOf(it) : null, m = mins(x);
 
-  const warns: string[] = [];
-  if (rec && knownTime(it) && m < rec * 0.7) warns.push(m + " minutes is tight" + (big ? " for " + b.people + " participants" : "") + ". The Library suggests about " + rec + ". Builder allows it.");
-  if (big && ["sense", "options", "decide", "landscape"].includes(x.role || "") && x.cfg.mode !== "Small group" && !x.par) warns.push("With " + b.people + " people, run this in small groups or breakouts.");
-  (d.byAt[x.id] || []).forEach(o => warns.push(o.t + " " + o.fix));
+  const sugs = d.byAt[x.id] || [];
 
   const secs = S.items.filter(y => y.kind === "section"), dayDivs = S.items.filter(y => y.kind === "day");
   const fld = (k: keyof Item["cfg"], label: string, def: string, rows: number, ph = "") => {
@@ -102,7 +100,7 @@ export default function BlockDetail({ x }: { x: Item }) {
         <span style={{ fontSize: 14, color: C.mute }}>min · {x.zone === "live" ? "live" : x.zone === "pre" ? "before the session" : "after the session"}</span>
       </div>
       {!!(rec && knownTime(it)) && <div style={{ marginTop: 6, fontSize: 13, color: C.mute }}>{"Library recommends about " + rec + " min" + (deco?.timeLabel && deco.timeLabel !== rec + " min" ? " (" + deco.timeLabel + ")" : "") + "."}</div>}
-      {warns.map((w, i) => <div key={i} style={{ marginTop: 8, padding: "8px 10px", border: "1px dashed " + C.accent, fontSize: 14, lineHeight: 1.4, color: C.ink }}>{w}</div>)}
+      {sugs.map(s => <div key={s.id} style={{ marginTop: 8 }}><SuggestionCard s={s} compact /></div>)}
       <div role="group" aria-label="Participant mode" style={{ marginTop: 14 }}>
         <div style={{ fontSize: 12, color: C.mute }}>Participant mode</div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 5 }}>

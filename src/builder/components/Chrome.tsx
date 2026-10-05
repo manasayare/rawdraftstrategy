@@ -37,7 +37,7 @@ export function MobileBar() {
   return (
     <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 75, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, background: C.rule, borderTop: "1px solid " + C.line }}>
       <button onClick={() => store.set({ sheet: "lib", open: null })} style={accent({ fontWeight: 500, minHeight: 56, fontSize: 16 })}>+ Add block</button>
-      <button onClick={() => store.set({ sheet: "assist" })} style={{ whiteSpace: "nowrap", background: C.well, color: C.ink, border: 0, minHeight: 56, cursor: "pointer", fontSize: 16 }}>{"Checks & export" + (d.ins.length ? " · " + d.ins.length : "")}</button>
+      <button onClick={() => store.set({ sheet: "assist" })} style={{ whiteSpace: "nowrap", background: C.well, color: C.ink, border: 0, minHeight: 56, cursor: "pointer", fontSize: 16 }}>{"Suggestions" + (d.sug.filter(s => s.level !== "optional" && !s.inlineOnly).length ? " · " + d.sug.filter(s => s.level !== "optional" && !s.inlineOnly).length : "")}</button>
     </div>
   );
 }

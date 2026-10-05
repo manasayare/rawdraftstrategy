@@ -1,7 +1,7 @@
 "use client";
 // Right-hand panel (a bottom sheet on phones): the open block, or selection actions, proposals,
-// workshop context, checks, the stress test, sharing and exports.
-import { C, SEVERE, STRESS_FIX, STRESS_Q, WORKSHOP_CMDS } from "../constants";
+// workshop context, suggestions, sharing and exports.
+import { C, WORKSHOP_CMDS } from "../constants";
 import { RDB, RDL } from "../engine";
 import { eng, applyChanges, mins, uid } from "../items";
 import { agendaCsv, agendaText, copyText, download, exportRows, fileName } from "../exportDoc";
@@ -11,6 +11,7 @@ import { BLANK_FILTERS, type Item } from "../types";
 import { BODY, DISPLAY, Kicker, KickerRow, accent, field, outline, path, solid, textBtn, useBuilder } from "../ui";
 import BlockDetail from "./BlockDetail";
 import ContextPanel from "./ContextPanel";
+import SuggestionsPanel from "./Suggestions";
 import { panelStyle } from "./LibraryPanel";
 
 const chipBtn = (hover = "bh-line-ink") => ({ className: hover, style: outline({ minHeight: 34, padding: "0 9px", fontSize: 13 }) });
@@ -32,12 +33,11 @@ export default function SidePanel() {
           <Selection />
           <ProposalView />
           <ContextPanel />
-          <Checks />
+          <SuggestionsPanel />
           <Kicker style={{ marginTop: 22 }}>ADJUST THE WHOLE WORKSHOP</Kicker>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
             {WORKSHOP_CMDS.map(([l, c]) => <button key={c} onClick={() => store.propose(c, c === "cut" ? 30 : null)} {...chipBtn()}>{l}</button>)}
           </div>
-          <Stress />
           <ShareExport />
         </>
       )}
@@ -103,15 +103,24 @@ function ProposalView() {
   if (!P) return null;
   const B = RDB(), items = S.items, b = S.brief;
   const on = P.changes.filter(c => c.on), after = eng(applyChanges(items, on.filter(c => c.type !== "brief"))), ta = B.total(after), tb = B.total(d.eb);
+  // When a change pushes the workshop past the time available, offer to take the time from the longest other activity.
+  const touched = new Set(P.changes.map(c => c.id)), excess = d.avail && ta > d.avail && ta > tb ? Math.min(ta - d.avail, ta - tb) : 0;
+  const longest = excess ? items.filter(x => x.kind === "block" && x.zone === "live" && x.role !== "breaks" && !touched.has(x.id)).sort((a, c) => (c.mins || 0) - (a.mins || 0))[0] : undefined;
+  const fit = longest && (longest.mins || 0) - Math.ceil(excess / 5) * 5 >= 10 ? { x: longest, n: Math.ceil(excess / 5) * 5 } : null;
   return (
     <div role="dialog" aria-label={P.title} style={{ border: "1px solid " + C.accent, padding: "14px 16px", marginBottom: 18, background: "#140f0d" }}>
       <Kicker color={C.accent}>PROPOSED CHANGE</Kicker>
       <div style={{ marginTop: 4, fontFamily: DISPLAY, fontWeight: 500, fontSize: 20, lineHeight: 1.1 }}>{P.title}</div>
       {!!P.sub && <div style={{ marginTop: 4, fontSize: 13, lineHeight: 1.4, color: C.mute }}>{P.sub}</div>}
       {ta !== tb && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "baseline", marginTop: 8, fontSize: 15 }}>
-          <span style={{ color: C.mute, textDecoration: "line-through" }}>{hm(tb)}</span><span>→</span><span>{hm(ta) + (d.avail ? " of " + hm(d.avail) : "")}</span>
+        <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "2px 12px", marginTop: 10, fontSize: 14 }}>
+          <span style={{ color: C.mute }}>Current</span><span style={{ color: C.mute }}>{hm(tb) + (d.avail ? " / " + hm(d.avail) : "")}</span>
+          <span style={{ color: C.mute }}>After</span><span style={{ color: d.avail && ta > d.avail && ta > tb ? C.accent : C.ink }}>{hm(ta) + (d.avail ? " / " + hm(d.avail) : "")}</span>
         </div>
+      )}
+      {fit && (
+        <button onClick={() => store.set(s => ({ proposal: s.proposal && { ...s.proposal, title: s.proposal.title + " + shorten " + fit.x.title, changes: s.proposal.changes.concat([{ type: "mins", id: fit.x.id, to: (fit.x.mins || 0) - fit.n, label: "Compress", why: "Keeps the workshop within the time available.", saved: fit.n, on: true }]) } }))}
+          style={outline({ marginTop: 8, minHeight: 34, padding: "0 10px", fontSize: 13, border: "1px solid " + C.edge })}>Also shorten {fit.x.title} by {fit.n} min to fit</button>
       )}
       {P.changes.map((c, ci) => {
         const x = c.id ? items.find(y => y.id === c.id) : undefined, ni = c.ref ? RDL().get(c.ref) : undefined;
@@ -141,52 +150,11 @@ function ProposalView() {
       })}
       {!P.changes.length && <p style={{ margin: "8px 0 0", fontSize: 14, color: C.mute }}>Nothing needs to change.</p>}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
-        <button onClick={() => store.acceptProposal()} style={accent({ minHeight: 42, padding: "0 14px", fontSize: 14 })}>{P.changes.length ? (on.length === P.changes.length ? "Accept all" : "Accept " + on.length + " of " + P.changes.length) : "Close"}</button>
-        <button onClick={() => store.set({ proposal: null })} style={outline({ border: "1px solid " + C.edge, minHeight: 42, padding: "0 14px", fontSize: 14 })}>Reject</button>
+        <button onClick={() => store.acceptProposal()} style={accent({ minHeight: 42, padding: "0 14px", fontSize: 14 })}>{P.changes.length ? (on.length === P.changes.length ? "Apply" : "Apply " + on.length + " of " + P.changes.length) : "Close"}</button>
+        <button onClick={() => store.set({ proposal: null })} style={outline({ border: "1px solid " + C.edge, minHeight: 42, padding: "0 14px", fontSize: 14 })}>Cancel</button>
+        {P.changes.length > 1 && <span style={{ alignSelf: "center", fontSize: 12, color: C.mute }}>Untick a change to leave it out.</span>}
       </div>
     </div>
-  );
-}
-
-function Checks() {
-  const { store, d } = useBuilder();
-  const obs = d.ins.filter(o => !o.at);
-  return (
-    <>
-      <KickerRow style={{ marginTop: 22 }} left="CHECKS" right={d.ins.length ? String(d.ins.length) : ""} />
-      {obs.map((o, i) => (
-        <div key={i} style={{ padding: "10px 0", borderBottom: "1px solid " + C.rule }}>
-          <div style={{ fontSize: 14, lineHeight: 1.4, color: o.sev === "high" ? C.accent : C.ink }}>{o.t}</div>
-          <div style={{ marginTop: 3, fontSize: 13, lineHeight: 1.4, color: C.mute }}>{o.fix}</div>
-          {o.cmd && <button onClick={() => store.propose(o.cmd!, o.n)} style={outline({ marginTop: 6, border: "1px solid " + C.edge, minHeight: 32, padding: "0 10px", fontSize: 13 })}>Propose fix</button>}
-        </div>
-      ))}
-      {!obs.length && <p style={{ margin: "8px 0 0", fontSize: 14, lineHeight: 1.45, color: C.mute }}>{!d.L.hasBlocks ? "Add blocks and Builder will check sequence, timing and inputs as you go." : d.ins.length ? "The rest are flagged on the canvas, next to the block they affect." : "Nothing flagged. Run a stress test to check it properly."}</p>}
-    </>
-  );
-}
-
-function Stress() {
-  const { S, store, d } = useBuilder();
-  const st = S.stress ? RDB().stress(S.brief, d.eb).map(r => (r.k === "Timing" && !d.avail ? { ...r, ok: true, msg: "No time limit set. Add one in Workshop context to check fit." } : r)) : [];
-  const groups = ([["HIGH PRIORITY", C.accent, st.filter(r => !r.ok && SEVERE.includes(r.k))], ["WORTH FIXING", C.ink, st.filter(r => !r.ok && !SEVERE.includes(r.k))], ["HOLDING UP", C.mute, st.filter(r => r.ok)]] as const).filter(g => g[2].length);
-  return (
-    <>
-      <button onClick={() => store.set({ stress: true })} style={solid({ marginTop: 22, width: "100%", minHeight: 46, fontSize: 15 })}>{S.stress ? "Stress test · re-run after changes" : "Stress test"}</button>
-      {S.stress && groups.map(([k, color, rows]) => (
-        <div key={k} style={{ marginTop: 14 }}>
-          <Kicker color={color}>{k}</Kicker>
-          {rows.map(r => (
-            <div key={r.k} style={{ padding: "9px 0", borderBottom: "1px solid " + C.hair }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12, color: C.mute }}><span>{r.k}</span><span>{STRESS_Q[r.k] || ""}</span></div>
-              <div style={{ marginTop: 3, fontSize: 14, lineHeight: 1.4 }}>{r.msg}</div>
-              {!r.ok && <div style={{ marginTop: 2, fontSize: 13, color: C.mute }}>Suggested fix: {r.fix}</div>}
-              {!r.ok && STRESS_FIX[r.k] && <button onClick={() => store.propose(STRESS_FIX[r.k])} style={outline({ marginTop: 6, border: "1px solid " + C.edge, minHeight: 32, padding: "0 10px", fontSize: 13 })}>Propose fix</button>}
-            </div>
-          ))}
-        </div>
-      ))}
-    </>
   );
 }
 

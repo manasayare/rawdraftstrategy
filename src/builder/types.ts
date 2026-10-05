@@ -85,6 +85,8 @@ export type Workshop = {
   from?: string;
   context?: WorkshopContext;
   session?: Session | null;
+  /** Suggestions set aside: id → what they depended on ("*" = not relevant for this workshop). */
+  dismissed?: Record<string, string>;
 };
 
 export type LibFilters = { q: string; stage: string; time: string; people: string; format: string; output: string; type: string };

@@ -33,15 +33,6 @@ export const WORKSHOP_CMDS: [string, string][] = [
   ["Add customer evidence", "evidence"], ["More divergence", "diverge"], ["Improve convergence", "converge"], ["Create pre-work", "prework"], ["Easier to facilitate", "easy"], ["Add a break", "break"]
 ];
 
-// Stress test
-export const SEVERE = ["Decision", "Authority", "Evidence", "Timing", "Outcome"];
-export const STRESS_FIX: Record<string, string> = { Decision: "decision", Authority: "owner", Evidence: "evidence", Timing: "fit", Divergence: "diverge", Convergence: "converge", Participation: "big", Load: "break", "Follow through": "commit" };
-export const STRESS_Q: Record<string, string> = {
-  Question: "Is the question specific enough?", Outcome: "Does it produce something tangible?", Decision: "Is there a decision?", Authority: "Will the decision owner be present?",
-  Evidence: "Where does reality enter?", Sequence: "Do outputs feed later activities?", Divergence: "Are alternatives generated?", Convergence: "Is there time to choose?",
-  Participation: "Can everyone contribute?", Load: "Is it cognitively realistic?", Timing: "Does it fit?", "Follow through": "Who owns what happens next?"
-};
-
 export const BLANK_NOTICE = "Blank workshop. Drag from the Library, or use + Structure for breaks, sections and custom blocks.";
 export const BIG_GROUPS = ["11 to 20", "20+"];
 

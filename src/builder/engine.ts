@@ -34,7 +34,6 @@ export type EngBlock = { id: string; role: string; label: string; ref?: string |
 
 export type Insight = { sev: "high" | "mid" | "low"; t: string; fix: string; cmd?: string; n?: number; at?: string };
 export type FlowRow = { id: string; uses: { k: string; ok: boolean }[]; makes: string[] };
-export type StressRow = { k: string; ok: boolean; msg: string; fix: string };
 export type Alternative = { id: string; title: string; why: string; meta: string };
 export type Suggestion = { it: LibItem; why: string; role: string };
 export type Detail = {
@@ -53,9 +52,7 @@ export type RDBApi = {
   roleOf(it: LibItem | null | undefined): string;
   minsOf(it: LibItem | null | undefined): number;
   suggest(blocks: EngBlock[], anchor: Partial<EngBlock> | null, dir: "before" | "after"): Suggestion[];
-  insights(b: object, blocks: EngBlock[]): Insight[];
   flow(blocks: EngBlock[]): FlowRow[];
-  stress(b: object, blocks: EngBlock[]): StressRow[];
   alternatives(b: object, blk: Partial<EngBlock>): Alternative[];
   command(cmd: string, b: object, blocks: EngBlock[], avail: number, n?: number | null): { title: string; short?: string; changes: any[] };
   impact(blocks: EngBlock[], c: any): string;

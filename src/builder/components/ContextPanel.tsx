@@ -19,7 +19,7 @@ export default function ContextPanel() {
   const ta = { ...field, display: "block", width: "100%", marginTop: 4, padding: "8px 10px", fontFamily: BODY, fontSize: 14, lineHeight: 1.4, resize: "vertical" } as const;
 
   return (
-    <>
+    <div id="rd-context">
       <button onClick={() => store.set(s => ({ ctx: !s.ctx }))} aria-expanded={S.ctx ? "true" : "false"} style={{ display: "flex", justifyContent: "space-between", gap: 10, width: "100%", textAlign: "left", background: "none", border: 0, borderBottom: "1px solid " + C.rule, color: C.ink, padding: "0 0 8px", cursor: "pointer" }}>
         <span style={{ minWidth: 0 }}>
           <span style={{ display: "block", fontFamily: DISPLAY, fontWeight: 500, fontSize: 19 }}>Context</span>
@@ -73,6 +73,6 @@ export default function ContextPanel() {
           <button onClick={() => store.set({ phase: "import" })} className="bh-ink" style={textBtn({ marginTop: 8, color: C.soft, fontSize: 14, minHeight: 32 })}>+ Add context</button>
         </>
       )}
-    </>
+    </div>
   );
 }

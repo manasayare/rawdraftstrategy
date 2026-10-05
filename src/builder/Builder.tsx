@@ -27,7 +27,8 @@ export default function Builder(props: BuilderProps) {
 
   useEffect(() => { window.scrollTo(0, 0); }, [S.phase, S.wid]);
 
-  const d = useMemo(() => (S.ready ? derive(S) : null), [S]);
+  // Recomputed when the workshop changes, not on every tick of the run clock.
+  const d = useMemo(() => (S.ready ? derive(S) : null), [S.ready, S.items, S.brief, S.start, S.context, S.proposal, S.w, S.dismissed, S.workshops, S.session, S.wid, S.name, S.view]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!d) return <section data-screen-label="Builder" style={{ minHeight: "60vh" }} />;
 
   const wide = d.wide;

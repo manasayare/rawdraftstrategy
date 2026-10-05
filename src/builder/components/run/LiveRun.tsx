@@ -24,6 +24,7 @@ export default function LiveRun() {
   const [overAck, setOverAck] = useState<string | null>(null);
   const [lateIgnored, setLateIgnored] = useState<number | null>(null);
   const [confirmEnd, setConfirmEnd] = useState(false);
+  const [breakIgnored, setBreakIgnored] = useState<string | null>(null);
   useEffect(() => { if (!confirmEnd) return; const t = setTimeout(() => setConfirmEnd(false), 4000); return () => clearTimeout(t); }, [confirmEnd]);
   if (!cur) return null;
 
@@ -40,6 +41,18 @@ export default function LiveRun() {
   const flash = S.flash > 0 && now - S.flash < 2500;
   const timerSize = wide ? 400 : mobile ? Math.min(S.w - 64, 300) : 340;
   const over = rem < 0 && overAck !== cur.id;
+
+  // Break due: worked continuously for over 100 minutes and the next break is far off.
+  const breakTip = (() => {
+    if (isBreak || breakIgnored === cur.id) return null;
+    let worked = el / 60000;
+    for (let k = ss.i - 1; k >= 0; k--) { const y = byId.get(ss.order[k]); if (!y || y.role === "breaks" || y.role === "energise") break; if (!ss.skipped.includes(y.id)) worked += (ss.actual[y.id] || 0) / 60000; }
+    if (worked < 100) return null;
+    let until = Math.max(0, rem) / 60000, breakId: string | undefined;
+    for (let k = ss.i + 1; k < ss.order.length; k++) { const y = byId.get(ss.order[k]); if (!y || ss.skipped.includes(y.id)) continue; if (y.role === "breaks") { breakId = y.id; break; } until += planOf(ss, y); }
+    if (breakId && until <= 30) return null;
+    return { breakId, text: "The group has worked " + hm(Math.round(worked)) + " without a break." + (breakId ? " The next one is in " + hm(Math.round(until)) + "." : " There's no break left in the plan.") };
+  })();
 
   return (
     <div style={{ flex: "1 1 auto", display: "flex", flexDirection: "column", minHeight: 0 }}>
@@ -69,10 +82,19 @@ export default function LiveRun() {
 
       {showLate && (
         <div role="status" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 10px", padding: "10px clamp(16px,3vw,36px)", background: "#1a0f0b", borderBottom: "1px solid " + C.accent }}>
-          <span style={{ fontSize: 13, letterSpacing: ".07em", color: C.accent, marginRight: 8 }}>{late} MIN BEHIND</span>
+          <span style={{ fontSize: 13, letterSpacing: ".07em", color: C.accent, marginRight: 8 }}>{late} MIN BEHIND · SUGGESTED</span>
           {recov.map(r => <button key={r.key} onClick={() => store.runApply(r.apply)} title={r.detail} style={outline({ minHeight: 36, padding: "0 12px", fontSize: 14, border: "1px solid " + C.edge })}>{r.label}</button>)}
           <button onClick={() => setLateIgnored(late)} title={"Accept finishing at " + clock(Math.round(sch.projectedEnd))} style={outline({ minHeight: 36, padding: "0 12px", fontSize: 14, border: "1px solid " + C.edge })}>Finish later ({clock(Math.round(sch.projectedEnd))})</button>
           <button onClick={() => setLateIgnored(late)} style={textBtn({ color: C.mute, fontSize: 14, minHeight: 36, padding: "0 6px" })}>Ignore</button>
+        </div>
+      )}
+
+      {breakTip && !showLate && (
+        <div role="status" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 10px", padding: "10px clamp(16px,3vw,36px)", borderBottom: "1px solid " + C.rule }}>
+          <span style={{ fontSize: 14, color: C.soft, marginRight: 8 }}>{breakTip.text}</span>
+          {breakTip.breakId ? <button onClick={() => store.runBreakNext(breakTip.breakId!)} style={outline({ minHeight: 36, padding: "0 12px", fontSize: 14, border: "1px solid " + C.edge })}>Take the break next</button>
+            : <button onClick={() => store.runAddBreak()} style={outline({ minHeight: 36, padding: "0 12px", fontSize: 14, border: "1px solid " + C.edge })}>Add a 10-minute break next</button>}
+          <button onClick={() => setBreakIgnored(cur.id)} style={textBtn({ color: C.mute, fontSize: 14, minHeight: 36, padding: "0 6px" })}>Not now</button>
         </div>
       )}
 

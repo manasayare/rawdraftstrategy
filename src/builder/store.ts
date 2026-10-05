@@ -18,6 +18,7 @@ import { scriptFor } from "./run/script";
 import { publishPresent } from "./run/present";
 import { cleanItems, libId, loadMyLibrary, saveMyLibrary, type MyLibrary, type MyTemplate } from "./mylib";
 import { summaryMarkdown } from "./review";
+import type { SAction, Suggestion } from "./suggest/rules";
 import { newSource } from "./import/toWorkshop";
 
 export type State = {
@@ -44,7 +45,12 @@ export type State = {
   drag: (DragPayload & { w: number }) | null;
   drop: Drop | null;
   proposal: Proposal | null;
-  stress: boolean;
+  /** Dismissed suggestions for the open workshop. */
+  dismissed: Record<string, string>;
+  /** Block whose inline suggestion is expanded on the canvas. */
+  sugOpen: string | null;
+  /** Show optional suggestions too ("Review workshop"). */
+  reviewAll: boolean;
   notice: string;
   /** Screen-reader announcement. */
   live: string;
@@ -116,7 +122,7 @@ export class BuilderStore {
       ready: enginesReady(), w: window.innerWidth, reducedMotion: !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
       phase: cur ? "bench" : "home", workshops: ws.workshops, wid: cur ? cur.id : null,
       items: cur?.items || [], brief: cur?.brief || {}, name: cur ? cur.name : "Untitled workshop", start: cur?.start || "09:30", view: cur?.view || "timeline", context: cur?.context || null, session: cur?.session || null, hist: [],
-      open: null, sel: [], drag: null, drop: null, proposal: null, stress: false, notice: "", live: "", center: "canvas", sheet: null,
+      open: null, sel: [], drag: null, drop: null, proposal: null, dismissed: cur?.dismissed || {}, sugOpen: null, reviewAll: false, notice: "", live: "", center: "canvas", sheet: null,
       lib: { ...BLANK_FILTERS }, filters: false, libPrev: null, libN: 24, suggestFor: null, pendingAdd: null,
       alts: null, ctx: false, cmp: "90", copied: false, prompted: null, exporting: null, sharing: false, shareMsg: "",
       runView: null, runOverlay: null, readyChecklist: {}, outputPrompt: null, captureType: "decision", captureDraft: "", focusCapture: 0, flash: 0, mylib: loadMyLibrary(), libTab: "raw", importSeed: null
@@ -138,7 +144,7 @@ export class BuilderStore {
 
   /** Current workshop merged back into the list, with "updated" bumped only when its content changed. */
   workshopList(s: State = this.state): Workshop[] {
-    return s.workshops.map(w => (w.id === s.wid ? { ...w, items: s.items, brief: s.brief, name: s.name, start: s.start, view: s.view, context: s.context || undefined, session: s.session, updated: this.stamps[w.id] || w.updated } : w));
+    return s.workshops.map(w => (w.id === s.wid ? { ...w, items: s.items, brief: s.brief, name: s.name, start: s.start, view: s.view, context: s.context || undefined, session: s.session, dismissed: s.dismissed, updated: this.stamps[w.id] || w.updated } : w));
   }
   private persist() {
     const s = this.state;
@@ -207,14 +213,14 @@ export class BuilderStore {
     const w: Workshop = { id, name: "Untitled workshop", items: [], brief: {}, chat: [], start: "09:30", view: "timeline", created: Date.now(), updated: Date.now(), ...o };
     this.set(s => ({
       workshops: this.workshopList(s).concat([w]), wid: id, items: norm(w.items), brief: w.brief, name: w.name, start: w.start, view: w.view, context: w.context || null, session: w.session || null, hist: [],
-      phase: "bench", center: "canvas", open: null, sel: [], proposal: null, stress: false, ...extra
+      phase: "bench", center: "canvas", open: null, sel: [], proposal: null, dismissed: w.dismissed || {}, sugOpen: null, ...extra
     }));
   }
   openWorkshop(id: string) {
     this.set(s => {
       const list = this.workshopList(s), w = list.find(x => x.id === id);
       if (!w) return {};
-      return { workshops: list, wid: id, items: w.items || [], brief: w.brief || {}, name: w.name, start: w.start || "09:30", view: w.view || "timeline", context: w.context || null, session: w.session || null, hist: [], phase: "bench", center: "canvas", open: null, sel: [], proposal: null, notice: "" };
+      return { workshops: list, wid: id, items: w.items || [], brief: w.brief || {}, name: w.name, start: w.start || "09:30", view: w.view || "timeline", context: w.context || null, session: w.session || null, dismissed: w.dismissed || {}, sugOpen: null, hist: [], phase: "bench", center: "canvas", open: null, sel: [], proposal: null, notice: "" };
     });
   }
   goHome() { this.set(s => ({ workshops: this.workshopList(s), phase: "home", open: null, sel: [], proposal: null, sheet: null })); }
@@ -279,12 +285,12 @@ export class BuilderStore {
   }
 
   // ---- editing ----
-  /** Every structural edit goes through here: snapshot for undo, normalise, clear the stress result. */
+  /** Every structural edit goes through here: snapshot for undo, then normalise. */
   commit(fn: (items: Item[]) => Item[], msg?: string, extra: Partial<State> = {}) {
-    this.set(s => ({ hist: s.hist.concat([s.items]).slice(-40), items: norm(fn(clone(s.items))), stress: false, live: msg || "", ...extra }));
+    this.set(s => ({ hist: s.hist.concat([s.items]).slice(-40), items: norm(fn(clone(s.items))), live: msg || "", ...extra }));
   }
   undo() { this.set(s => (s.hist.length ? { items: s.hist[s.hist.length - 1], hist: s.hist.slice(0, -1), proposal: null, live: "Undone" } : {})); }
-  edit(id: string, patch: Partial<Item>) { this.set(s => ({ items: s.items.map(x => (x.id === id ? { ...x, ...patch } : x)), stress: false })); }
+  edit(id: string, patch: Partial<Item>) { this.set(s => ({ items: s.items.map(x => (x.id === id ? { ...x, ...patch } : x)) })); }
   setCfg(id: string, k: string, v: unknown) { this.set(s => ({ items: s.items.map(x => (x.id === id ? { ...x, cfg: { ...x.cfg, [k]: v } } : x)) })); }
   moveBy(id: string, dir: number) {
     const title = this.state.items.find(x => x.id === id)?.title || "section";
@@ -336,11 +342,29 @@ export class BuilderStore {
   // ---- proposals ----
   propose(cmd: string, n?: number | null, sub?: string | null, scope?: string[]) {
     const s = this.state;
-    if (cmd === "stress") { this.set({ stress: true }); return; }
     const P = scope ? selectionProposal(cmd as SelCmd, s.items, s.brief, scope, n) : workshopProposal(cmd, s.items, s.brief, available(s.brief), n, sub);
     P.changes.forEach(c => (c.on = true));
     this.set({ proposal: P, open: null, sheet: this.wide ? null : "assist" });
   }
+  /** Shows a suggestion's change as a proposal: nothing is applied until the person accepts. */
+  preview(P: Proposal) {
+    const copy: Proposal = JSON.parse(JSON.stringify(P));
+    copy.changes.forEach(c => (c.on = true));
+    this.set({ proposal: copy, open: null, sheet: this.wide ? null : "assist" });
+  }
+  runSuggestion(a: SAction) {
+    const wide = this.wide;
+    if (a.kind === "propose") this.preview(a.proposal);
+    else if (a.kind === "command") this.propose(a.cmd, a.n ?? null);
+    else if (a.kind === "context") { this.set({ ctx: true, open: null, sheet: wide ? null : "assist" }); setTimeout(() => document.getElementById("rd-context")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); }
+    else if (a.kind === "brief") { if (typeof a.value === "string") this.onContext(a.key, a.value); else this.setBrief(a.key, a.value); }
+    else if (a.kind === "alts") this.set({ open: a.id, alts: a.id, sel: [a.id], sheet: wide ? null : "assist" });
+    else if (a.kind === "methods") this.set({ lib: { ...BLANK_FILTERS, stage: a.stage }, filters: true, libTab: "raw", sheet: wide ? null : "lib" });
+    else if (a.kind === "open") this.set({ open: a.id, sheet: wide ? null : "assist" });
+  }
+  /** "Keep as is" holds until what the suggestion depends on changes; "Not relevant" holds for this workshop. */
+  dismissSuggestion(sg: Suggestion, forGood = false) { this.set(s => ({ dismissed: { ...s.dismissed, [sg.id]: forGood ? "*" : sg.sig }, sugOpen: null })); }
+  restoreSuggestions() { this.set({ dismissed: {} }); }
   toggleChange(ci: number) { this.set(s => ({ proposal: s.proposal && { ...s.proposal, changes: s.proposal.changes.map((y, yi) => (yi === ci ? { ...y, on: !y.on } : y)) } })); }
   acceptProposal() {
     this.set(s => {
@@ -348,7 +372,7 @@ export class BuilderStore {
       const sel = s.proposal.changes.filter(c => c.on), br = { ...s.brief } as Record<string, unknown>;
       sel.filter(c => c.type === "brief").forEach(c => (br[c.key as string] = c.val));
       return {
-        hist: s.hist.concat([s.items]).slice(-40), items: applyChanges(s.items, sel.filter(c => c.type !== "brief")), brief: br as Brief, proposal: null, stress: false,
+        hist: s.hist.concat([s.items]).slice(-40), items: applyChanges(s.items, sel.filter(c => c.type !== "brief")), brief: br as Brief, proposal: null,
         notice: sel.length ? "Applied " + sel.length + " change" + (sel.length > 1 ? "s" : "") + ". Undo if it is not right." : "", live: "Changes applied"
       };
     });
@@ -476,7 +500,7 @@ export class BuilderStore {
     this.set(s => ({ hist: s.hist.concat([s.items]).slice(-40) }));
     const mv = (ev: PointerEvent) => {
       const nm = Math.max(5, m0 + Math.round((ev.clientY - y0) / k / 5) * 5);
-      if (nm !== this.state.items.find(y => y.id === id)?.mins) this.set(s => ({ items: s.items.map(y => (y.id === id ? { ...y, mins: nm } : y)), stress: false }));
+      if (nm !== this.state.items.find(y => y.id === id)?.mins) this.set(s => ({ items: s.items.map(y => (y.id === id ? { ...y, mins: nm } : y)) }));
     };
     const up = () => {
       window.removeEventListener("pointermove", mv);
@@ -621,6 +645,16 @@ export class BuilderStore {
     this.set({ live: (x?.title || "Backup") + " is next" });
   }
   runApply(fn: (ss: Session) => Session) { this.setSession(fn); }
+  /** Takes the next scheduled break straight after the current activity. */
+  runBreakNext(breakId: string) { this.setSession(ss => { const o = ss.order.filter(x => x !== breakId); o.splice(o.indexOf(curId(ss)) + 1, 0, breakId); return { ...ss, order: o }; }); }
+  /** Adds a 10-minute break after the current activity, to the plan and to this run. */
+  runAddBreak() {
+    const cur = this.current();
+    if (!cur) return;
+    const br = { ...mkStruct("break"), mins: 10 };
+    this.commit(its => { its.splice(its.findIndex(x => x.id === cur.id) + 1, 0, br); return its; }, "Break added");
+    this.setSession(ss => { const o = ss.order.slice(); o.splice(ss.i + 1, 0, br.id); return { ...ss, order: o }; });
+  }
   /** Ends the workshop and opens Review. */
   runEnd() {
     this.setSession(ss => { const el = elapsed(ss), actual = { ...ss.actual }; if (el > 0 && !ss.endedAt) actual[curId(ss)] = el; return { ...ss, actual, t0: null, acc: 0, endedAt: ss.endedAt || Date.now() }; });

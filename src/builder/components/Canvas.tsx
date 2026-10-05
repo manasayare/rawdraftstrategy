@@ -3,7 +3,8 @@
 // sections and blocks. Blocks in a parallel group render side by side as lanes.
 import type { CSSProperties } from "react";
 import { BLANK_NOTICE, C } from "../constants";
-import { RDB, RDL, type Insight } from "../engine";
+import { RDB, RDL } from "../engine";
+import { SuggestionCard, SuggestionChip } from "./Suggestions";
 import type { DayLayout, GroupRow, Row, SectionRow } from "../layout";
 import { STAGE_CATS } from "../library";
 import { mins, mkStruct } from "../items";
@@ -126,26 +127,16 @@ function Hero() {
 function RowView({ r, zone }: { r: Row; zone: Zone }) {
   const { S, d } = useBuilder();
   const blocks = S.view === "blocks", isSection = r.kind === "section", isPar = r.kind === "group" && r.lanes.length > 1;
-  const notes = r.kind === "group" ? r.lanes.flatMap(o => d.byAt[o.x.id] || []) : [];
+  // An expanded inline suggestion for a block in this row.
+  const notes = r.kind === "group" && S.sugOpen && r.lanes.some(o => o.x.id === S.sugOpen) ? d.byAt[S.sugOpen] || [] : [];
   return (
     <div data-first={r.first} data-last={r.last} data-zone={zone}
       style={{ display: "flex", flexDirection: blocks && !isSection ? "row" : "column", alignItems: "stretch", flex: blocks ? (isSection ? "1 1 100%" : "0 0 auto") : "0 0 auto", width: blocks && !isSection ? (isPar ? Math.min(3, (r as GroupRow).lanes.length) * 230 + 40 : 236) + "px" : "100%", maxWidth: "100%" }}>
       <Gap on={S.drop?.key === "ins:" + zone + ":" + r.first} />
       <div style={{ flex: "1 1 auto", minWidth: 0, display: "flex", flexDirection: "column" }}>
-        {notes.map((o, i) => <CanvasNote key={i} o={o} />)}
         {r.kind === "section" ? <SectionView r={r} zone={zone} /> : <GroupView r={r} zone={zone} />}
+        {notes.length > 0 && <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 6, marginLeft: zone === "live" && !blocks ? 56 : 0 }}>{notes.map(s => <SuggestionCard key={s.id} s={s} compact />)}</div>}
       </div>
-    </div>
-  );
-}
-
-function CanvasNote({ o }: { o: Insight }) {
-  const { store } = useBuilder();
-  const high = o.sev === "high";
-  return (
-    <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: "6px 14px", alignItems: "center", border: "1px dashed " + (high ? C.accent : C.faint), background: C.bg, padding: "8px 12px", marginBottom: 6 }}>
-      <span style={{ fontSize: 14, lineHeight: 1.4, minWidth: 0, flex: "1 1 240px" }}><span style={{ color: high ? C.accent : C.ink }}>{o.t}</span><span style={{ color: C.mute }}> {o.fix}</span></span>
-      {o.cmd && <button onClick={() => store.propose(o.cmd!, o.n)} style={outline({ border: "1px solid " + C.edge, minHeight: 32, padding: "0 10px", fontSize: 13 })}>Propose fix</button>}
     </div>
   );
 }
@@ -241,6 +232,7 @@ function BlockCard({ x, t0 }: { x: Item; t0: number }) {
           </div>
         )}
         {!!pend && <div style={{ padding: "6px 12px 0 30px", fontSize: 13, color: C.accent }}>Proposed: {pend}</div>}
+        {(d.byAt[x.id] || []).length > 0 && <div style={{ padding: "6px 12px 0 30px" }}><SuggestionChip id={x.id} /></div>}
         <div style={{ flex: "1 1 auto", minHeight: 8 }} />
         {live && view !== "blocks" && (
           <div onPointerDown={e => store.resizeStart(e, x.id, k)} aria-hidden="true" title="Drag to change duration" style={{ touchAction: "none", height: 12, cursor: "ns-resize", display: "flex", alignItems: "center", justifyContent: "center" }}>
