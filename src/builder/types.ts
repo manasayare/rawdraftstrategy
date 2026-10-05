@@ -154,7 +154,8 @@ export type Capture = {
   /** Parking lot / follow-up handling after the session. */
   status?: "open" | "action" | "followup" | "resolved";
 };
-export type RunSettings = { sound: "soft" | "visual" | "silent"; show: Record<string, boolean> };
+/** clicks: sound on facilitator actions (next, pause, capture). haptics: vibration where the device allows. Both default to on. */
+export type RunSettings = { sound: "soft" | "visual" | "silent"; clicks?: boolean; haptics?: boolean; show: Record<string, boolean> };
 export type Session = {
   id: string;
   startedAt: number | null;

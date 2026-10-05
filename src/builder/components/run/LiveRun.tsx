@@ -2,6 +2,7 @@
 // The facilitator desktop: the current activity dominates (timer, script), with the workshop clock,
 // previous and next, quick capture and notes beside it. Everything has a keyboard shortcut.
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { canVibrate, cue } from "../../run/cues";
 import { C } from "../../constants";
 import { mins } from "../../items";
 import { CAPTURE_TYPES, SHOW_LABELS, curId, elapsed, planOf, recoveryOptions, schedule } from "../../run/session";
@@ -362,6 +363,18 @@ function Overlay() {
                 <input type="radio" name="sound" checked={ss.settings.sound === k} onChange={() => store.setRunSettings({ sound: k })} style={{ width: 18, height: 18, accentColor: C.accent }} />{l}
               </label>
             ))}
+            <Kicker style={{ marginTop: 20 }}>FEEDBACK</Kicker>
+            {([["clicks", "Sound on next, pause and capture", ss.settings.sound !== "soft"], ["haptics", canVibrate() ? "Vibrate on this device" : "Vibrate (not available in this browser)", !canVibrate() || ss.settings.sound === "silent"]] as const).map(([k, l, off]) => (
+              <label key={k} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: "1px solid " + C.hair, fontSize: 15, cursor: off ? "default" : "pointer", color: off ? C.mute : C.ink }}>
+                <input type="checkbox" disabled={off} checked={!off && ss.settings[k] !== false} onChange={e => store.setRunSettings({ [k]: e.target.checked })} style={{ width: 18, height: 18, accentColor: C.accent }} />{l}
+              </label>
+            ))}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+              {([["next", "Test a tap"], ["warn", "2 min left"], ["due", "Time's up"]] as const).map(([c, l]) => (
+                <button key={c} onClick={() => cue(c, ss.settings)} className="bh-line-mute" style={outline({ minHeight: 36, padding: "0 12px", fontSize: 13, border: "1px solid " + C.edge })}>{l}</button>
+              ))}
+            </div>
+            <p style={{ margin: "10px 0 0", fontSize: 13, color: C.mute }}>Sound plays from this device. iPhones don't allow vibration from a web page.</p>
           </div>
         )}
       </div>

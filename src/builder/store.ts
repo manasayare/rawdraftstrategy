@@ -14,6 +14,7 @@ import {
 } from "./types";
 import { emptyBrief } from "./import/parse";
 import { CAPTURE_TYPES, capture, curId, elapsed, newSession, planOf } from "./run/session";
+import { cue, unlockAudio, type Cue } from "./run/cues";
 import { scriptFor } from "./run/script";
 import { publishPresent } from "./run/present";
 import { cleanItems, libId, loadMyLibrary, saveMyLibrary, type MyLibrary, type MyTemplate } from "./mylib";
@@ -95,13 +96,6 @@ export const WIDE = 1100;
 const sig = (s: Pick<State, "items" | "name" | "brief" | "start">) => JSON.stringify([s.items, s.name, s.brief, s.start]);
 
 type Bridge = { pdf(doc: unknown): Promise<void>; docx(doc: unknown): Promise<void>; share(w: unknown, prev?: unknown): Promise<{ id: string; key: string; url: string }>; load(id: string): Promise<Partial<Workshop>> };
-function chime() {
-  try {
-    const A = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext, ctx = new A();
-    [660, 880].forEach((f, i) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine"; o.frequency.value = f; const t = ctx.currentTime + i * 0.22; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.08, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6); o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + 0.65); });
-    setTimeout(() => ctx.close(), 1200);
-  } catch {}
-}
 const bridge = () => (window as unknown as { RDX?: Bridge }).RDX;
 
 export class BuilderStore {
@@ -592,6 +586,7 @@ export class BuilderStore {
     if (ss?.startedAt && !ss.endedAt) { this.set({ runView: "live", phase: "bench" }); this.startTicking(); return; }
     this.set({ runView: "ready", phase: "bench", readyChecklist: ss && !ss.startedAt ? ss.checklist : {} });
   }
+  private cue(c: Cue) { const ss = this.state.session; cue(c, ss ? ss.settings : { sound: "soft" }); }
   startRun() {
     const s = this.state, now = Date.now();
     const ss = { ...newSession(s.items, s.session), checklist: s.readyChecklist, startedAt: now, t0: now };
@@ -599,6 +594,7 @@ export class BuilderStore {
     this.alerted.clear();
     this.set({ session: ss, runView: "live", outputPrompt: null, notice: "" });
     this.startTicking();
+    this.cue("start");
   }
   private startTicking() {
     if (this.runTimer) return;
@@ -609,6 +605,9 @@ export class BuilderStore {
       if (ss.t0) this.notify();
     }, 250);
     window.addEventListener("keydown", this.onRunKey, true);
+    // After a reload mid-session the browser blocks audio until the first tap or key.
+    window.addEventListener("pointerdown", unlockAudio, { once: true });
+    window.addEventListener("keydown", unlockAudio, { once: true });
   }
   runStop() {
     if (this.runTimer) clearInterval(this.runTimer);
@@ -617,15 +616,20 @@ export class BuilderStore {
   }
   /** Leaves Run mode; a session in progress stays and can be resumed. */
   exitRun() { this.runStop(); this.set({ runView: null, runOverlay: null }); }
-  runPlay() { this.setSession(ss => (ss.endedAt ? ss : ss.t0 ? { ...ss, acc: elapsed(ss), t0: null } : { ...ss, t0: Date.now(), started: ss.started.includes(curId(ss)) ? ss.started : ss.started.concat([curId(ss)]) })); }
+  runPlay() {
+    const was = this.state.session;
+    this.setSession(ss => (ss.endedAt ? ss : ss.t0 ? { ...ss, acc: elapsed(ss), t0: null } : { ...ss, t0: Date.now(), started: ss.started.includes(curId(ss)) ? ss.started : ss.started.concat([curId(ss)]) }));
+    if (was && !was.endedAt) this.cue(was.t0 ? "pause" : "resume");
+  }
   /** Adds (or with a negative n, removes) minutes from the current activity. */
   runAdjust(n: number) {
     const x = this.current();
     if (!x) return;
     this.setSession(ss => ({ ...ss, extra: { ...ss.extra, [x.id]: Math.max(1 - mins(x), (ss.extra[x.id] || 0) + n) } }));
-    if (n > 0) this.alerted.delete(x.id);
+    if (n > 0) this.clearAlerts(x.id);
   }
-  runReset() { this.setSession(ss => ({ ...ss, acc: 0, t0: ss.t0 ? Date.now() : null })); this.alerted.delete(curId(this.state.session!)); }
+  runReset() { this.setSession(ss => ({ ...ss, acc: 0, t0: ss.t0 ? Date.now() : null })); this.clearAlerts(curId(this.state.session!)); }
+  private clearAlerts(id: string) { ["", ":warn", ":over"].forEach(k => this.alerted.delete(id + k)); }
   /** Moves to block k. Time on the block being left is logged; a running clock keeps running. */
   runGo(k: number) {
     this.setSession(ss => {
@@ -647,9 +651,10 @@ export class BuilderStore {
     const ask = x && sc?.output && !ss.outputs[x.id] && x.role !== "breaks" ? x.id : null;
     if (k >= ss.order.length) { this.runEnd(); return; }
     this.runGo(k);
+    this.cue("next");
     if (ask) this.set({ outputPrompt: ask });
   }
-  runBack() { const ss = this.state.session; if (ss && ss.i > 0) this.runGo(ss.i - 1); }
+  runBack() { const ss = this.state.session; if (ss && ss.i > 0) { this.runGo(ss.i - 1); this.cue("back"); } }
   runSkip(id: string, on = true) { this.setSession(ss => ({ ...ss, skipped: on ? ss.skipped.concat([id]) : ss.skipped.filter(z => z !== id) })); }
   /** Puts a backup activity straight after the current one. */
   runActivateBackup(id: string) {
@@ -670,6 +675,7 @@ export class BuilderStore {
   }
   /** Ends the workshop and opens Review. */
   runEnd() {
+    if (this.state.session && !this.state.session.endedAt) this.cue("end");
     this.setSession(ss => { const el = elapsed(ss), actual = { ...ss.actual }; if (el > 0 && !ss.endedAt) actual[curId(ss)] = el; return { ...ss, actual, t0: null, acc: 0, endedAt: ss.endedAt || Date.now() }; });
     this.runStop();
     this.set({ runView: null, runOverlay: null, outputPrompt: null, phase: "review", notice: "" });
@@ -679,6 +685,7 @@ export class BuilderStore {
     if (!t) return;
     this.setSession(ss => capture(ss, type, t, this.current()));
     this.set({ captureDraft: "" });
+    this.cue("capture");
   }
   updateCapture(id: string, patch: Partial<Capture>) { this.setSession(ss => ({ ...ss, captures: ss.captures.map(c => (c.id === id ? { ...c, ...patch } : c)) })); }
   removeCapture(id: string) { this.setSession(ss => ({ ...ss, captures: ss.captures.filter(c => c.id !== id) })); }
@@ -686,16 +693,16 @@ export class BuilderStore {
   setOutput(id: string, text: string) { this.setSession(ss => ({ ...ss, outputs: { ...ss.outputs, [id]: text } })); }
   setRunSettings(p: Partial<Session["settings"]>) { this.setSession(ss => ({ ...ss, settings: { ...ss.settings, ...p } })); }
 
-  /** Soft chime and a visual cue when an activity reaches zero; never more than once per activity. */
+  /** Clock cues, each at most once per activity: two minutes left (on activities of six minutes or more),
+   *  time's up (with the visual flash), and five minutes over. */
   private tickAlerts(ss: Session) {
     const x = this.current();
     if (!x || !ss.t0) return;
-    const rem = planOf(ss, x) * 60000 - elapsed(ss);
-    if (rem <= 0 && !this.alerted.has(x.id)) {
-      this.alerted.add(x.id);
-      if (ss.settings.sound === "soft") chime();
-      if (ss.settings.sound !== "silent") { this.set({ flash: Date.now() }); }
-    }
+    const plan = planOf(ss, x) * 60000, rem = plan - elapsed(ss);
+    const once = (k: string, c: Cue) => { if (this.alerted.has(x.id + k)) return false; this.alerted.add(x.id + k); this.cue(c); return true; };
+    if (plan >= 360000 && rem <= 120000 && rem > 0) once(":warn", "warn");
+    if (rem <= 0 && once("", "due") && ss.settings.sound !== "silent") this.set({ flash: Date.now() });
+    if (rem <= -300000) once(":over", "over");
   }
   private onRunKey = (e: KeyboardEvent) => {
     const s = this.state;
