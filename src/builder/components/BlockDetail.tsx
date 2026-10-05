@@ -60,7 +60,7 @@ export default function BlockDetail({ x }: { x: Item }) {
       if (v === "pre" || v === "after") { mv.zone = v; its.push(mv); return its; }
       mv.zone = "live";
       const next = its.filter(y => y.kind === "day")[+v.slice(3)];
-      its.splice(next ? its.indexOf(next) : its.filter(y => y.zone !== "after").length, 0, mv);
+      its.splice(next ? its.indexOf(next) : its.filter(y => y.zone === "pre" || y.zone === "live").length, 0, mv);
       return its;
     }, x.title + " moved");
   };

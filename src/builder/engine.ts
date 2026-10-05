@@ -62,6 +62,8 @@ export type RDBApi = {
   detail(b: object, blk: Partial<EngBlock>): Detail;
   insertAt(blocks: EngBlock[], role: string): number;
   total(blocks: EngBlock[]): number;
+  compose(b: object): { day?: boolean; role: string; ref?: string | null; title: string; mins: number }[];
+  recommend(b: object): { name: string; why: string };
 };
 export type RDLApi = {
   STAGES: [string, string][];

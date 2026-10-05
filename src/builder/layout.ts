@@ -9,7 +9,7 @@ export type GroupRow = { kind: "group"; par: string | null; first: number; last:
 export type Row = SectionRow | GroupRow;
 export type DayLayout = { index: number; divider: Indexed | null; list: Indexed[]; rows: Row[]; dur: number; end: number };
 export type ZoneLayout = { key: Zone; list: Indexed[]; rows: Row[]; end: number; dur: number };
-export type Layout = { pre: ZoneLayout; after: ZoneLayout; days: DayLayout[]; liveEnd: number; preEnd: number; total: number; hasBlocks: boolean };
+export type Layout = { pre: ZoneLayout; after: ZoneLayout; backup: ZoneLayout; days: DayLayout[]; liveEnd: number; preEnd: number; total: number; hasBlocks: boolean };
 
 function buildRows(list: Indexed[], zone: Zone, start: number): { rows: Row[]; dur: number } {
   const rows: Row[] = [];
@@ -33,7 +33,7 @@ function buildRows(list: Indexed[], zone: Zone, start: number): { rows: Row[]; d
 
 export function layout(items: Item[], start: number): Layout {
   const idx = items.map((x, i) => ({ x, i }));
-  const preL = idx.filter(o => o.x.zone === "pre"), liveL = idx.filter(o => o.x.zone === "live"), aftL = idx.filter(o => o.x.zone === "after");
+  const preL = idx.filter(o => o.x.zone === "pre"), liveL = idx.filter(o => o.x.zone === "live"), aftL = idx.filter(o => o.x.zone === "after"), bakL = idx.filter(o => o.x.zone === "backup");
   const preEnd = preL.length, liveEnd = preEnd + liveL.length;
 
   const split: { div: Indexed | null; list: Indexed[] }[] = [];
@@ -50,5 +50,5 @@ export function layout(items: Item[], start: number): Layout {
   });
   const zone = (key: Zone, list: Indexed[], end: number): ZoneLayout => ({ key, list, end, rows: buildRows(list, key, start).rows, dur: list.reduce((s, o) => s + mins(o.x), 0) });
 
-  return { pre: zone("pre", preL, preEnd), after: zone("after", aftL, items.length), days, liveEnd, preEnd, total, hasBlocks: liveL.some(o => o.x.kind === "block") };
+  return { pre: zone("pre", preL, preEnd), after: zone("after", aftL, liveEnd + aftL.length), backup: zone("backup", bakL, items.length), days, liveEnd, preEnd, total, hasBlocks: liveL.some(o => o.x.kind === "block") };
 }

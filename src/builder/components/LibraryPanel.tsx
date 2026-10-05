@@ -5,6 +5,7 @@ import { C, STRUCTS, STRUCT_MINS } from "../constants";
 import { RDB, RDL, type LibItem } from "../engine";
 import { expand, mkStruct } from "../items";
 import { FILTER_ROWS, TYPE_LABELS, knownTime, searchLibrary } from "../library";
+import { contextRecommendations } from "../import/toWorkshop";
 import { BLANK_FILTERS, type LibFilters } from "../types";
 import { BODY, Chip, DISPLAY, Kicker, KickerRow, field, path, textBtn, useBuilder } from "../ui";
 
@@ -29,7 +30,10 @@ export default function LibraryPanel() {
   // Suggestions: next to an anchor block ("What comes before/after?"), else after the last live block.
   const lastLive = [...eb].reverse().find(x => !x.pre && x.role !== "breaks");
   const sf = S.suggestFor ? eb.find(x => x.id === S.suggestFor!.id) : undefined;
-  const sug = L.q || L.stage || L.type ? [] : B.suggest(eb, sf || lastLive || null, sf ? S.suggestFor!.dir : "after");
+  const browsing = !!(L.q || L.stage || L.type);
+  const sug = browsing ? [] : B.suggest(eb, sf || lastLive || null, sf ? S.suggestFor!.dir : "after");
+  const hasContext = !!(S.context || S.brief.question || S.brief.outcome);
+  const recs = browsing || sf || !hasContext ? [] : contextRecommendations(S.context?.brief, S.brief, new Set(S.items.map(x => x.ref || "").concat(sug.map(x => x.it.id))), 5);
 
   const card = (it: LibItem, why?: string) => {
     const deco = RDL().deco(it), open = S.libPrev === it.id, isW = it.type === "workshop", n = isW ? expand(it).filter(x => x.kind === "block").length : 0;
@@ -95,6 +99,25 @@ export default function LibraryPanel() {
         ))}
       </div>
 
+      {recs.length > 0 && (
+        <>
+          <div style={{ marginTop: 18, fontSize: 12, letterSpacing: ".06em", color: C.accent }}>FOR THIS WORKSHOP</div>
+          <div style={{ marginTop: 4, fontSize: 13, color: C.mute }}>From your context</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
+            {recs.map(it => {
+              const c = card(it);
+              return (
+                <div key={it.id} onPointerDown={c.down} className="bh-line-mute" style={{ touchAction: touch, background: C.card, border: "1px solid " + C.edge, padding: "10px 12px", cursor: "grab", userSelect: "none" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 12, color: C.mute }}><span>{(c.deco.typeLabel || "").toUpperCase()}</span><span>{c.time}</span></div>
+                  <div style={{ marginTop: 3, fontFamily: DISPLAY, fontWeight: 500, fontSize: 17, lineHeight: 1.1 }}>{it.title}</div>
+                  <div style={{ ...cardText, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{it.short}</div>
+                  <button onClick={c.add} className="bh-accent" style={addBtn}>{c.addL}</button>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
       {sug.length > 0 && (
         <>
           <div style={{ marginTop: 18, display: "flex", justifyContent: "space-between", gap: 10 }}>

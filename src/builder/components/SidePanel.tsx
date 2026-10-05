@@ -1,7 +1,7 @@
 "use client";
 // Right-hand panel (a bottom sheet on phones): the open block, or selection actions, proposals,
 // workshop context, checks, the stress test, sharing and exports.
-import { BRIEF_QUESTIONS, C, CONTEXT_KEYS, SEVERE, STRESS_FIX, STRESS_Q, WORKSHOP_CMDS } from "../constants";
+import { C, SEVERE, STRESS_FIX, STRESS_Q, WORKSHOP_CMDS } from "../constants";
 import { RDB, RDL } from "../engine";
 import { eng, applyChanges, mins, uid } from "../items";
 import { agendaCsv, agendaText, copyText, download, exportRows, fileName } from "../exportDoc";
@@ -10,6 +10,7 @@ import { hm } from "../time";
 import { BLANK_FILTERS, type Item } from "../types";
 import { BODY, DISPLAY, Kicker, KickerRow, accent, field, outline, path, solid, textBtn, useBuilder } from "../ui";
 import BlockDetail from "./BlockDetail";
+import ContextPanel from "./ContextPanel";
 import { panelStyle } from "./LibraryPanel";
 
 const chipBtn = (hover = "bh-line-ink") => ({ className: hover, style: outline({ minHeight: 34, padding: "0 9px", fontSize: 13 }) });
@@ -30,7 +31,7 @@ export default function SidePanel() {
         <>
           <Selection />
           <ProposalView />
-          <Context />
+          <ContextPanel />
           <Checks />
           <Kicker style={{ marginTop: 22 }}>ADJUST THE WHOLE WORKSHOP</Kicker>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
@@ -144,44 +145,6 @@ function ProposalView() {
         <button onClick={() => store.set({ proposal: null })} style={outline({ border: "1px solid " + C.edge, minHeight: 42, padding: "0 14px", fontSize: 14 })}>Reject</button>
       </div>
     </div>
-  );
-}
-
-function Context() {
-  const { S, store } = useBuilder();
-  const b = S.brief;
-  const summary = [b.time, b.people && b.people + " people", b.format, b.owner === "Yes" ? "decider in the room" : b.owner === "Joins final part" ? "decider joins late" : ""].filter(Boolean).join(" · ") || "Not set. Optional, but sharpens the checks.";
-  const sel = { ...field, width: "100%", marginTop: 4, minHeight: 36, padding: "0 6px", fontSize: 13 };
-  return (
-    <>
-      <button onClick={() => store.set(s => ({ ctx: !s.ctx }))} aria-expanded={S.ctx ? "true" : "false"} style={{ display: "flex", justifyContent: "space-between", gap: 10, width: "100%", textAlign: "left", background: "none", border: 0, borderBottom: "1px solid " + C.rule, color: C.ink, padding: "0 0 8px", cursor: "pointer" }}>
-        <span><span style={{ display: "block", fontFamily: DISPLAY, fontWeight: 500, fontSize: 19 }}>Workshop context</span><span style={{ display: "block", marginTop: 2, fontSize: 13, color: C.mute }}>{summary}</span></span>
-        <span style={{ fontSize: 13, color: C.mute }}>{S.ctx ? "Close" : "Edit"}</span>
-      </button>
-      {S.ctx && (
-        <>
-          <p style={{ margin: "8px 0 0", fontSize: 13, lineHeight: 1.45, color: C.mute }}>Optional. Used by the checks below.</p>
-          <label style={{ display: "block", marginTop: 8 }}>
-            <span style={{ fontSize: 12, color: C.mute }}>Question</span>
-            <textarea value={b.question || ""} onChange={e => store.setBrief("question", e.target.value)} rows={2} placeholder="What must this workshop figure out?" style={{ ...field, display: "block", width: "100%", marginTop: 4, padding: "8px 10px", fontFamily: BODY, fontSize: 14, lineHeight: 1.4, resize: "vertical" }} />
-          </label>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            {CONTEXT_KEYS.map(k => {
-              const q = BRIEF_QUESTIONS.find(x => x.key === k)!;
-              return (
-                <label key={k} style={{ display: "block", marginTop: 8, minWidth: 0 }}>
-                  <span style={{ fontSize: 12, color: C.mute }}>{q.label}</span>
-                  <select value={(b[k] as string) || ""} onChange={e => store.onContext(k, e.target.value)} style={sel}>
-                    <option value="">Not set</option>
-                    {q.options.map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </label>
-              );
-            })}
-          </div>
-        </>
-      )}
-    </>
   );
 }
 

@@ -10,8 +10,9 @@ import { loadWorkspace, saveWorkspace } from "./storage";
 import { parseStart } from "./time";
 import {
   BLANK_FILTERS, type Brief, type Center, type DragPayload, type Drop, type Item, type LibFilters, type NoteEntry, type NoteType,
-  type Phase, type Proposal, type RunState, type Sheet, type View, type Workshop
+  type Phase, type Proposal, type RunState, type Sheet, type View, type Workshop, type WorkshopContext, type Source, type Session
 } from "./types";
+import { emptyBrief } from "./import/parse";
 
 export type State = {
   ready: boolean;
@@ -27,6 +28,9 @@ export type State = {
   name: string;
   start: string;
   view: View;
+  context: WorkshopContext | null;
+  /** The latest run of this workshop, with everything captured. */
+  session: Session | null;
   hist: Item[][];
   // Canvas
   open: string | null;
@@ -88,7 +92,7 @@ export class BuilderStore {
     this.state = {
       ready: enginesReady(), w: window.innerWidth, reducedMotion: !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
       phase: cur ? "bench" : "home", workshops: ws.workshops, wid: cur ? cur.id : null,
-      items: cur?.items || [], brief: cur?.brief || {}, name: cur ? cur.name : "Untitled workshop", start: cur?.start || "09:30", view: cur?.view || "timeline", hist: [],
+      items: cur?.items || [], brief: cur?.brief || {}, name: cur ? cur.name : "Untitled workshop", start: cur?.start || "09:30", view: cur?.view || "timeline", context: cur?.context || null, session: cur?.session || null, hist: [],
       open: null, sel: [], drag: null, drop: null, proposal: null, stress: false, notice: "", live: "", center: "canvas", sheet: null,
       lib: { ...BLANK_FILTERS }, filters: false, libPrev: null, libN: 24, suggestFor: null, pendingAdd: null,
       alts: null, ctx: false, cmp: "90", copied: false, prompted: null, exporting: null, sharing: false, shareMsg: "",
@@ -109,7 +113,7 @@ export class BuilderStore {
 
   /** Current workshop merged back into the list, with "updated" bumped only when its content changed. */
   workshopList(s: State = this.state): Workshop[] {
-    return s.workshops.map(w => (w.id === s.wid ? { ...w, items: s.items, brief: s.brief, name: s.name, start: s.start, view: s.view, updated: this.stamps[w.id] || w.updated } : w));
+    return s.workshops.map(w => (w.id === s.wid ? { ...w, items: s.items, brief: s.brief, name: s.name, start: s.start, view: s.view, context: s.context || undefined, session: s.session, updated: this.stamps[w.id] || w.updated } : w));
   }
   private persist() {
     const s = this.state;
@@ -144,9 +148,7 @@ export class BuilderStore {
   }
 
   /** With nothing saved yet, open a blank canvas with the template picker showing. */
-  private firstVisit(props: BuilderProps) {
-    setTimeout(() => { if (!props.w && this.state.phase === "home" && !this.state.workshops.length) this.newWorkshop({}, { center: "tpl" }); }, 0);
-  }
+  private firstVisit(props: BuilderProps) { void props; }
 
   /** Reacts to ?add=, ?q=, ?tpl= and ?w= once each, then cleans the URL. */
   syncProps(p: BuilderProps) {
@@ -171,7 +173,7 @@ export class BuilderStore {
     const id = "w" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
     const w: Workshop = { id, name: "Untitled workshop", items: [], brief: {}, chat: [], start: "09:30", view: "timeline", created: Date.now(), updated: Date.now(), ...o };
     this.set(s => ({
-      workshops: this.workshopList(s).concat([w]), wid: id, items: norm(w.items), brief: w.brief, name: w.name, start: w.start, view: w.view, hist: [],
+      workshops: this.workshopList(s).concat([w]), wid: id, items: norm(w.items), brief: w.brief, name: w.name, start: w.start, view: w.view, context: w.context || null, session: w.session || null, hist: [],
       phase: "bench", center: "canvas", open: null, sel: [], proposal: null, stress: false, ...extra
     }));
   }
@@ -179,7 +181,7 @@ export class BuilderStore {
     this.set(s => {
       const list = this.workshopList(s), w = list.find(x => x.id === id);
       if (!w) return {};
-      return { workshops: list, wid: id, items: w.items || [], brief: w.brief || {}, name: w.name, start: w.start || "09:30", view: w.view || "timeline", hist: [], phase: "bench", center: "canvas", open: null, sel: [], proposal: null, notice: "" };
+      return { workshops: list, wid: id, items: w.items || [], brief: w.brief || {}, name: w.name, start: w.start || "09:30", view: w.view || "timeline", context: w.context || null, session: w.session || null, hist: [], phase: "bench", center: "canvas", open: null, sel: [], proposal: null, notice: "" };
     });
   }
   goHome() { this.set(s => ({ workshops: this.workshopList(s), phase: "home", open: null, sel: [], proposal: null, sheet: null })); }
@@ -187,6 +189,23 @@ export class BuilderStore {
     this.newWorkshop({ name: t.name, items: tplItems(t), brief: { ...(t.brief as Brief) } }, { notice: t.name + " opened as an editable copy. Change anything." });
   }
   blankWorkshop() { this.newWorkshop({}, { notice: BLANK_NOTICE }); }
+  // ---- context ----
+  /** Creates a workshop from imported context, or attaches the context to the open one. */
+  createFromContext(o: { name: string; context: WorkshopContext; brief: Brief; items: Item[]; start?: string; attach?: boolean; notice: string }) {
+    if (o.attach && this.state.wid) {
+      const s = this.state, ctx = s.context || { brief: emptyBrief(), sources: [] };
+      const merged = { ...ctx.brief };
+      (Object.keys(o.context.brief) as (keyof typeof merged)[]).forEach(k => { if (o.context.brief[k] && !merged[k]) merged[k] = o.context.brief[k]; });
+      this.set({ phase: "bench", context: { brief: merged, sources: ctx.sources.concat(o.context.sources) }, brief: { ...o.brief, ...stripEmpty(s.brief) }, notice: o.notice });
+      if (o.items.length) this.commit(its => its.concat(o.items), "Imported blocks added");
+      return;
+    }
+    this.newWorkshop({ name: o.name, items: o.items, brief: o.brief, context: o.context, start: o.start || "09:30" }, { notice: o.notice, center: "canvas" });
+  }
+  setContextBrief(k: string, v: string) { this.set(s => ({ context: { brief: { ...(s.context?.brief || emptyBrief()), [k]: v }, sources: s.context?.sources || [] } })); }
+  removeSource(id: string) { this.set(s => (s.context ? { context: { ...s.context, sources: s.context.sources.filter(x => x.id !== id) } } : {})); }
+  addSource(src: Source) { this.set(s => ({ context: { brief: s.context?.brief || emptyBrief(), sources: (s.context?.sources || []).concat([src]) } })); }
+
   currentWorkshop() { return this.state.workshops.find(x => x.id === this.state.wid); }
 
   // ---- sharing ----
@@ -247,7 +266,7 @@ export class BuilderStore {
   }
   remove(id: string, msg: string, extra: Partial<State> = {}) { this.commit(its => its.filter(y => y.id !== id), msg, extra); }
   insertItems(add: Item[], at: number | null, msg: string) {
-    this.commit(items => { const pos = at == null ? items.filter(x => x.zone !== "after").length : at; items.splice(pos, 0, ...add); return items; }, msg);
+    this.commit(items => { const pos = at == null ? items.filter(x => x.zone === "pre" || x.zone === "live").length : at; items.splice(pos, 0, ...add); return items; }, msg);
   }
   /** Adds after the selection when there is one, otherwise at the end of the live workshop. */
   addEnd(add: Item[], label: string) {
@@ -474,6 +493,7 @@ export class BuilderStore {
     this.runTimer = null;
     window.removeEventListener("keydown", this.onRunKey, true);
   }
+  openRun() { this.runBegin(); }
   runEnd() { this.runStop(); this.set({ run: null }); }
   runPlay() {
     this.set(s => {
@@ -508,5 +528,7 @@ export class BuilderStore {
   /** Stats used by the header and checks; recomputed by components from items. */
   engBlocks() { return eng(this.state.items); }
 }
+
+const stripEmpty = <T extends object>(o: T): Partial<T> => Object.fromEntries(Object.entries(o).filter(([, v]) => v != null && v !== "" && !(Array.isArray(v) && !v.length))) as Partial<T>;
 
 export type BuilderProps = { add?: string; q?: string; tpl?: string; w?: string };

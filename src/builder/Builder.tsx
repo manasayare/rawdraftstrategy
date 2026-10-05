@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "reac
 import Canvas from "./components/Canvas";
 import Header from "./components/Header";
 import Home from "./components/Home";
+import ImportView from "./components/ImportView";
+import ModeTabs from "./components/ModeTabs";
 import LibraryPanel from "./components/LibraryPanel";
 import RunMode from "./components/RunMode";
 import SidePanel from "./components/SidePanel";
@@ -22,6 +24,8 @@ export default function Builder(props: BuilderProps) {
   useEffect(() => store.mount(propsRef.current), [store]);
   useEffect(() => { store.syncProps(props); }, [store, props.add, props.q, props.tpl, props.w]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => { window.scrollTo(0, 0); }, [S.phase, S.wid]);
+
   const d = useMemo(() => (S.ready ? derive(S) : null), [S]);
   if (!d) return <section data-screen-label="Builder" style={{ minHeight: "60vh" }} />;
 
@@ -31,6 +35,8 @@ export default function Builder(props: BuilderProps) {
       <section data-screen-label="Builder" style={{ padding: `clamp(16px,2.5vw,32px) clamp(12px,2vw,28px) ${wide ? "48px" : "96px"}`, fontFamily: BODY, color: "#ece9e0" }}>
         <div aria-live="polite" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>{S.live}</div>
         {S.phase === "home" && <Home />}
+        {(S.phase === "bench" || S.phase === "review" || (S.phase === "import" && !!S.wid)) && <ModeTabs />}
+        {S.phase === "import" && <ImportView />}
         {S.phase === "bench" && (
           <>
             <Header />

@@ -41,7 +41,7 @@ export default function Header() {
         <button onClick={() => store.undo()} disabled={!S.hist.length} style={headBtn({ color: S.hist.length ? C.ink : C.faint })}>Undo</button>
         <button onClick={() => store.set({ center: "tpl", open: null, sheet: null })} className="bh-line-mute" style={headBtn()}>Templates</button>
         <button onClick={() => store.newWorkshop({}, { notice: BLANK_NOTICE })} style={solid({ minHeight: 40, padding: "0 14px", fontSize: 14 })}>New workshop</button>
-        <button onClick={() => store.runBegin()} disabled={!canRun} title={canRun ? "Facilitate this workshop live" : "Add blocks to the session first"}
+        <button onClick={() => store.openRun()} disabled={!canRun} title={canRun ? "Facilitate this workshop live" : "Add blocks to the session first"}
           style={accent({ minHeight: 40, padding: "0 16px", fontSize: 14, opacity: canRun ? 1 : 0.4 })}>Run workshop</button>
       </div>
     </div>

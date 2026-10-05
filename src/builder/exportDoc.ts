@@ -19,6 +19,7 @@ export function exportRows(items: Item[], startStr: string): ExportRow[] {
   const start = parseStart(startStr), out: ExportRow[] = [];
   let day = 1, t = start, sec = "";
   items.forEach(x => {
+    if (x.zone === "backup") return;
     if (x.zone !== "live") {
       if (x.kind === "block") out.push([x.zone === "pre" ? "Pre-work" : "After", "", "", "", x.title || "", mins(x), x.cfg.mode || "", x.cfg.output || "", libUrl(x.ref)]);
       return;

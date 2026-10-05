@@ -1,7 +1,8 @@
 // Builder data model. Workshops are saved in localStorage ("rd-workspace") in exactly this shape,
 // so field names match what earlier versions stored.
 
-export type Zone = "pre" | "live" | "after";
+/** "backup" holds alternatives that are not in the timeline until activated during a run. */
+export type Zone = "pre" | "live" | "after" | "backup";
 export type ItemKind = "block" | "section" | "day";
 export type View = "timeline" | "blocks" | "days";
 export type NoteType = "decision" | "action" | "park" | "note" | "offline";
@@ -17,6 +18,13 @@ export type ItemCfg = {
   notes?: string;
   groups?: string;
   gsize?: string;
+  // Facilitator script, shown in Run mode
+  open?: string;
+  questions?: string;
+  watch?: string;
+  transition?: string;
+  /** What the room sees on the participant screen. */
+  participant?: string;
   log?: NoteEntry[];
 };
 
@@ -33,6 +41,10 @@ export type Item = {
   par?: string | null;
   custom?: boolean;
   locked?: boolean;
+  /** Optional blocks can be skipped when running late. Default is core. */
+  priority?: "core" | "optional";
+  /** For a backup: the block it stands in for. */
+  backupFor?: string | null;
 };
 
 export type Brief = {
@@ -47,6 +59,12 @@ export type Brief = {
   notes?: string;
   context?: string;
 };
+
+// ---- Context: what the workshop is for, kept with it for its whole life ----
+export type SourceType = "paste" | "ai" | "agenda" | "notes" | "file" | "connector";
+export type Source = { id: string; type: SourceType; title: string; text: string; added: number; origin?: string; url?: string };
+export type ContextBrief = import("./import/parse").ContextBrief;
+export type WorkshopContext = { brief: ContextBrief; sources: Source[] };
 
 export type ShareRef = { id: string; key: string };
 
@@ -65,6 +83,8 @@ export type Workshop = {
   sharedSig?: string;
   /** Share id this workshop was copied from. */
   from?: string;
+  context?: WorkshopContext;
+  session?: Session | null;
 };
 
 export type LibFilters = { q: string; stage: string; time: string; people: string; format: string; output: string; type: string };
@@ -111,6 +131,49 @@ export type RunState = {
   done: boolean;
 };
 
-export type Phase = "home" | "bench";
+// ---- Session: one run of the workshop, and what was captured ----
+export type CaptureType = "decision" | "question" | "parking" | "followup" | "observation" | "note";
+export type Capture = {
+  id: string;
+  type: CaptureType;
+  text: string;
+  /** Wall-clock time of capture (ms). */
+  at: number;
+  blockId?: string;
+  blockTitle?: string;
+  owner?: string;
+  // Decision log
+  decider?: string;
+  rationale?: string;
+  evidence?: string;
+  followup?: string;
+  /** Parking lot / follow-up handling after the session. */
+  status?: "open" | "action" | "followup" | "resolved";
+};
+export type RunSettings = { sound: "soft" | "visual" | "silent"; show: Record<string, boolean> };
+export type Session = {
+  id: string;
+  startedAt: number | null;
+  endedAt: number | null;
+  /** Ordered ids of the blocks being run (live blocks plus activated backups). */
+  order: string[];
+  i: number;
+  acc: number;
+  t0: number | null;
+  actual: Record<string, number>;
+  extra: Record<string, number>;
+  skipped: string[];
+  /** Ids whose clock has been started at least once. */
+  started: string[];
+  breakUntil: number | null;
+  captures: Capture[];
+  outputs: Record<string, string>;
+  blockNotes: Record<string, string>;
+  general: string;
+  checklist: Record<string, boolean>;
+  settings: RunSettings;
+};
+
+export type Phase = "home" | "import" | "bench" | "review";
 export type Center = "canvas" | "tpl";
 export type Sheet = "lib" | "assist" | null;

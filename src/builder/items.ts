@@ -8,12 +8,12 @@ export const isLiveBlock = (x: Item) => x.kind === "block" && x.zone === "live";
 
 export const clone = (items: Item[]): Item[] => items.map(x => ({ ...x, cfg: { ...x.cfg } }));
 
-const RANK: Record<Zone, number> = { pre: 0, live: 1, after: 2 };
+const RANK: Record<Zone, number> = { pre: 0, live: 1, after: 2, backup: 3 };
 
 /** Orders items pre → live → after (stable) and drops parallel ids that no longer have a neighbour. */
 export function norm(input: Item[]): Item[] {
   const items = input.map((x, i) => [x, i] as const).sort((a, b) => RANK[a[0].zone] - RANK[b[0].zone] || a[1] - b[1]).map(a => a[0]);
-  items.forEach(x => { if (x.zone !== "live" || x.kind !== "block") x.par = null; });
+  items.forEach(x => { if (x.zone !== "live" || x.kind !== "block") x.par = null; if (x.zone !== "backup") delete x.backupFor; });
   items.forEach((x, i) => { if (x.par && !(items[i - 1]?.par === x.par || items[i + 1]?.par === x.par)) x.par = null; });
   return items;
 }
@@ -68,12 +68,26 @@ export function tplItems(t: Template): Item[] {
   }).filter((x): x is Item => !!x);
 }
 
+const PHASE: Record<string, string> = { open: "Open", frame: "Open", evidence: "Understand", landscape: "Understand", sense: "Understand", options: "Create", assumptions: "Decide", criteria: "Decide", prioritise: "Decide", decide: "Decide", test: "Commit", commit: "Commit" };
+/** Engine-composed blocks (RDB.compose) → items, with a section per phase. */
+export function fromEngine(bl: { day?: boolean; role: string; ref?: string | null; title: string; mins: number }[]): Item[] {
+  const out: Item[] = [];
+  let ph: string | null = null;
+  bl.forEach(x => {
+    if (x.day) { out.push(mkStruct("day")); ph = null; return; }
+    const p = PHASE[x.role];
+    if (p && p !== ph) { out.push({ ...mkStruct("section"), title: p }); ph = p; }
+    out.push({ id: uid(), kind: "block", zone: "live", role: x.role, ref: x.ref, title: x.title, mins: x.mins, cfg: {} });
+  });
+  return out;
+}
+
 /** The engine's view: blocks before the session plus live blocks; a parallel group counts once at its longest lane. */
 export function eng(items: Item[]): EngBlock[] {
   const ROLES = RDB().ROLES, out: EngBlock[] = [];
   let lastPar: string | null | undefined = null, head: EngBlock | null = null;
   items.forEach(x => {
-    if (x.kind !== "block" || x.zone === "after") { if (x.kind === "day") lastPar = null; return; }
+    if (x.kind !== "block" || x.zone === "after" || x.zone === "backup") { if (x.kind === "day") lastPar = null; return; }
     const role = x.role && ROLES[x.role] ? x.role : "custom";
     const e: EngBlock = { id: x.id, role, label: ROLES[role][0], ref: x.ref, title: x.title, mins: mins(x), locked: x.locked, pre: x.zone === "pre" };
     if (x.zone === "live" && x.par && x.par === lastPar && head) { head.mins = Math.max(head.mins, mins(x)); e.mins = 0; }
@@ -101,7 +115,7 @@ export function applyChanges(items: Item[], chs: Change[]): Item[] {
   chs.filter(c => c.type === "insert").forEach(c => {
     const ni = { ...c.item, id: uid(), cfg: {} } as Item;
     let pos = c.anchor ? out.findIndex(y => y.id === c.anchor) : -1;
-    if (pos < 0) pos = out.filter(y => y.zone !== "after").length;
+    if (pos < 0) pos = out.filter(y => y.zone === "pre" || y.zone === "live").length;
     out.splice(pos, 0, ni);
   });
   chs.forEach(c => {
@@ -115,7 +129,7 @@ export function applyChanges(items: Item[], chs: Change[]): Item[] {
     else if (c.type === "move") {
       out = out.filter(y => y.id !== x.id);
       const p = c.anchor ? out.findIndex(y => y.id === c.anchor) : -1;
-      out.splice(p < 0 ? out.filter(y => y.zone !== "after").length : p, 0, x);
+      out.splice(p < 0 ? out.filter(y => y.zone === "pre" || y.zone === "live").length : p, 0, x);
     }
   });
   return norm(out);
