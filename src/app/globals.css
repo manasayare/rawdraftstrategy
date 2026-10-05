@@ -1,0 +1,14 @@
+@import "../generated/dc.css";
+
+/* dc-runtime page baseline */
+html, body { height: 100%; margin: 0; }
+@media print {
+  @page { margin: 0.5cm; }
+  figure, table { break-inside: avoid; }
+  *, *::before, *::after {
+    print-color-adjust: exact; -webkit-print-color-adjust: exact;
+    animation-delay: -99s !important; animation-duration: .001s !important;
+    animation-iteration-count: 1 !important; animation-fill-mode: both !important;
+    transition-duration: 0s !important;
+  }
+}
