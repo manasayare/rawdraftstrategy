@@ -129,4 +129,14 @@ const lead = {
   orderings: [{ title: "Newest", name: "newest", by: [{ field: "received", direction: "desc" }] }]
 };
 
-export const schemaTypes = [libraryItem, source, work, note, person, partner, builderTemplate, submission, lead];
+// Builder share links. Written by /api/workshops; the edit key is stored only as a hash.
+const sharedWorkshop = {
+  name: "sharedWorkshop", title: "Shared workshop", type: "document",
+  fields: [
+    str("name", "Name"), { name: "data", title: "Snapshot (JSON)", type: "text", rows: 6, readOnly: true }, { name: "keyHash", title: "Edit key hash", type: "string", readOnly: true, hidden: true },
+    { name: "created", title: "Created", type: "datetime", readOnly: true }, { name: "updated", title: "Updated", type: "datetime", readOnly: true }
+  ],
+  orderings: [{ title: "Newest", name: "newest", by: [{ field: "updated", direction: "desc" }] }]
+};
+
+export const schemaTypes = [libraryItem, source, work, note, person, partner, builderTemplate, submission, lead, sharedWorkshop];

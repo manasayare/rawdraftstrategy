@@ -156,7 +156,7 @@ class Component extends DCLogic {
       onPalQ: e => this.setState({ pal: { open: true, q: e.target.value, sel: 0 } }),
       onPalKey: e => { const n = rows.length; if (e.key === "ArrowDown") { e.preventDefault(); this.setState(s => ({ pal: Object.assign({}, s.pal, { sel: (s.pal.sel + 1) % n }) })); } else if (e.key === "ArrowUp") { e.preventDefault(); this.setState(s => ({ pal: Object.assign({}, s.pal, { sel: (s.pal.sel - 1 + n) % n }) })); } else if (e.key === "Enter" && rows[S.pal.sel]) this.go(rows[S.pal.sel].href); },
 
-      isHome: !p0, isSprints: p0 === "sprints", isLibrary: libList, isItem: p0 === "library" && !libList, isPage: pages.includes(p0), isWorkFlow: p0 === "work-with-us", isSuggest: p0 === "suggest", isBuilder: p0 === "builder", builderAdd: S.route.params.get("add") || "", builderQ: S.route.params.get("q") || "", builderTpl: S.route.params.get("tpl") || "", hubTab: p0 === "notes" ? "notes" : (S.route.params.get("tab") || "work"), srcType: (this.lastSrc || {}).sourceType || "direct", srcTitle: (this.lastSrc || {}).sourceTitle || "",
+      isHome: !p0, isSprints: p0 === "sprints", isLibrary: libList, isItem: p0 === "library" && !libList, isPage: pages.includes(p0), isWorkFlow: p0 === "work-with-us", isSuggest: p0 === "suggest", isBuilder: p0 === "builder", builderAdd: S.route.params.get("add") || "", builderQ: S.route.params.get("q") || "", builderTpl: S.route.params.get("tpl") || "", builderW: S.route.params.get("w") || "", hubTab: p0 === "notes" ? "notes" : (S.route.params.get("tab") || "work"), srcType: (this.lastSrc || {}).sourceType || "direct", srcTitle: (this.lastSrc || {}).sourceTitle || "",
       routeKey: S.route.key, rid: p0 === "library" ? (p[2] || p[1] || "") : (p[1] || ""), view: cur, libQ: S.route.params.get("q") || "", libType: p0 === "resources" ? "resource" : (slugType || S.route.params.get("type") || "all"),
       libGoal: S.route.params.get("goal") || "all", libStage: S.route.params.get("stage") || "all",
 
@@ -1018,7 +1018,7 @@ Component.prototype.template = function (V) {
           ) : null}
           {V.isBuilder ? (
             <>
-              <div className="sc-host"><RDBuilder add={V.builderAdd} q={V.builderQ} tpl={V.builderTpl} /></div>
+              <div className="sc-host"><RDBuilder add={V.builderAdd} q={V.builderQ} tpl={V.builderTpl} w={V.builderW} /></div>
             </>
           ) : null}
           {V.isSuggest ? (

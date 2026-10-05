@@ -106,7 +106,7 @@ Component.prototype.template = function (V) {
               <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.phaseCols)};border-top:1px solid #ece9e0`)}>
                 {dcList(V.phases).map((p_2, $i2) => (
                   <React.Fragment key={$i2}>
-                    <button onClick={p_2?.pick} aria-expanded={p_2?.aria} style={dcCss(`text-align:left;background:${dcStr(p_2?.bg)};border:0;border-bottom:1px solid #2a2925;border-right:1px solid #2a2925;color:#ece9e0;min-height:88px;padding:14px 14px 16px;cursor:pointer`)} className="scp-hover-m">
+                    <button onClick={p_2?.pick} aria-expanded={p_2?.aria} style={dcCss(`text-align:left;background:${dcStr(p_2?.bg)};border:0;border-bottom:1px solid #2a2925;border-right:1px solid #2a2925;color:#ece9e0;min-height:88px;padding:14px 14px 16px;cursor:pointer`)} className="scp-hover-n">
                       <span style={dcCss(`display:block;font-size:14px;color:${dcStr(p_2?.nc)}`)}>
                         {dcText(p_2?.n)}
                       </span>

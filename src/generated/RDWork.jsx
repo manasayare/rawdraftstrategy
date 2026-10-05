@@ -79,7 +79,7 @@ Component.prototype.template = function (V) {
                         <span style={{"fontSize":"14px","color":"#8f8b80"}}>
                           {dcText(f_0?.label)}
                         </span>
-                        <input type={f_0?.type} name={f_0?.key} autoComplete={f_0?.ac} value={f_0?.v ?? ""} onChange={f_0?.on} placeholder={f_0?.ph} aria-invalid={f_0?.bad} style={dcCss(`display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid ${dcStr(f_0?.bd)};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:19px`)} className="scp-focus-n" />
+                        <input type={f_0?.type} name={f_0?.key} autoComplete={f_0?.ac} value={f_0?.v ?? ""} onChange={f_0?.on} placeholder={f_0?.ph} aria-invalid={f_0?.bad} style={dcCss(`display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid ${dcStr(f_0?.bd)};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:19px`)} className="scp-focus-o" />
                       </label>
                     </React.Fragment>
                   ))}
@@ -136,7 +136,7 @@ Component.prototype.template = function (V) {
                   <input tabIndex="-1" autoComplete="off" value={V.trap ?? ""} onChange={V.onTrap} />
                 </label>
                 <div style={{"display":"flex","flexWrap":"wrap","alignItems":"center","gap":"12px 18px","marginTop":"28px"}}>
-                  <button type="submit" disabled={V.sending} style={dcCss(`white-space:nowrap;background:#ff4b23;color:#0b0b0a;border:0;min-height:56px;padding:0 26px;cursor:pointer;font-size:18px;font-weight:500;opacity:${dcStr(V.sendOp)}`)} className="scp-hover-h">
+                  <button type="submit" disabled={V.sending} style={dcCss(`white-space:nowrap;background:#ff4b23;color:#0b0b0a;border:0;min-height:56px;padding:0 26px;cursor:pointer;font-size:18px;font-weight:500;opacity:${dcStr(V.sendOp)}`)} className="scp-hover-i">
                     {dcText(V.sendL)}
                   </button>
                   <span role="status" aria-live="polite" style={dcCss(`font-size:15px;color:${dcStr(V.msgC)}`)}>

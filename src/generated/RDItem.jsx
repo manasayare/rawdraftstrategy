@@ -124,7 +124,7 @@ class Component extends DCLogic {
         const open = !!S.prompt[p.id], copied = S.copied === p.id;
         rows.push({ hasVis: true, vis: "prompt_text", title: p.title, meta: "Prompt · " + p.author, actions: [], planned: false, isPrompt: true, p, open, openAria: open ? "true" : "false", toggleLabel: open ? "Hide prompt" : "View prompt",
           toggle: () => this.setState(st => ({ prompt: Object.assign({}, st.prompt, { [p.id]: !st.prompt[p.id] }) })),
-          copy: () => { try { navigator.clipboard.writeText(p.prompt); } catch (e) {} this.setState({ copied: p.id }); clearTimeout(this.cpT); this.cpT = setTimeout(() => this.setState({ copied: null }), 1600); },
+          copy: () => { try { Promise.resolve(navigator.clipboard && navigator.clipboard.writeText(p.prompt)).catch(() => {}); } catch (e) {} this.setState({ copied: p.id }); clearTimeout(this.cpT); this.cpT = setTimeout(() => this.setState({ copied: null }), 1600); },
           copyLabel: copied ? "Copied" : "Copy prompt", copyBg: copied ? "#ece9e0" : "#ff4b23" });
       });
       if (T !== "resource" && T !== "methodology") L.refs(uniq((it.resources || []).concat(ix.supportedBy[it.id] || []))).filter(r => r.type === "resource").slice(0, 3).forEach(r => {
@@ -261,7 +261,7 @@ Component.prototype.template = function (V) {
                   </a>
                   {V.hasRun ? (
                     <>
-                      <button onClick={V.goRun} style={{"background":"#ff4b23","color":"#0b0b0a","border":"0","padding":"0 18px","minHeight":"46px","cursor":"pointer","fontSize":"16px","fontWeight":"500"}} className="scp-hover-h">
+                      <button onClick={V.goRun} style={{"background":"#ff4b23","color":"#0b0b0a","border":"0","padding":"0 18px","minHeight":"46px","cursor":"pointer","fontSize":"16px","fontWeight":"500"}} className="scp-hover-i">
                         {dcText(V.runLabel)}
                       </button>
                     </>

@@ -29,6 +29,7 @@ http.createServer((req, res) => {
       if (m) return send(res, 200, { result: [...docs.values()].filter(d => d._type === m[1]).length });
       if (q.includes('"items"')) return send(res, 200, { result: emulateContentQuery([...docs.values()]) });
       if (q.includes('*[_type == "lead"]')) return send(res, 200, { result: [...docs.values()].filter(d => d._type === "lead").sort((a, b) => b.received.localeCompare(a.received)) });
+      if (q.startsWith("*[_id == $id")) { const d = docs.get(JSON.parse(url.searchParams.get("$id") || "null")); return send(res, 200, { result: d ? { keyHash: d.keyHash, data: d.data, updated: d.updated } : null }); }
       if (q.includes("*[_type == \"submission\"")) return send(res, 200, { result: [...docs.values()].filter(d => d._type === "submission") });
       return send(res, 400, { error: "unsupported query in mock: " + q.slice(0, 80) });
     }

@@ -24,7 +24,7 @@ class Component extends DCLogic {
     if (!this.state.ready) this.poll = setInterval(() => { if (window.RDB && window.RD && window.RDL && window.RDB.TPL) { clearInterval(this.poll); go(); } }, 40); else { this.fromLib(); this.fromProps(); this.firstVisit(); }
   }
   // With nothing saved yet, open a blank canvas with the template picker showing.
-  firstVisit() { setTimeout(() => { if (this.state.phase === "home" && !(this.state.workshops || []).length) this.newWorkshop({}, { center: "tpl" }); }, 0); }
+  firstVisit() { setTimeout(() => { if (!this.props.w && this.state.phase === "home" && !(this.state.workshops || []).length) this.newWorkshop({}, { center: "tpl" }); }, 0); }
   componentWillUnmount() { window.removeEventListener("resize", this.onR); window.removeEventListener("keydown", this.onK); clearInterval(this.poll); this.unbind(); this.runStop(); }
   runEl(r) { r = r || this.state.run; return r ? r.acc + (r.t0 ? Date.now() - r.t0 : 0) : 0; }
   runStop() { clearInterval(this.runTick); this.runTick = null; if (this.runKey) window.removeEventListener("keydown", this.runKey, true); this.runKey = null; }
@@ -85,7 +85,7 @@ class Component extends DCLogic {
       runSumSub: [cnt ? "Captured " + cnt + "." : "", offN ? offN + " offline capture" + (offN > 1 ? "s" : "") + " still to type up." : "", long ? long + " block" + (long > 1 ? "s" : "") + " ran long." : ""].filter(Boolean).join(" ") || "Planned " + hm(totalPlan) + ", ran " + hm(aMin) + ".",
       sumGroups: groups, hasSumGroups: groups.length > 0, noSumGroups: !groups.length, runSum: sum, runResume: () => this.runMove(0, L.length - 1), runExit: () => this.runEnd(),
       runApply: () => { const lg = r.log; this.commit(list => list.map(x => lg[x.id] != null && x.kind === "block" ? Object.assign({}, x, { mins: Math.max(5, Math.round(lg[x.id] / 300000) * 5) }) : x), "Timings updated from the session"); this.runEnd(); } }); }
-  componentDidUpdate(pp) { if (pp.add !== this.props.add) this.fromLib(); if (pp.q !== this.props.q || pp.tpl !== this.props.tpl) this.fromProps(); const S = this.state;
+  componentDidUpdate(pp) { if (pp.add !== this.props.add) this.fromLib(); if (pp.q !== this.props.q || pp.tpl !== this.props.tpl || pp.w !== this.props.w) this.fromProps(); const S = this.state;
     try { const ses = { phase: S.phase === "morph" ? "bench" : S.phase, pendQ: S.pendQ, asked: S.asked, recShown: S.recShown, seed: S.seed };
       if (!S.account || S.phase === "chat") Object.assign(ses, { chat: S.chat, brief: S.brief });
       localStorage.setItem("rd-builder-session", JSON.stringify(ses));
@@ -100,7 +100,19 @@ class Component extends DCLogic {
   fromProps() { if (!this.state.ready && !(window.RDB && window.RDB.TPL)) return; const q = this.props.q, tpl = this.props.tpl;
     const clean = () => { try { RDNav.replace("#/builder"); } catch (e) {} };
     if (q && this.qDone !== q) { this.qDone = q; clean(); if (this.state.phase !== "bench") { if ((this.state.workshops || []).length) this.openWs((this.state.workshops.find(w => w.id === this.state.wid) || this.state.workshops[this.state.workshops.length - 1]).id); else this.newWorkshop({}); } this.setState(s => ({ lib: Object.assign({}, s.lib, { q }), libN: 24 })); }
-    if (tpl !== undefined && tpl !== null && tpl !== "" && this.tplDone !== tpl) { this.tplDone = tpl; clean(); const t = RDB.TPL[+tpl]; if (t) { if (this.state.account) this.openTemplate(t); else this.setState({ gate: { kind: "tpl", tpl: +tpl }, gateMode: "start" }); } } }
+    if (tpl !== undefined && tpl !== null && tpl !== "" && this.tplDone !== tpl) { this.tplDone = tpl; clean(); const t = RDB.TPL[+tpl]; if (t) { if (this.state.account) this.openTemplate(t); else this.setState({ gate: { kind: "tpl", tpl: +tpl }, gateMode: "start" }); } }
+    const wq = this.props.w; if (wq && this.wDone !== wq) { this.wDone = wq; clean(); this.openShared(wq); } }
+  // A share link opens the sender's workshop as a copy you own. Your own link reopens your workshop.
+  openShared(id) { const mine = (this.state.workshops || []).find(w => w.share && w.share.id === id); if (mine) { this.openWs(mine.id); return; }
+    this.setState({ notice: "Opening shared workshop…" });
+    Promise.resolve(window.RDX ? RDX.load(id) : Promise.reject(new Error("Couldn't open the shared workshop."))).then(w => this.newWorkshop({ name: String(w.name || "Shared workshop"), items: Array.isArray(w.items) ? w.items : [], brief: w.brief && typeof w.brief === "object" ? w.brief : {}, start: w.start || "09:30", view: w.view || "timeline", from: id }, { notice: "Shared workshop opened as your own copy. Changes stay with you." }))
+      .catch(e => { this.setState({ notice: e.message }); if (this.state.phase === "home" && !(this.state.workshops || []).length) this.newWorkshop({}, { center: "tpl" }); }); }
+  shareLink() { const S = this.state; if (S.sharing || !S.wid) return; const w = (S.workshops || []).find(x => x.id === S.wid) || {};
+    const items = S.items.map(x => x.cfg && x.cfg.log ? Object.assign({}, x, { cfg: Object.assign({}, x.cfg, { log: undefined }) }) : x);
+    this.setState({ sharing: true, shareMsg: "" });
+    Promise.resolve(window.RDX ? RDX.share({ name: S.name, start: S.start, view: S.view, brief: S.brief, items }, w.share) : Promise.reject(new Error("Sharing isn't available.")))
+      .then(r => { try { Promise.resolve(navigator.clipboard && navigator.clipboard.writeText(r.url)).catch(() => {}); } catch (er) {} this.setState(s => ({ sharing: false, shareMsg: "Link saved and copied. Anyone with it gets their own copy.", workshops: this.wsList(s).map(x => x.id === s.wid ? Object.assign({}, x, { share: { id: r.id, key: r.key }, sharedSig: JSON.stringify([s.items, s.name, s.brief, s.start]) }) : x) })); })
+      .catch(e => this.setState({ sharing: false, shareMsg: e.message })); }
   CQ = { outcome: ["What needs to exist by the end?", "Builder picks the structure from this.", [["A decision", "Decision"], ["A direction", "Direction"], ["Ideas to test", "Ideas"], ["A prototype", "Prototype"], ["Alignment", "Alignment"], ["Priorities", "Priorities"], ["Not sure", ""]]],
     time: ["How much time do you have with the team?", "The whole session, not the prep.", [["90 min", "90 min"], ["Half day", "Half day"], ["1 day", "1 day"], ["2 days", "2 days"], ["Multiple sessions", "Multiple sessions"]]],
     people: ["How many people will be in the room?", "Group size changes how discussion and synthesis run.", [["2–5", "2 to 5"], ["6–10", "6 to 10"], ["11–20", "11 to 20"], ["20+", "20+"]]],
@@ -347,7 +359,7 @@ class Component extends DCLogic {
         dup: () => this.commit(its => { const i = its.findIndex(y => y.id === x.id); its.splice(i + 1, 0, Object.assign({}, its[i], { id: this.uid(), cfg: Object.assign({}, its[i].cfg) })); return its; }, x.title + " duplicated"),
         remove: () => this.commit(its => its.filter(y => y.id !== x.id), x.title + " deleted", { open: null, sheet: null, notice: x.title + " deleted. " + RDB.impact(eb, { type: "remove", id: x.id }) + " Undo brings it back." }),
         hasLib: !!it, why: DD.why, lists: [["Use when", DD.useWhen], ["Avoid when", DD.avoidWhen], ["Watch for", DD.watch]].filter(l => l[1].length).map(([kk, its]) => ({ k: kk, items: its })), assets: DD.assets, hasSource: !!DD.source, source: DD.source, rights: DD.rights, hasRelated: DD.related.length > 0, related: DD.related, href: DD.href,
-        promptL: S.prompted === x.id ? "Copied" : "Copy facilitation prompt", copyPrompt: () => { const t = "Facilitate " + x.title + " (" + x.mins + " min)" + (b.people ? " for " + b.people + " people" : "") + ". " + (b.question ? "Question: " + b.question + ". " : "") + "Input: " + DD.input + ". Output: " + DD.output + ". " + DD.steps.map((s, i) => (i + 1) + ". " + s).join(" "); try { navigator.clipboard.writeText(t); } catch (er2) {} this.setState({ prompted: x.id }); setTimeout(() => this.setState({ prompted: null }), 1500); } };
+        promptL: S.prompted === x.id ? "Copied" : "Copy facilitation prompt", copyPrompt: () => { const t = "Facilitate " + x.title + " (" + x.mins + " min)" + (b.people ? " for " + b.people + " people" : "") + ". " + (b.question ? "Question: " + b.question + ". " : "") + "Input: " + DD.input + ". Output: " + DD.output + ". " + DD.steps.map((s, i) => (i + 1) + ". " + s).join(" "); try { Promise.resolve(navigator.clipboard && navigator.clipboard.writeText(t)).catch(() => {}); } catch (er2) {} this.setState({ prompted: x.id }); setTimeout(() => this.setState({ prompted: null }), 1500); } };
     }
     // proposal
     const PV = P ? (() => { const sel = P.changes.filter(c => c.on), after = this.eng(this.applyCh(items, sel.filter(c => c.type !== "brief"))), ta = RDB.total(after), tb = RDB.total(eb);
@@ -389,7 +401,7 @@ class Component extends DCLogic {
       rowsForExport().forEach(r => L.push("- " + (r[1] ? r[1] + "–" + r[2] : r[0]) + " · " + (r[3] ? "[" + r[3] + "] " : "") + r[4] + " (" + r[5] + " min)" + (r[7] ? " → output: " + r[7] : "")));
       const NB = notesBy(); if (NB.length) { L.push("", "## Session notes (we have run it)", "Use these to write up outcomes, decisions and follow-ups, and to suggest what to change next time."); NB.forEach(g => { L.push("", "### " + g[0]); g[1].forEach(e => L.push("- " + noteLine(e))); }); }
       L.push("", "## Reply format", "After your explanation, give the full revised agenda as one JSON block so I can paste it back into Builder:", "```json", JSON.stringify({ items: items.slice(0, 3).map(x => x.kind === "block" ? Object.assign({ kind: "block", title: x.title, mins: x.mins }, x.zone !== "live" ? { zone: x.zone } : {}, x.ref ? { ref: x.ref } : {}) : x.kind === "section" ? { kind: "section", title: x.title } : { kind: "day" }).concat([{ kind: "block", title: "…", mins: 10 }]) }), "```", "kind is block, section or day. zone is pre, live (default) or after. Keep ref when you keep a Library method; omit it for new blocks.", "", "## Current agenda as JSON", "```json", JSON.stringify({ items: items.map(x => x.kind === "block" ? Object.assign({ kind: "block", title: x.title, mins: x.mins }, x.zone !== "live" ? { zone: x.zone } : {}, x.ref ? { ref: x.ref } : {}, x.cfg && x.cfg.output ? { output: x.cfg.output } : {}) : x.kind === "section" ? { kind: "section", title: x.title } : { kind: "day" }) }), "```"); return L.join("\n"); };
-    const copy = t => { try { navigator.clipboard.writeText(t); } catch (er) {} };
+    const copy = t => { try { Promise.resolve(navigator.clipboard && navigator.clipboard.writeText(t)).catch(() => {}); } catch (er) {} };
     const openAgent = base => { const t = ctxText(); copy(t); const url = base + encodeURIComponent(t.length > 7000 ? t.slice(0, 7000) + "\n\n[Truncated. Full context is on my clipboard; I'll paste it next.]" : t); window.open(url, "_blank", "noopener"); };
     const applyAgent = () => { const txt = S.agentPaste || ""; const blocks = [...txt.matchAll(/```(?:json)?\s*([\s\S]*?)```/g)].map(m => m[1]); if (!blocks.length) { const i = txt.indexOf("{"), j = txt.lastIndexOf("}"); if (i >= 0 && j > i) blocks.push(txt.slice(i, j + 1)); }
       let data = null; for (let k = blocks.length - 1; k >= 0 && !data; k--) { try { const d = JSON.parse(blocks[k]); const arr = Array.isArray(d) ? d : d && d.items; if (Array.isArray(arr) && arr.length && !arr.some(x => x && x.title === "…")) data = arr; } catch (er) {} }
@@ -397,21 +409,14 @@ class Component extends DCLogic {
       const list = data.filter(x => x && typeof x === "object").map(x => { const kind = x.kind === "section" || x.kind === "day" ? x.kind : "block"; if (kind === "day") return this.mkStruct("day"); if (kind === "section") return Object.assign(this.mkStruct("section"), { title: String(x.title || "Section") });
         const mins = Math.max(5, Math.round((+x.mins || 15) / 5) * 5), r = x.ref && RDL.get(x.ref), z = ["pre", "after"].includes(x.zone) ? x.zone : "live"; const y = r ? Object.assign(this.mkLib(r, mins), { title: String(x.title || r.title) }) : Object.assign(this.mkStruct("custom"), { title: String(x.title || "Block"), mins }); y.zone = z; if (x.output) y.cfg = Object.assign({}, y.cfg, { output: String(x.output) }); return y; });
       replaceWith(list); this.setState({ agentPaste: "", agentMsg: "Applied " + list.filter(x => x.kind === "block").length + " blocks. Undo to go back.", agentErr: false }); };
-    const pdfAgenda = () => { const rows = rowsForExport(), pre = rows.filter(r => r[0] === "Pre-work"), aft = rows.filter(r => r[0] === "After"), live = rows.filter(r => r[1]); const dayN = [...new Set(live.map(r => r[0]))];
-      const fonts = [...document.querySelectorAll("style")].map(s => s.textContent).filter(t => /@font-face/.test(t)).join("\n"); const links = [...document.querySelectorAll('link[rel="stylesheet"]')].map(l => '<link rel="stylesheet" href="' + l.href + '">').join("");
-      const tbl = (list, timed) => '<table>' + list.map(r => '<tr><td class="t">' + (timed ? esc(r[1]) + '<span>–' + esc(r[2]) + '</span>' : esc(r[5]) + ' min') + '</td><td><div class="b">' + esc(r[4]) + '</div>' + (r[7] ? '<div class="o">Output · ' + esc(r[7]) + '</div>' : '') + '</td><td class="m">' + (timed ? esc(r[5]) + ' min' : '') + '</td></tr>').join('') + '</table>';
-      const secs = list => { let out = "", cur = null, buf = []; const flush = () => { if (buf.length) out += (cur ? '<h3>' + esc(cur) + '</h3>' : '') + tbl(buf, true); buf = []; }; list.forEach(r => { if (r[3] !== cur) { flush(); cur = r[3]; } buf.push(r); }); flush(); return out; };
-      const bl = briefList().filter(r => ["Question"].includes(r[0]) || /outcome|people|decision|output/i.test(r[0]));
-      const html = '<!doctype html><html><head><meta charset="utf-8"><title>' + esc(S.name || "Workshop agenda") + '</title><base href="' + location.href + '">' + links + '<style>' + fonts + '@page{size:A4;margin:16mm 16mm 18mm}*{box-sizing:border-box}body{margin:0;font-family:Satoshi,sans-serif;color:#0b0b0a;font-size:10.5pt;line-height:1.4;-webkit-print-color-adjust:exact;print-color-adjust:exact}.k{font-size:8pt;letter-spacing:.08em;text-transform:uppercase;color:#6b675e}h1{font-family:"Clash Display",sans-serif;font-weight:500;font-size:30pt;letter-spacing:-.03em;line-height:1;margin:6pt 0 0}.meta{margin-top:8pt;font-size:11pt}.meta b{color:#ff4b23;font-weight:500}dl{display:grid;grid-template-columns:28mm 1fr;gap:4pt 10pt;margin:14pt 0 0;padding:10pt 0;border-top:1px solid #0b0b0a;border-bottom:1px solid #d8d4c8}dt{color:#6b675e}dd{margin:0}h2{font-family:"Clash Display",sans-serif;font-weight:500;font-size:15pt;margin:18pt 0 4pt;display:flex;justify-content:space-between;align-items:baseline}h2 span{font-family:Satoshi,sans-serif;font-size:9.5pt;color:#6b675e;font-weight:400}h3{font-size:8pt;letter-spacing:.08em;text-transform:uppercase;color:#ff4b23;margin:10pt 0 2pt;font-weight:500}table{width:100%;border-collapse:collapse}tr{break-inside:avoid}td{padding:6pt 0;border-bottom:1px solid #e4e0d5;vertical-align:top}.t{width:26mm;font-variant-numeric:tabular-nums;font-weight:500}.t span{color:#6b675e;font-weight:400}.m{width:16mm;text-align:right;color:#6b675e;font-variant-numeric:tabular-nums}.b{font-weight:500}.o{font-size:9pt;color:#6b675e;margin-top:1pt}footer{margin-top:20pt;font-size:8pt;color:#6b675e;display:flex;justify-content:space-between}</style></head><body>' +
-        '<div class="k">' + (notesBy().length ? 'Agenda and session notes' : 'Workshop agenda') + '</div><h1>' + esc(S.name || "Untitled workshop") + '</h1><div class="meta">' + (live.length ? 'Starts <b>' + esc(clock(start)) + '</b> · ' + esc(hm(total)) + (nDays > 1 ? ' across ' + nDays + ' days' : ' · ends ' + esc(clock(start + total))) : 'No timed blocks yet') + '</div>' +
-        (bl.length ? '<dl>' + bl.map(r => '<dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd>').join('') + '</dl>' : '') +
-        (pre.length ? '<h2>Before the session</h2>' + tbl(pre, false) : '') +
-        dayN.map(d => { const dr = live.filter(r => r[0] === d), m = dr.reduce((s, r) => s + (+r[5] || 0), 0); return '<h2>' + (dayN.length > 1 ? esc(d) : 'The session') + '<span>' + esc(dr[0][1]) + '–' + esc(dr[dr.length - 1][2]) + ' · ' + esc(hm(m)) + '</span></h2>' + secs(dr); }).join('') +
-        (aft.length ? '<h2>Afterwards</h2>' + tbl(aft, false) : '') +
-        (notesBy().length ? '<h2 style="break-before:page">Session notes</h2>' + notesBy().map(g => '<h3>' + esc(g[0]) + '</h3><table>' + g[1].map(e => '<tr><td><div class="b">' + esc(e.text) + '</div>' + (e.typed ? '<div class="o" style="color:#0b0b0a">' + esc(e.typed) + '</div>' : '') + '<div class="o">' + esc(e.block) + (e.owner ? ' · Owner: ' + esc(e.owner) : '') + '</div></td></tr>').join('') + '</table>').join('') : '') +
-        '<footer><span>Designed in Raw Draft Builder</span><span>' + esc(new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })) + '</span></footer></body></html>';
-      const f = document.createElement("iframe"); f.setAttribute("aria-hidden", "true"); f.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden"; document.body.appendChild(f); const d = f.contentWindow.document; d.open(); d.write(html); d.close();
-      const go = () => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (er) {} setTimeout(() => f.remove(), 60000); }; (d.fonts && d.fonts.ready ? d.fonts.ready : Promise.resolve()).then(() => setTimeout(go, 250)); };
+    const agendaDoc = () => { const rows = rowsForExport(), row = r => ({ start: r[1], end: r[2], title: String(r[4]), mins: +r[5] || 0, output: r[7] || "", mode: r[6] || "", link: r[8] || "" }), live = rows.filter(r => r[1]), dayN = [...new Set(live.map(r => r[0]))], NB = notesBy();
+      const days = dayN.map(d => { const dr = live.filter(r => r[0] === d), secs = []; dr.forEach(r => { const last = secs[secs.length - 1]; if (!last || last.title !== r[3]) secs.push({ title: r[3] || "", rows: [] }); secs[secs.length - 1].rows.push(row(r)); }); return { label: d, range: dr[0][1] + "–" + dr[dr.length - 1][2], total: hm(dr.reduce((s, r) => s + (+r[5] || 0), 0)), sections: secs }; });
+      return { name: S.name || "", kicker: NB.length ? "Agenda and session notes" : "Workshop agenda", meta: live.length ? "Starts " + clock(start) + " · " + hm(total) + (nDays > 1 ? " across " + nDays + " days" : " · ends " + clock(start + total)) : "No timed blocks yet",
+        brief: briefList().filter(r => r[0] === "Question" || /outcome|people|decision|output/i.test(r[0])).map(r => [String(r[0]), String(r[1])]), pre: rows.filter(r => r[0] === "Pre-work").map(row), days, after: rows.filter(r => r[0] === "After").map(row),
+        notes: NB.map(g => ({ group: g[0], entries: g[1].map(e => ({ text: e.text, typed: e.typed || "", block: e.block, owner: e.owner || "" })) })), date: new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" }) }; };
+    const exportFile = kind => { if (S.exporting) return; this.setState({ exporting: kind }); Promise.resolve(window.RDX && RDX[kind](agendaDoc())).catch(() => {}).then(() => this.setState({ exporting: null })); };
+    const curW = (S.workshops || []).find(x => x.id === S.wid) || {};
+    const pdfAgenda = () => exportFile("pdf"), docxAgenda = () => exportFile("docx");
     const blank = { lib: { q: "", stage: "", time: "", people: "", format: "", output: "", type: "" } };
     const selItems = items.filter(x => S.sel.includes(x.id) && x.kind === "block"), selIds = selItems.map(x => x.id);
     // chat-first values
@@ -507,11 +512,13 @@ class Component extends DCLogic {
         const fm = tl.match(/(?:fit|into|in|under)\s+(?:to\s+|in\s+)?(\d+(?:\.\d+)?)\s*(hours?|hrs?|h\b|min|minutes)/); if (fm) { const target = /^h/.test(fm[2]) ? Math.round(+fm[1] * 60) : +fm[1]; if (total > target) { done({}); this.propose("cut", total - target, "From: “" + t + "”"); } else done({ notice: "It already fits: " + hm(total) + " planned." }); return; } this.setState({ asking: true }); const r = await RDB.ask(t); this.setState({ asking: false }); if (!r) { this.setState({ notice: "Builder could not turn that into a change yet. Try an action above, or edit the blocks directly." }); return; } this.setState({ askText: "" }); this.propose(r.cmd, r.n, "From: “" + t + "”"); },
       runStress: () => this.setState({ stress: true }), stressL: S.stress ? "Stress test · re-run after changes" : "Stress test", hasStress: S.stress, stressGroups: groups,
       methods, hasMethods: methods.length > 0,
-      copyL: S.copied ? "Copied" : "Copy agenda", copyAgenda: () => { const t = [S.name, ""].concat(rowsForExport().map(r => (r[1] ? r[1] + "  " : r[0] + "  ") + r[4] + "  (" + r[5] + " min)")).join("\n"); try { navigator.clipboard.writeText(t); } catch (er) {} this.setState({ copied: true }); setTimeout(() => this.setState({ copied: false }), 1500); },
+      copyL: S.copied ? "Copied" : "Copy agenda", copyAgenda: () => { const t = [S.name, ""].concat(rowsForExport().map(r => (r[1] ? r[1] + "  " : r[0] + "  ") + r[4] + "  (" + r[5] + " min)")).join("\n"); try { Promise.resolve(navigator.clipboard && navigator.clipboard.writeText(t)).catch(() => {}); } catch (er) {} this.setState({ copied: true }); setTimeout(() => this.setState({ copied: false }), 1500); },
       dlCsv: () => dl((S.name || "workshop").replace(/[^\w]+/g, "-") + ".csv", "text/csv", [["Part", "Start", "End", "Section", "Block", "Minutes", "Mode", "Output", "Library"]].concat(rowsForExport()).map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(",")).join("\n")),
       dlJson: () => dl((S.name || "workshop").replace(/[^\w]+/g, "-") + ".json", "application/json", JSON.stringify({ name: S.name, start: S.start, brief: b, items }, null, 2)),
       ...this.runVals(items, start, clock, hm),
-      pdfAgenda, agentOpen: !!S.agent, agentAria: S.agent ? "true" : "false", agentToggleL: S.agent ? "Hide paste box" : "Paste the agent's reply →", toggleAgent: () => this.setState(s => ({ agent: !s.agent })),
+      shareL: S.sharing ? "Saving…" : curW.share ? (curW.sharedSig === JSON.stringify([S.items, S.name, S.brief, S.start]) ? "Copy share link" : "Update share link") : "Create share link", doShare: () => this.shareLink(),
+      hasShareUrl: !!curW.share, shareUrl: curW.share ? location.origin + "/builder?w=" + curW.share.id : "", shareMsg: S.shareMsg || (curW.share ? "Updating keeps the same link." : "Saves a copy online. Run notes stay in this browser."), selAll: e => e.target.select(),
+      pdfAgenda, docxAgenda, pdfL: S.exporting === "pdf" ? "Preparing…" : "Agenda PDF", notesPdfL: S.exporting === "pdf" ? "Preparing…" : "Session notes PDF", docxL: S.exporting === "docx" ? "Preparing…" : ".docx", agentOpen: !!S.agent, agentAria: S.agent ? "true" : "false", agentToggleL: S.agent ? "Hide paste box" : "Paste the agent's reply →", toggleAgent: () => this.setState(s => ({ agent: !s.agent })),
       openClaude: () => openAgent("https://claude.ai/new?q="), openGpt: () => openAgent("https://chatgpt.com/?q="),
       ctxL: S.ctxCopied ? "Copied" : "Copy context", copyCtx: () => { copy(ctxText()); this.setState({ ctxCopied: true }); setTimeout(() => this.setState({ ctxCopied: false }), 1500); }, dlCtx: () => dl(fname(".md"), "text/markdown", ctxText()),
       agentPaste: S.agentPaste || "", onAgentPaste: e => this.setState({ agentPaste: e.target.value, agentMsg: "" }), applyAgent, agentMsg: S.agentMsg || "", agentMsgC: S.agentErr ? "#ff4b23" : "#8f8b80",
@@ -902,7 +909,10 @@ Component.prototype.template = function (V) {
                         </p>
                         <div style={{"display":"flex","flexWrap":"wrap","gap":"8px","marginTop":"22px"}}>
                           <button onClick={V.pdfAgenda} style={{"whiteSpace":"nowrap","background":"#ff4b23","border":"0","color":"#0b0b0a","minHeight":"48px","padding":"0 18px","cursor":"pointer","fontSize":"15px","fontWeight":"500"}}>
-                            {"Session notes PDF"}
+                            {dcText(V.notesPdfL)}
+                          </button>
+                          <button onClick={V.docxAgenda} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","cursor":"pointer","minHeight":"48px","padding":"0 16px","fontSize":"15px"}}>
+                            {dcText(V.docxL)}
                           </button>
                           <button onClick={V.copyAgenda} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","cursor":"pointer","minHeight":"48px","padding":"0 16px","fontSize":"15px"}}>
                             {dcText(V.copyL)}
@@ -2109,11 +2119,28 @@ Component.prototype.template = function (V) {
                       </>
                     ) : null}
                     <div style={{"marginTop":"24px","fontSize":"12px","letterSpacing":".06em","color":"#8f8b80"}}>
+                      {"SHARE"}
+                    </div>
+                    <button onClick={V.doShare} style={{"whiteSpace":"nowrap","marginTop":"8px","width":"100%","background":"none","border":"1px solid #ece9e0","color":"#ece9e0","minHeight":"42px","cursor":"pointer","fontSize":"14px","fontWeight":"500"}} className="scp-hover-h">
+                      {dcText(V.shareL)}
+                    </button>
+                    {V.hasShareUrl ? (
+                      <>
+                        <input readOnly="readonly" value={V.shareUrl ?? ""} onFocus={V.selAll} aria-label="Share link" style={{"marginTop":"6px","width":"100%","boxSizing":"border-box","background":"#141413","border":"1px solid #34332e","color":"#c9c5ba","minHeight":"36px","padding":"0 10px","font":"inherit","fontSize":"13px"}} />
+                      </>
+                    ) : null}
+                    <p role="status" style={{"margin":"6px 0 0","fontSize":"13px","lineHeight":"1.45","color":"#8f8b80"}}>
+                      {dcText(V.shareMsg)}
+                    </p>
+                    <div style={{"marginTop":"24px","fontSize":"12px","letterSpacing":".06em","color":"#8f8b80"}}>
                       {"EXPORT"}
                     </div>
                     <div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginTop":"8px"}}>
                       <button onClick={V.pdfAgenda} style={{"whiteSpace":"nowrap","background":"#ece9e0","border":"0","color":"#0b0b0a","minHeight":"36px","padding":"0 12px","cursor":"pointer","fontSize":"13px","fontWeight":"500"}}>
-                        {"Agenda PDF"}
+                        {dcText(V.pdfL)}
+                      </button>
+                      <button onClick={V.docxAgenda} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","cursor":"pointer","minHeight":"36px","padding":"0 10px","fontSize":"13px"}}>
+                        {dcText(V.docxL)}
                       </button>
                       <button onClick={V.copyAgenda} style={{"whiteSpace":"nowrap","background":"none","border":"1px solid #34332e","color":"#ece9e0","cursor":"pointer","minHeight":"36px","padding":"0 10px","fontSize":"13px"}}>
                         {dcText(V.copyL)}
@@ -2126,7 +2153,7 @@ Component.prototype.template = function (V) {
                       </button>
                     </div>
                     <p style={{"margin":"16px 0 0","fontSize":"13px","lineHeight":"1.45","color":"#8f8b80"}}>
-                      {"Saved in this browser. Export the agenda to share it."}
+                      {"Saved in this browser. PDF and Word files download straight away."}
                     </p>
                     {V.hasMethods ? (
                       <>

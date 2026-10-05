@@ -34,6 +34,9 @@ aren't connected yet.
   "Contributed by <name>".
 - **Advanced fields (JSON)** on a Library item holds rarely used structures (agendas, blueprints, game
   rules). Keep it valid JSON; if it isn't, the page ignores those fields rather than breaking.
+- **Shared workshops** are Builder share links (`/builder?w=<id>`), written by `/api/workshops`. Each holds a
+  JSON snapshot of the agenda and brief; run notes are never uploaded. Only the creator's browser holds
+  the edit key, so posting again updates the same link. Delete one in the Studio to kill its link.
 
 ## Changing the content model
 

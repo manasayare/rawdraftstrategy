@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { RDNav } from "@/lib/dc";
 import { loadEngines } from "@/rd";
 import RawDraft from "@/generated/RawDraft";
+import { RDX } from "@/builder/bridge";
 
 // Content comes from Sanity through /api/content; with no CMS connected (204) the bundled data is used.
 // Sanity content replaces the bundled records right after the file that defines them loads,
@@ -18,6 +19,7 @@ function loadSite() {
       "rd-builder.js": () => { if (c.templates.length) window.RDB.TPL.splice(0, window.RDB.TPL.length, ...c.templates); }
     } : {});
     window.RD.fromCMS = !!c;
+    window.RDX = RDX;
   })());
 }
 
