@@ -1,11 +1,29 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { RDNav } from "@/lib/dc";
-import "@/rd";
+import { loadEngines } from "@/rd";
 import RawDraft from "@/generated/RawDraft";
 
+// Content comes from Sanity through /api/content; with no CMS connected (204) the bundled data is used.
+// Sanity content replaces the bundled records right after the file that defines them loads,
+// before any engine that reads them.
+let loading = null;
+function loadSite() {
+  return (loading = loading || (async () => {
+    const c = await fetch("/api/content").then(r => (r.status === 200 ? r.json() : null)).catch(() => null);
+    await loadEngines(c ? {
+      "rd-backlog.js": () => Object.assign(window.RD, { items: c.items, sources: c.sources, work: c.work, notes: c.notes }),
+      "rd-network.js": () => Object.assign(window.RDN, { people: c.people, partners: c.partners }),
+      "rd-builder.js": () => { if (c.templates.length) window.RDB.TPL.splice(0, window.RDB.TPL.length, ...c.templates); }
+    } : {});
+    window.RD.fromCMS = !!c;
+  })());
+}
+
 export default function App() {
+  const [ready, setReady] = useState(false);
+  useEffect(() => { loadSite().then(() => setReady(true)); }, []);
   const router = useRouter();
   const pathname = usePathname();
   const search = useSearchParams().toString();
@@ -35,5 +53,5 @@ export default function App() {
     return () => document.removeEventListener("click", onClick);
   }, [router]);
 
-  return <RawDraft />;
+  return ready ? <RawDraft /> : <div style={{ minHeight: "100vh", background: "#0b0b0a" }} />;
 }
