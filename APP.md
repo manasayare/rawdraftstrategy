@@ -12,7 +12,7 @@ npm run build && npm start
 
 ## How it is put together
 
-- `project/` is the design export, untouched. It is the source of truth for markup, styles and logic.
+- `project/` started as the Claude Design export. It is the source of truth for markup, styles and logic.
 - `scripts/dc-to-jsx.mjs` compiles each `.dc.html` page into a React component in `src/generated/`, and copies the engine and data scripts (`rd-*.js`) into `src/rd/`. Inline styles, hover/focus states and the logic classes are carried over as written, so the app renders pixel for pixel like the prototype.
 - `project/` is now edited directly (the no-login, no-AI changes live there). Edit it, then run `npm run generate`. Don't edit `src/generated/` or `src/rd/` by hand; they are overwritten. A fresh Claude Design export would replace these edits, so merge rather than overwrite.
 - `src/lib/dc.js` is the small runtime the generated components use.
