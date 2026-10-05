@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import ClientApp from "@/components/ClientApp";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,10 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&display=swap" />
       </head>
-      <body>
-        <ClientApp />
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

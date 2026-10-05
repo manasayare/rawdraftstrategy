@@ -19,6 +19,7 @@ http.createServer((req, res) => {
         const [op, d] = Object.entries(m)[0];
         if (op === "create" && docs.has(d._id)) return send(res, 409, { error: { description: "exists" } });
         if (op === "create" || op === "createOrReplace" || (op === "createIfNotExists" && !docs.has(d._id))) docs.set(d._id, d);
+        if (op === "patch") { const cur = docs.get(d.id); if (!cur) return send(res, 404, { error: "missing" }); Object.assign(cur, d.set || {}); (d.unset || []).forEach(k => delete cur[k]); }
       }
       return send(res, 200, { transactionId: "t" + Date.now(), results: mutations.map(m => ({ id: Object.values(m)[0]._id, operation: "create" })) });
     }
@@ -27,6 +28,7 @@ http.createServer((req, res) => {
       const m = q.match(/^count\(\*\[_type == "(\w+)"\]\)$/);
       if (m) return send(res, 200, { result: [...docs.values()].filter(d => d._type === m[1]).length });
       if (q.includes('"items"')) return send(res, 200, { result: emulateContentQuery([...docs.values()]) });
+      if (q.includes('*[_type == "lead"]')) return send(res, 200, { result: [...docs.values()].filter(d => d._type === "lead").sort((a, b) => b.received.localeCompare(a.received)) });
       if (q.includes("*[_type == \"submission\"")) return send(res, 200, { result: [...docs.values()].filter(d => d._type === "submission") });
       return send(res, 400, { error: "unsupported query in mock: " + q.slice(0, 80) });
     }

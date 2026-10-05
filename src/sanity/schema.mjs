@@ -116,4 +116,17 @@ const submission = {
   orderings: [{ title: "Newest", name: "newest", by: [{ field: "submittedAt", direction: "desc" }] }]
 };
 
-export const schemaTypes = [libraryItem, source, work, note, person, partner, builderTemplate, submission];
+const lead = {
+  name: "lead", title: "Lead", type: "document",
+  fields: [
+    list("status", "Status", [["new", "New"], ["toSchedule", "To schedule"], ["booked", "Call booked"], ["done", "Call done"], ["notNow", "Not now"], ["declined", "Declined"]], { initialValue: "new" }),
+    list("urgency", "Urgency", [["high", "High"], ["medium", "Medium"], ["low", "Low"]], { description: "Empty means the dashboard suggests one from timing and budget." }),
+    { name: "received", title: "Received", type: "datetime", readOnly: true }, { name: "callAt", title: "Discovery call", type: "datetime" }, { name: "callMinutes", title: "Call length (min)", type: "number" },
+    str("name", "Name"), str("email", "Email"), str("org", "Organisation"), str("role", "Role"), text("help", "Needs help with", 2), text("topics", "Session is about", 2),
+    str("length", "Session length"), str("people", "Group size"), str("when", "When"), str("budget", "Budget"), text("notes", "Their note", 4), str("source", "Came from"), str("page", "Page"),
+    text("decisionNote", "Private note", 3)
+  ],
+  orderings: [{ title: "Newest", name: "newest", by: [{ field: "received", direction: "desc" }] }]
+};
+
+export const schemaTypes = [libraryItem, source, work, note, person, partner, builderTemplate, submission, lead];
