@@ -6,77 +6,51 @@ import { DCLogic, dcList, dcText, dcStr, dcCss, dcHref, RDNav } from "@/lib/dc";
 
 
 class Component extends DCLogic {
-  fieldRef = React.createRef();
-  load() { try { return JSON.parse(sessionStorage.getItem("rd-book-3") || "null"); } catch (e) { return null; } }
-  state = Object.assign({ step: -1, a: {}, c: { name: "", email: "", company: "", notes: "" }, err: "", sent: false }, this.load() || {}, { fade: false, ready: !!(window.RDQ && window.RD), w: window.innerWidth, rm: !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) });
-  FIELDS = [{ key: "name", label: "What's your name?", ph: "Type your name", type: "text", mode: "text", ac: "name", req: true },
-    { key: "email", label: "And your work email?", sub: "Only used to send the booking and follow up.", ph: "name@company.com", type: "email", mode: "email", ac: "email", req: true },
-    { key: "company", label: "Which organisation is this for?", sub: "Optional. Press Enter to skip.", ph: "Company or team", type: "text", mode: "text", ac: "organization" },
-    { key: "notes", label: "Anything I should know before we talk?", sub: "Optional. A link, a constraint, a date.", ph: "Type here", type: "text", mode: "text", ac: "off" }];
-  componentDidMount() {
-    this.onR = () => this.setState({ w: window.innerWidth }); window.addEventListener("resize", this.onR);
-    this.onK = e => this.key(e); window.addEventListener("keydown", this.onK);
-    if (!this.state.ready) this.poll = setInterval(() => { if (window.RDQ && window.RD) { clearInterval(this.poll); this.setState({ ready: true }); } }, 40);
+  // Options mirror what was asked in the old step-by-step flow, so enquiries stay comparable.
+  static HELP = ["Designing the workshop or Sprint", "Facilitating it on the day", "Structuring the problem first", "Research and preparation", "Synthesis and follow-through", "Not sure yet"];
+  static TOPICS = ["A difficult decision", "What to build", "Positioning or brand", "Aligning a leadership team", "Making sense of research", "Where AI fits", "Preparing for the future", "Going to market", "Something else"];
+  static SELECTS = [
+    ["length", "Session length", ["90 minutes", "Half a day", "A full day", "2 to 5 days, a Sprint", "Several sessions", "Not sure yet"]],
+    ["people", "Group size", ["2 to 5", "6 to 10", "11 to 20", "20+"]],
+    ["when", "When", ["Within 2 to 4 weeks", "Within 1 to 2 months", "This quarter", "Later this year", "No date yet"]],
+    ["budget", "Budget (USD)", ["Under $2,500", "$2,500 to $7,500", "$7,500 to $15,000", "$15,000 to $30,000", "$30,000 or more", "Not approved yet", "No budget yet"]]];
+  static FIELDS = [["name", "Name", "text", "name", "Your name", true], ["email", "Work email", "email", "email", "name@company.com", true], ["org", "Organisation", "text", "organization", "Company or team"], ["role", "Your role", "text", "organization-title", "e.g. Head of Product"]];
+
+  state = { v: { name: "", email: "", org: "", role: "", length: "", people: "", when: "", budget: "" }, help: [], topics: [], notes: "", trap: "", status: "idle", bad: {}, w: window.innerWidth };
+  componentDidMount() { this.onR = () => this.setState({ w: window.innerWidth }); window.addEventListener("resize", this.onR); }
+  componentWillUnmount() { window.removeEventListener("resize", this.onR); }
+  set(k, val) { this.setState(s => ({ v: Object.assign({}, s.v, { [k]: val }), bad: Object.assign({}, s.bad, { [k]: false }), status: s.status === "error" || s.status === "invalid" ? "idle" : s.status })); }
+  toggle(key, x) { this.setState(s => ({ [key]: s[key].includes(x) ? s[key].filter(y => y !== x) : s[key].concat([x]) })); }
+
+  async submit(e) {
+    e.preventDefault();
+    const S = this.state, v = S.v, bad = {};
+    if (!v.name.trim()) bad.name = true;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email.trim())) bad.email = true;
+    if (Object.keys(bad).length) { this.setState({ bad, status: "invalid" }); return; }
+    this.setState({ status: "sending" });
+    const body = Object.assign({}, v, { help: S.help.join("; "), topics: S.topics.join("; "), notes: S.notes, website: S.trap,
+      source: [this.props.sourceType, this.props.sourceTitle].filter(Boolean).join(": ") || "direct", page: location.href });
+    try {
+      const res = await fetch("/api/enquiry", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      if (res.ok) { this.setState({ status: "sent" }); window.scrollTo(0, 0); return; }
+      this.setState({ status: res.status === 503 ? "offline" : "error" });
+    } catch (err) { this.setState({ status: "error" }); }
   }
-  componentWillUnmount() { window.removeEventListener("resize", this.onR); window.removeEventListener("keydown", this.onK); clearInterval(this.poll); clearTimeout(this.t); clearTimeout(this.adv); }
-  componentDidUpdate(_, ps) { try { const { step, a, c, sent } = this.state; sessionStorage.setItem("rd-book-3", JSON.stringify({ step, a, c, sent })); } catch (e) {} if (ps.step !== this.state.step && this.fieldRef.current) setTimeout(() => this.fieldRef.current && this.fieldRef.current.focus(), 50); }
-  Qs() { return (window.RDQ ? RDQ.questions : []); }
-  total() { return this.Qs().length + this.FIELDS.length; }
-  go(n) { if (this.state.rm) { this.setState({ step: n, err: "" }); window.scrollTo(0, 0); return; } this.setState({ fade: true }); clearTimeout(this.t); this.t = setTimeout(() => { this.setState({ step: n, fade: false, err: "" }); window.scrollTo(0, 0); }, 170); }
-  cur() { const S = this.state, Q = this.Qs(); if (S.step < 0) return { kind: "intro" }; if (S.step < Q.length) return { kind: "q", q: Q[S.step] }; const fi = S.step - Q.length; if (fi < this.FIELDS.length) return { kind: "f", f: this.FIELDS[fi] }; return { kind: "out" }; }
-  answered(q) { const v = this.state.a[q.id]; return q.optional ? true : q.multi ? !!(v && v.length) : !!v; }
-  advance() { const S = this.state, C = this.cur();
-    if (C.kind === "intro") return this.go(0);
-    if (C.kind === "q") { if (!this.answered(C.q)) { this.setState({ err: "Please pick an option." }); return; } return this.go(S.step + 1); }
-    if (C.kind === "f") { const v = (S.c[C.f.key] || "").trim(); if (C.f.req && !v) { this.setState({ err: "This one is needed." }); return; } if (C.f.key === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { this.setState({ err: "That email doesn't look right." }); return; }
-      if (S.step + 1 === this.total()) this.finish(); return this.go(S.step + 1); } }
-  pick(q, k) { const S = this.state; if (q.multi) { let cur = (S.a[q.id] || []).slice(); if (cur.includes(k)) cur = cur.filter(x => x !== k); else { cur.push(k); if (cur.length > q.multi) cur.shift(); } this.setState({ a: Object.assign({}, S.a, { [q.id]: cur }), err: "" }); return; }
-    this.setState({ a: Object.assign({}, S.a, { [q.id]: k }), err: "" }); if (k === q.other) return; clearTimeout(this.adv); this.adv = setTimeout(() => this.go(this.state.step + 1), this.state.rm ? 0 : 280); }
-  key(e) { if (e.metaKey || e.ctrlKey || e.altKey) return; const C = this.cur(), tag = (e.target && e.target.tagName) || "";
-    if (e.key === "Enter" && !e.shiftKey) { if (tag === "BUTTON" || tag === "A") return; if (C.kind !== "out") { e.preventDefault(); this.advance(); } return; }
-    if (C.kind === "q" && tag !== "INPUT" && tag !== "TEXTAREA" && /^[a-z]$/i.test(e.key)) { const i = e.key.toUpperCase().charCodeAt(0) - 65; const o = C.q.opts[i]; if (o) { e.preventDefault(); this.pick(C.q, o[0]); } } }
-  finish() { const S = this.state, ev = RDQ.evaluate(S.a), sub = RDQ.build(S.a, ev, S.c, { sourceType: this.props.sourceType || "direct", sourceTitle: this.props.sourceTitle || "" }); sub.engagement = this.engagement(S.a).name; RDQ.capture(sub); }
-  engagement(a) { const h = a.help || [], f = a.format, L = (id, v) => RDQ.label(id, v);
-    const size = { small: "2 to 5", mid: "6 to 10", large: "11 to 20", xl: "20+" }[a.people] || "Your group";
-    const topic = (a.strategicProblems || []).filter(x => x !== "other").map(x => L("strategicProblems", x)).join(" and ") || (a.otherText || "Your question");
-    const len = { "90": "90-minute", half: "Half-day", day: "Full-day", series: "Multi-session" }[f] || "";
-    let name, d, inc, price;
-    if (h.includes("structure")) { name = "Problem structuring session"; d = "A focused 90-minute session to sharpen the question, agree who decides and choose the right workshop format before anyone books a room."; inc = ["Pre-call with the decision owner", "90-minute structuring session", "Recommended workshop design", "One-page brief"]; price = [1500, 3000]; }
-    else if (f === "sprint") { name = "Designed and facilitated Sprint"; d = "A 2 to 5 day Sprint designed around your question and run with your team, from evidence to a tested direction."; inc = ["Sprint design", "Pre-work and research plan", "Facilitation on every day", "Synthesis and decision memo", "Follow-up plan"]; price = [15000, 40000]; }
-    else if (h.includes("facilitate")) { name = (len ? len + " " : "") + "facilitated workshop"; d = "I design the session around your question and run it on the day, so you can take part instead of holding the room."; inc = ["Workshop design", "Participant pre-read", "Facilitation on the day", "Boards and materials", "Summary and decision log"]; price = f === "day" ? [7000, 12000] : f === "series" ? [9000, 18000] : f === "90" ? [2500, 4500] : [4000, 8000]; }
-    else if (h.includes("research") || h.includes("synthesis")) { name = "Workshop with research and synthesis"; d = "Evidence gathered before the session and turned into decisions after it, so the room works from reality, not opinion."; inc = ["Research plan", "Interviews or desk research", "Facilitated session", "Synthesis", "Decision memo"]; price = [10000, 20000]; }
-    else { name = "Workshop design"; d = "A complete workshop designed for your question that your team runs, with a facilitator briefing beforehand."; inc = ["Agenda and timings", "Facilitator guide", "Boards and materials", "Facilitator briefing call"]; price = [2500, 5000]; }
-    name = name.charAt(0).toUpperCase() + name.slice(1);
-    const facts = [["About", topic], ["Session", [L("format", f), a.people ? size + " people" : ""].filter(Boolean).join(", ")], ["When", L("decisionHorizon", a.decisionHorizon)]].filter(x => x[1]).map(([k, v]) => ({ k, v }));
-    const usd = n => "$" + n.toLocaleString("en-US"), bmax = { b1: 2500, b2: 7500, b3: 15000, b4: 30000, b5: 1e9 }[a.commercialReadiness], bl = RDQ.label("commercialReadiness", a.commercialReadiness), bmin = { b1: 0, b2: 2500, b3: 7500, b4: 15000, b5: 30000 }[a.commercialReadiness] || 0;
-    const fitNote = !bmax ? (bl ? "Your budget: " + bl.toLowerCase() + "." : "") : bmax < price[0] ? "Your approved range (" + bl + ") is below the typical range. I can scope a smaller version to fit." : bmax < price[1] ? "Your approved range (" + bl + ") fits the lower end. I'll scope it to stay within it." : (bmin > price[1] ? "Your approved range (" + bl + ") is above this. The budget leaves room for research or follow-through." : "Your approved range (" + bl + ") covers this.");
-    return { name, d, inc, facts, priceL: usd(price[0]) + " to " + usd(price[1]), fitNote, hasFitNote: !!fitNote, under: !!bmax && bmax < price[0] }; }
+
   renderVals() {
-    const S = this.state;
-    if (!(S.ready && window.RDQ)) return { isIntro: true, opts: [], reasons: [], eng: { facts: [], inc: [] }, out: {}, q: {}, f: {}, pct: "0%", op: "1", ty: "0px", trans: "none", begin: () => {} };
-    const Q = this.Qs(), C = this.cur(), tot = this.total(), mainN = tot;
-    const base = { pct: Math.max(0, Math.min(100, ((S.step + (C.kind === "out" ? 1 : 0)) / tot) * 100)) + "%", op: S.fade ? "0" : "1", ty: S.fade ? "-14px" : "0px", trans: S.rm ? "none" : "opacity .17s ease, transform .2s ease",
-      isIntro: C.kind === "intro", isQ: C.kind === "q", isField: C.kind === "f", isOut: C.kind === "out", begin: () => this.go(0),
-      showNav: C.kind === "q" || C.kind === "f", back: () => this.go(Math.max(0, S.step - 1)), noBack: S.step <= 0, backOp: S.step <= 0 ? ".4" : "1", next: () => this.advance(), qNum: String(S.step + 1), qMeta: (S.step + 1) + " of " + mainN,
-      opts: [], reasons: [], eng: { facts: [], inc: [] }, out: {}, q: {}, f: {}, okL: "OK", okDisabled: false, fwdOp: "1" };
-    { const ev = RDQ.evaluate(S.a), FN = { priority: "Strong fit · planning call", discovery: "Good fit · 20-minute call", early: "Early fit · proposal by email" }; Object.assign(base, { showProto: (this.props.showRouting ?? true) && C.kind !== "intro", protoFit: "Currently: " + FN[ev.route], protoShort: FN[ev.route].split(" · ")[0], protoOpen: !!S.protoOpen, protoAria: S.protoOpen ? "true" : "false", toggleProto: () => this.setState(st => ({ protoOpen: !st.protoOpen })), protoScore: "Score " + ev.score + " · strong ≥ " + RDQ.thresholds.priority + ", good ≥ " + RDQ.thresholds.discovery, restartAll: () => this.setState({ step: -1, a: {}, c: { name: "", email: "", company: "", notes: "" }, sent: false, err: "" }) }); }
-    if (C.kind === "q") { const q = C.q, v = S.a[q.id], multi = !!q.multi, ok = this.answered(q);
-      Object.assign(base, { q, hasSub: !!q.sub, isMulti: multi, groupRole: multi ? "group" : "radiogroup", showOk: multi || q.optional || (v === q.other && !!q.other), okL: q.optional && !v ? "Skip" : "OK", okDisabled: !ok, okBg: ok ? "#ff4b23" : "#4a4843", fwdOp: ok ? "1" : ".4",
-        qMeta: (S.step + 1) + " of " + mainN + (q.optional ? " · optional" : "") + (S.err ? " · " + S.err : ""),
-        opts: q.opts.map(([k, label], j) => { const on = multi ? (v || []).includes(k) : v === k; return { key: String.fromCharCode(65 + j), label, on, role: multi ? "checkbox" : "radio", aria: on ? "true" : "false", bg: on ? "rgba(255,75,35,.12)" : "rgba(236,233,224,.03)", bd: on ? "#ff4b23" : "#34332e", kbd: on ? "#ff4b23" : "#4a4843", kbg: on ? "#ff4b23" : "transparent", kfg: on ? "#0b0b0a" : "#c9c5ba", pick: () => this.pick(q, k) }; }),
-        showOther: !!q.other && (multi ? (v || []).includes(q.other) : v === q.other), otherText: S.a.otherText || "", onOther: e => this.setState({ a: Object.assign({}, this.state.a, { otherText: e.target.value }) }) }); }
-    if (C.kind === "f") { const f = C.f, val = S.c[f.key] || "";
-      Object.assign(base, { f, hasFSub: !!f.sub, fVal: val, fieldRef: this.fieldRef, onField: e => this.setState({ c: Object.assign({}, this.state.c, { [f.key]: e.target.value }), err: "" }), onFieldKey: () => {}, fErr: S.err, fInvalid: S.err ? "true" : "false", fBd: S.err ? "#ff4b23" : "#4a4843",
-        okL: S.step + 1 === tot ? "Submit" : (!f.req && !val.trim() ? "Skip" : "OK") }); }
-    if (C.kind === "out") { const a = S.a, ev = RDQ.evaluate(a), route = ev.route, eng = this.engagement(a), nm = (S.c.name || "").trim().split(/\s+/)[0];
-      const cal = u => u + "?name=" + encodeURIComponent(S.c.name || "") + "&email=" + encodeURIComponent(S.c.email || "");
-      const later = route === "early";
-      const out = route === "priority" ? { kicker: "Fit 1 of 3 · Strong fit", title: "Let's get it in the calendar" + (nm ? ", " + nm : "") + ".", copy: "Pick a time for a 30-minute planning call. We agree the format, the room and the dates, and I send a proposal within two working days.", cta: "Pick a planning call time", href: cal(RDQ.calPriority), target: "_blank", note: "30 minutes · video call", click: () => {} }
-        : later ? { kicker: "Fit 3 of 3 · Early fit", title: "I'll send you a proposal" + (nm ? ", " + nm : "") + ".", copy: "Not everything is in place yet, so a call can wait. I'll email a proposed format, what it includes and the price, so you can take it to whoever approves the budget.", cta: S.sent ? "Proposal requested" : "Send me the proposal", href: "#/work-with-us", target: "_self", note: "Usually within two working days", click: e => { e.preventDefault(); this.setState({ sent: true }); } }
-        : { kicker: "Fit 2 of 3 · Good fit", title: "Let's book a short call" + (nm ? ", " + nm : "") + ".", copy: "A 20-minute call to check the question, who needs to be in the room and what the session must produce. Then I come back with a format and dates.", cta: "Book a 20-minute call", href: cal(RDQ.calDiscovery), target: "_blank", note: "20 minutes · video call", click: () => {} };
-      const reasons = RDQ.reasons(a, ev);
-      Object.assign(base, { fitC: eng.under ? "#ff4b23" : "#c9c5ba", out, eng, reasons, hasReasons: reasons.length > 0, sentNote: S.sent && later, sentMsg: "Done. The proposal will go to " + (S.c.email || "your email") + ".", restart: () => this.setState({ step: -1, a: {}, c: { name: "", email: "", company: "", notes: "" }, sent: false, err: "" }) }); }
-    return base;
+    const S = this.state, C = Component, wide = S.w >= 700, first = (S.v.name || "").trim().split(/\s+/)[0];
+    const chip = (key, l) => { const on = S[key].includes(l); return { l, aria: on ? "true" : "false", bg: on ? "rgba(255,75,35,.12)" : "transparent", bd: on ? "#ff4b23" : "#34332e", pick: () => this.toggle(key, l) }; };
+    const MSG = { idle: ["", "#8f8b80"], sending: ["Sending…", "#8f8b80"], invalid: ["Add your name and a valid email.", "#ff4b23"], error: ["That didn't go through. Please try again.", "#ff4b23"], offline: ["Enquiries aren't connected yet. Please try again later.", "#ff4b23"] }[S.status] || ["", "#8f8b80"];
+    return {
+      isForm: S.status !== "sent", isSent: S.status === "sent", cols: wide ? "minmax(0,1fr) minmax(0,1fr)" : "minmax(0,1fr)",
+      fields: C.FIELDS.map(([key, label, type, ac, ph, req]) => ({ key, label: label + (req ? "" : " (optional)"), type, ac, ph, v: S.v[key], bad: S.bad[key] ? "true" : "false", bd: S.bad[key] ? "#ff4b23" : "#4a4843", on: e => this.set(key, e.target.value) })),
+      groups: [{ q: "What do you need help with?", sub: "Pick any that apply.", opts: C.HELP.map(l => chip("help", l)) }, { q: "What is the session about?", sub: "The question the room needs to answer.", opts: C.TOPICS.map(l => chip("topics", l)) }],
+      selects: C.SELECTS.map(([key, label, opts]) => ({ label: label + " (optional)", v: S.v[key], on: e => this.set(key, e.target.value), opts: [{ v: "", l: "Choose…" }].concat(opts.map(o => ({ v: o, l: o }))) })),
+      notes: S.notes, onNotes: e => this.setState({ notes: e.target.value }), trap: S.trap, onTrap: e => this.setState({ trap: e.target.value }),
+      submit: e => this.submit(e), sending: S.status === "sending", sendOp: S.status === "sending" ? ".6" : "1", sendL: S.status === "sending" ? "Sending…" : "Send enquiry", msg: MSG[0], msgC: MSG[1],
+      sentTitle: "Thanks" + (first ? ", " + first : "") + ".", sentCopy: "I'll reply to " + (S.v.email.trim() || "your email") + " within two working days with a suggested format and next steps."
+    };
   }
 }
 
@@ -84,286 +58,116 @@ Component.displayName = "RDWork";
 Component.prototype.template = function (V) {
   return (
     <>
-      <section data-screen-label="Book a workshop" style={{"position":"relative","fontFamily":"'Satoshi',sans-serif","color":"#ece9e0","minHeight":"calc(100vh - 100px)","display":"flex","flexDirection":"column"}}>
-        <div aria-hidden="true" style={{"position":"sticky","top":"60px","zIndex":"5","height":"3px","background":"#1d1c1a"}}>
-          <div style={dcCss(`height:100%;width:${dcStr(V.pct)};background:#ff4b23;transition:width .35s ease`)}></div>
-        </div>
-        <div style={{"flex":"1","display":"flex","alignItems":"center","justifyContent":"center","padding":"clamp(32px,6vw,80px) clamp(16px,4vw,48px)"}}>
-          <div style={dcCss(`width:100%;max-width:780px;opacity:${dcStr(V.op)};transform:translateY(${dcStr(V.ty)});transition:${dcStr(V.trans)}`)}>
-            {V.isIntro ? (
-              <>
-                <div style={{"fontSize":"15px","color":"#8f8b80"}}>
-                  {"Book a workshop"}
-                </div>
-                <h1 style={{"margin":"16px 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(40px,6vw,88px)","letterSpacing":"-.04em","lineHeight":".92","textWrap":"balance"}}>
-                  {"Tell me about the session."}
-                </h1>
-                <p style={{"margin":"18px 0 0","maxWidth":"46ch","fontSize":"clamp(17px,1.5vw,20px)","lineHeight":"1.5","color":"#c9c5ba"}}>
-                  {"Eight quick questions, about two minutes. At the end you get a recommended format and a way to book it."}
-                </p>
-                <div style={{"display":"flex","flexWrap":"wrap","alignItems":"center","gap":"12px 18px","marginTop":"28px"}}>
-                  <button onClick={V.begin} style={{"whiteSpace":"nowrap","background":"#ff4b23","color":"#0b0b0a","border":"0","minHeight":"54px","padding":"0 26px","cursor":"pointer","fontSize":"18px","fontWeight":"500"}} className="scp-hover-h">
-                    {"Start"}
-                  </button>
-                  <span style={{"fontSize":"14px","color":"#8f8b80"}}>
-                    {"press "}
-                    <b style={{"color":"#ece9e0","fontWeight":"500"}}>
-                      {"Enter ↵"}
-                    </b>
-                  </span>
-                </div>
-              </>
-            ) : null}
-            {V.isQ ? (
-              <>
-                <div style={{"display":"flex","alignItems":"baseline","gap":"12px","fontSize":"15px","color":"#ff4b23"}}>
-                  <span>
-                    {dcText(V.qNum)}
-                    {" →"}
-                  </span>
-                  <span style={{"color":"#8f8b80"}}>
-                    {dcText(V.qMeta)}
-                  </span>
-                </div>
-                <h1 id="rdq-title" style={{"margin":"10px 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(30px,4.2vw,56px)","letterSpacing":"-.03em","lineHeight":"1.02","textWrap":"balance"}}>
-                  {dcText(V.q?.q)}
-                </h1>
-                {V.hasSub ? (
-                  <>
-                    <p style={{"margin":"12px 0 0","fontSize":"17px","lineHeight":"1.45","color":"#8f8b80"}}>
-                      {dcText(V.q?.sub)}
-                    </p>
-                  </>
-                ) : null}
-                <div role={V.groupRole} aria-labelledby="rdq-title" style={{"display":"flex","flexDirection":"column","gap":"8px","marginTop":"26px","maxWidth":"560px"}}>
-                  {dcList(V.opts).map((o_0, $i0) => (
+      <section data-screen-label="Book a workshop" style={{"fontFamily":"'Satoshi',sans-serif","color":"#ece9e0","padding":"clamp(32px,6vw,80px) clamp(16px,3vw,40px) 0"}}>
+        <div style={{"maxWidth":"820px"}}>
+          {V.isForm ? (
+            <>
+              <div style={{"fontSize":"15px","color":"#8f8b80"}}>
+                {"Book a workshop"}
+              </div>
+              <h1 style={{"margin":"14px 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(40px,6vw,88px)","letterSpacing":"-.04em","lineHeight":".92","textWrap":"balance"}}>
+                {"Tell me about the session."}
+              </h1>
+              <p style={{"margin":"18px 0 0","maxWidth":"48ch","fontSize":"clamp(17px,1.5vw,20px)","lineHeight":"1.5","color":"#c9c5ba"}}>
+                {"A few details are enough. I reply within two working days with a suggested format and next steps."}
+              </p>
+              <form onSubmit={V.submit} noValidate={true} style={{"marginTop":"clamp(32px,4vw,48px)"}}>
+                <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.cols)};gap:18px 24px`)}>
+                  {dcList(V.fields).map((f_0, $i0) => (
                     <React.Fragment key={$i0}>
-                      <button role={o_0?.role} aria-checked={o_0?.aria} onClick={o_0?.pick} style={dcCss(`display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:${dcStr(o_0?.bg)};color:#ece9e0;border:1px solid ${dcStr(o_0?.bd)};min-height:52px;padding:8px 14px 8px 8px;cursor:pointer;font-size:clamp(17px,1.5vw,19px);line-height:1.3;transition:background .15s,border-color .15s`)} className="scp-hover-b">
-                        <span style={dcCss(`flex:none;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid ${dcStr(o_0?.kbd)};background:${dcStr(o_0?.kbg)};color:${dcStr(o_0?.kfg)};font-size:13px;font-weight:600`)}>
-                          {dcText(o_0?.key)}
+                      <label style={{"display":"block","minWidth":"0"}}>
+                        <span style={{"fontSize":"14px","color":"#8f8b80"}}>
+                          {dcText(f_0?.label)}
                         </span>
-                        <span style={{"flex":"1","minWidth":"0"}}>
-                          {dcText(o_0?.label)}
-                        </span>
-                        {o_0?.on ? (
-                          <>
-                            <span aria-hidden="true" style={{"flex":"none","color":"#ff4b23","fontSize":"16px"}}>
-                              {"✓"}
-                            </span>
-                          </>
-                        ) : null}
-                      </button>
+                        <input type={f_0?.type} name={f_0?.key} autoComplete={f_0?.ac} value={f_0?.v ?? ""} onChange={f_0?.on} placeholder={f_0?.ph} aria-invalid={f_0?.bad} style={dcCss(`display:block;width:100%;margin-top:6px;background:none;border:0;border-bottom:1px solid ${dcStr(f_0?.bd)};outline:none;color:#ece9e0;padding:8px 0;font-family:'Satoshi',sans-serif;font-size:19px`)} className="scp-focus-n" />
+                      </label>
                     </React.Fragment>
                   ))}
                 </div>
-                {V.showOther ? (
-                  <>
-                    <input aria-label="Tell me in a sentence" value={V.otherText ?? ""} onChange={V.onOther} placeholder="Tell me in a sentence" style={{"display":"block","width":"100%","maxWidth":"560px","marginTop":"14px","background":"none","border":"0","borderBottom":"1px solid #ece9e0","outline":"none","color":"#ece9e0","padding":"10px 0","fontSize":"20px","fontFamily":"'Satoshi',sans-serif"}} />
-                  </>
-                ) : null}
-                <div style={{"display":"flex","flexWrap":"wrap","alignItems":"center","gap":"12px 18px","marginTop":"24px"}}>
-                  {V.showOk ? (
-                    <>
-                      <button onClick={V.next} disabled={V.okDisabled} style={dcCss(`white-space:nowrap;background:${dcStr(V.okBg)};color:#0b0b0a;border:0;min-height:48px;padding:0 22px;cursor:pointer;font-size:17px;font-weight:500`)}>
-                        {dcText(V.okL)}
-                      </button>
-                      <span style={{"fontSize":"14px","color":"#8f8b80"}}>
-                        {"press "}
-                        <b style={{"color":"#ece9e0","fontWeight":"500"}}>
-                          {"Enter ↵"}
-                        </b>
-                      </span>
-                    </>
-                  ) : null}
-                  {V.isMulti ? (
-                    <>
-                      <span style={{"fontSize":"14px","color":"#8f8b80"}}>
-                        {"Choose up to two"}
-                      </span>
-                    </>
-                  ) : null}
-                </div>
-              </>
-            ) : null}
-            {V.isField ? (
-              <>
-                <div style={{"display":"flex","alignItems":"baseline","gap":"12px","fontSize":"15px","color":"#ff4b23"}}>
-                  <span>
-                    {dcText(V.qNum)}
-                    {" →"}
-                  </span>
-                  <span style={{"color":"#8f8b80"}}>
-                    {dcText(V.qMeta)}
-                  </span>
-                </div>
-                <label htmlFor="rdq-field" style={{"display":"block","marginTop":"10px","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(30px,4.2vw,56px)","letterSpacing":"-.03em","lineHeight":"1.02"}}>
-                  {dcText(V.f?.label)}
-                </label>
-                {V.hasFSub ? (
-                  <>
-                    <p style={{"margin":"12px 0 0","fontSize":"17px","color":"#8f8b80"}}>
-                      {dcText(V.f?.sub)}
-                    </p>
-                  </>
-                ) : null}
-                <input id="rdq-field" ref={V.fieldRef} type={V.f?.type} inputMode={V.f?.mode} autoComplete={V.f?.ac} value={V.fVal ?? ""} onChange={V.onField} onKeyDown={V.onFieldKey} placeholder={V.f?.ph} aria-invalid={V.fInvalid} aria-describedby="rdq-ferr" style={dcCss(`display:block;width:100%;max-width:620px;margin-top:24px;background:none;border:0;border-bottom:2px solid ${dcStr(V.fBd)};outline:none;color:#ece9e0;padding:10px 0;font-size:clamp(22px,2.4vw,30px);font-family:'Satoshi',sans-serif`)} />
-                <p id="rdq-ferr" aria-live="polite" style={{"margin":"8px 0 0","fontSize":"15px","color":"#ff4b23","minHeight":"22px"}}>
-                  {dcText(V.fErr)}
-                </p>
-                <div style={{"display":"flex","flexWrap":"wrap","alignItems":"center","gap":"12px 18px","marginTop":"10px"}}>
-                  <button onClick={V.next} style={{"whiteSpace":"nowrap","background":"#ff4b23","color":"#0b0b0a","border":"0","minHeight":"48px","padding":"0 22px","cursor":"pointer","fontSize":"17px","fontWeight":"500"}}>
-                    {dcText(V.okL)}
-                  </button>
-                  <span style={{"fontSize":"14px","color":"#8f8b80"}}>
-                    {"press "}
-                    <b style={{"color":"#ece9e0","fontWeight":"500"}}>
-                      {"Enter ↵"}
-                    </b>
-                  </span>
-                </div>
-              </>
-            ) : null}
-            {V.isOut ? (
-              <>
-                <div style={{"fontSize":"15px","color":"#ff4b23"}}>
-                  {dcText(V.out?.kicker)}
-                </div>
-                <h1 style={{"margin":"12px 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(36px,5.4vw,76px)","letterSpacing":"-.04em","lineHeight":".94","textWrap":"balance"}}>
-                  {dcText(V.out?.title)}
-                </h1>
-                <p style={{"margin":"16px 0 0","maxWidth":"52ch","fontSize":"clamp(17px,1.5vw,20px)","lineHeight":"1.5","color":"#c9c5ba"}}>
-                  {dcText(V.out?.copy)}
-                </p>
-                <div style={{"marginTop":"28px","background":"#1a1917","border":"1px solid #34332e","padding":"clamp(18px,2.6vw,28px)","transform":"rotate(-.4deg)"}}>
-                  <div style={{"fontSize":"12px","letterSpacing":".06em","color":"#8f8b80"}}>
-                    {"RECOMMENDED FORMAT"}
-                  </div>
-                  <div style={{"marginTop":"8px","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(26px,3vw,40px)","letterSpacing":"-.02em","lineHeight":"1.05"}}>
-                    {dcText(V.eng?.name)}
-                  </div>
-                  <p style={{"margin":"10px 0 0","fontSize":"16px","lineHeight":"1.5","color":"#c9c5ba"}}>
-                    {dcText(V.eng?.d)}
-                  </p>
-                  <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(min(100%,180px),1fr))","gap":"10px 24px","marginTop":"16px","paddingTop":"14px","borderTop":"1px solid #2a2925"}}>
-                    {dcList(V.eng?.facts).map((x_1, $i1) => (
-                      <React.Fragment key={$i1}>
-                        <div>
-                          <div style={{"fontSize":"12px","color":"#8f8b80"}}>
-                            {dcText(x_1?.k)}
-                          </div>
-                          <div style={{"marginTop":"3px","fontSize":"15px","lineHeight":"1.4"}}>
-                            {dcText(x_1?.v)}
-                          </div>
-                        </div>
-                      </React.Fragment>
-                    ))}
-                  </div>
-                  <div style={{"display":"flex","flexWrap":"wrap","alignItems":"baseline","gap":"4px 14px","marginTop":"16px","paddingTop":"14px","borderTop":"1px solid #2a2925"}}>
-                    <span style={{"fontSize":"12px","letterSpacing":".06em","color":"#8f8b80"}}>
-                      {"TYPICAL INVESTMENT"}
-                    </span>
-                    <span style={{"fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(22px,2.4vw,30px)"}}>
-                      {dcText(V.eng?.priceL)}
-                    </span>
-                    <span style={{"fontSize":"13px","color":"#8f8b80"}}>
-                      {"USD · confirmed in the proposal"}
-                    </span>
-                  </div>
-                  {V.eng?.hasFitNote ? (
-                    <>
-                      <div style={dcCss(`margin-top:6px;font-size:14px;color:${dcStr(V.fitC)}`)}>
-                        {dcText(V.eng?.fitNote)}
+                {dcList(V.groups).map((g_1, $i1) => (
+                  <React.Fragment key={$i1}>
+                    <fieldset style={{"margin":"clamp(28px,3.5vw,40px) 0 0","padding":"0","border":"0","minWidth":"0"}}>
+                      <legend style={{"padding":"0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(22px,2.2vw,28px)","letterSpacing":"-.015em"}}>
+                        {dcText(g_1?.q)}
+                      </legend>
+                      <div style={{"marginTop":"4px","fontSize":"14px","color":"#8f8b80"}}>
+                        {dcText(g_1?.sub)}
                       </div>
-                    </>
-                  ) : null}
-                  <div style={{"marginTop":"14px","fontSize":"12px","color":"#8f8b80"}}>
-                    {"INCLUDED"}
-                  </div>
-                  <div style={{"display":"flex","flexWrap":"wrap","gap":"6px","marginTop":"6px"}}>
-                    {dcList(V.eng?.inc).map((x_2, $i2) => (
-                      <React.Fragment key={$i2}>
-                        <span style={{"display":"inline-block","whiteSpace":"nowrap","lineHeight":"1.35","border":"1px solid #4a4843","padding":"4px 9px","fontSize":"13px"}}>
-                          {dcText(x_2)}
+                      <div style={{"display":"flex","flexWrap":"wrap","gap":"8px","marginTop":"12px"}}>
+                        {dcList(g_1?.opts).map((o_2, $i2) => (
+                          <React.Fragment key={$i2}>
+                            <button type="button" onClick={o_2?.pick} aria-pressed={o_2?.aria} style={dcCss(`white-space:nowrap;background:${dcStr(o_2?.bg)};color:#ece9e0;border:1px solid ${dcStr(o_2?.bd)};min-height:44px;padding:0 14px;cursor:pointer;font-size:15px`)} className="scp-hover-b">
+                              {dcText(o_2?.l)}
+                            </button>
+                          </React.Fragment>
+                        ))}
+                      </div>
+                    </fieldset>
+                  </React.Fragment>
+                ))}
+                <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.cols)};gap:18px 24px;margin-top:clamp(28px,3.5vw,40px)`)}>
+                  {dcList(V.selects).map((s_3, $i3) => (
+                    <React.Fragment key={$i3}>
+                      <label style={{"display":"block","minWidth":"0"}}>
+                        <span style={{"fontSize":"14px","color":"#8f8b80"}}>
+                          {dcText(s_3?.label)}
                         </span>
-                      </React.Fragment>
-                    ))}
-                  </div>
+                        <select value={s_3?.v ?? ""} onChange={s_3?.on} style={{"display":"block","width":"100%","marginTop":"6px","background":"#111110","border":"1px solid #34332e","color":"#ece9e0","minHeight":"46px","padding":"0 10px","fontFamily":"'Satoshi',sans-serif","fontSize":"16px","colorScheme":"dark"}}>
+                          {dcList(s_3?.opts).map((o_4, $i4) => (
+                            <React.Fragment key={$i4}>
+                              <option value={o_4?.v ?? ""}>
+                                {dcText(o_4?.l)}
+                              </option>
+                            </React.Fragment>
+                          ))}
+                        </select>
+                      </label>
+                    </React.Fragment>
+                  ))}
                 </div>
-                {V.hasReasons ? (
-                  <>
-                    <div style={{"marginTop":"22px"}}>
-                      <div style={{"fontSize":"12px","letterSpacing":".06em","color":"#8f8b80"}}>
-                        {"WHY THIS FIT"}
-                      </div>
-                      {dcList(V.reasons).map((r_3, $i3) => (
-                        <React.Fragment key={$i3}>
-                          <div style={{"padding":"9px 0","borderBottom":"1px solid #2a2925","fontSize":"16px"}}>
-                            {dcText(r_3)}
-                          </div>
-                        </React.Fragment>
-                      ))}
-                    </div>
-                  </>
-                ) : null}
-                <div style={{"display":"flex","flexWrap":"wrap","alignItems":"center","gap":"12px 18px","marginTop":"26px"}}>
-                  <a href={dcHref(V.out?.href)} target={V.out?.target} rel="noopener" onClick={V.out?.click} style={{"whiteSpace":"nowrap","display":"inline-flex","alignItems":"center","minHeight":"54px","background":"#ff4b23","color":"#0b0b0a","padding":"0 24px","textDecoration":"none","fontSize":"18px","fontWeight":"500"}} className="scp-hover-2">
-                    {dcText(V.out?.cta)}
-                  </a>
+                <label style={{"display":"block","marginTop":"clamp(28px,3.5vw,40px)"}}>
                   <span style={{"fontSize":"14px","color":"#8f8b80"}}>
-                    {dcText(V.out?.note)}
+                    {"Anything else I should know? A link, a constraint, a date."}
+                  </span>
+                  <textarea value={V.notes ?? ""} onChange={V.onNotes} rows="4" style={{"display":"block","width":"100%","marginTop":"6px","background":"#111110","border":"1px solid #34332e","outline":"none","color":"#ece9e0","padding":"12px 14px","fontFamily":"'Satoshi',sans-serif","fontSize":"17px","lineHeight":"1.45","resize":"vertical"}} className="scp-focus-a"></textarea>
+                </label>
+                <label aria-hidden="true" style={{"position":"absolute","left":"-9999px","width":"1px","height":"1px","overflow":"hidden"}}>
+                  {"Website"}
+                  <input tabIndex="-1" autoComplete="off" value={V.trap ?? ""} onChange={V.onTrap} />
+                </label>
+                <div style={{"display":"flex","flexWrap":"wrap","alignItems":"center","gap":"12px 18px","marginTop":"28px"}}>
+                  <button type="submit" disabled={V.sending} style={dcCss(`white-space:nowrap;background:#ff4b23;color:#0b0b0a;border:0;min-height:56px;padding:0 26px;cursor:pointer;font-size:18px;font-weight:500;opacity:${dcStr(V.sendOp)}`)} className="scp-hover-h">
+                    {dcText(V.sendL)}
+                  </button>
+                  <span role="status" aria-live="polite" style={dcCss(`font-size:15px;color:${dcStr(V.msgC)}`)}>
+                    {dcText(V.msg)}
                   </span>
                 </div>
-                {V.sentNote ? (
-                  <>
-                    <p role="status" style={{"margin":"14px 0 0","fontSize":"15px","color":"#c9c5ba"}}>
-                      {dcText(V.sentMsg)}
-                    </p>
-                  </>
-                ) : null}
-                <button onClick={V.restart} style={{"whiteSpace":"nowrap","marginTop":"28px","background":"none","border":"0","color":"#8f8b80","cursor":"pointer","fontSize":"15px","padding":"0","minHeight":"40px"}} className="scp-hover-1">
-                  {"Start over"}
-                </button>
-              </>
-            ) : null}
-          </div>
+              </form>
+            </>
+          ) : null}
+          {V.isSent ? (
+            <>
+              <div style={{"fontSize":"15px","color":"#ff4b23"}}>
+                {"Enquiry sent"}
+              </div>
+              <h1 style={{"margin":"14px 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(40px,6vw,88px)","letterSpacing":"-.04em","lineHeight":".92","textWrap":"balance"}}>
+                {dcText(V.sentTitle)}
+              </h1>
+              <p style={{"margin":"18px 0 0","maxWidth":"48ch","fontSize":"clamp(17px,1.5vw,20px)","lineHeight":"1.5","color":"#c9c5ba"}}>
+                {dcText(V.sentCopy)}
+              </p>
+              <div style={{"display":"flex","flexWrap":"wrap","gap":"12px 24px","marginTop":"28px","fontSize":"16px"}}>
+                <a href="/library">
+                  {"Browse the Library"}
+                </a>
+                <a href="/builder">
+                  {"Open Builder"}
+                </a>
+              </div>
+            </>
+          ) : null}
         </div>
-        {V.showProto ? (
-          <>
-            <div style={{"position":"absolute","top":"12px","right":"clamp(12px,3vw,32px)","zIndex":"6","display":"flex","flexDirection":"column","alignItems":"flex-end","gap":"6px"}}>
-              <button onClick={V.toggleProto} aria-expanded={V.protoAria} style={{"whiteSpace":"nowrap","background":"#0b0b0a","border":"1px dashed #5a5850","color":"#c9c5ba","cursor":"pointer","fontSize":"12px","padding":"5px 10px","minHeight":"30px"}}>
-                {"Prototype · "}
-                {dcText(V.protoShort)}
-              </button>
-              {V.protoOpen ? (
-                <>
-                  <div style={{"background":"#0b0b0a","border":"1px dashed #5a5850","padding":"8px 10px","fontSize":"12px","lineHeight":"1.5","color":"#8f8b80","maxWidth":"240px","textAlign":"right"}}>
-                    <div style={{"color":"#ece9e0"}}>
-                      {dcText(V.protoFit)}
-                    </div>
-                    <div>
-                      {dcText(V.protoScore)}
-                    </div>
-                    <button onClick={V.restartAll} style={{"whiteSpace":"nowrap","marginTop":"6px","background":"none","border":"1px solid #4a4843","color":"#ece9e0","cursor":"pointer","fontSize":"12px","padding":"3px 8px"}}>
-                      {"Restart from the beginning"}
-                    </button>
-                  </div>
-                </>
-              ) : null}
-            </div>
-          </>
-        ) : null}
-        {V.showNav ? (
-          <>
-            <div style={{"position":"sticky","bottom":"16px","display":"flex","justifyContent":"flex-end","gap":"2px","padding":"0 clamp(16px,4vw,48px) 8px"}}>
-              <button onClick={V.back} disabled={V.noBack} aria-label="Previous question" style={dcCss(`white-space:nowrap;width:44px;height:40px;background:#ff4b23;color:#0b0b0a;border:0;cursor:pointer;font-size:16px;opacity:${dcStr(V.backOp)}`)}>
-                {"↑"}
-              </button>
-              <button onClick={V.next} disabled={V.okDisabled} aria-label="Next question" style={dcCss(`white-space:nowrap;width:44px;height:40px;background:#ff4b23;color:#0b0b0a;border:0;cursor:pointer;font-size:16px;opacity:${dcStr(V.fwdOp)}`)}>
-                {"↓"}
-              </button>
-            </div>
-          </>
-        ) : null}
       </section>
     </>
   );

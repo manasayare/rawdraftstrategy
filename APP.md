@@ -27,4 +27,5 @@ The prototype routed on the hash (`#/library?q=x`). The app uses real paths (`/l
 - Pages render in the browser only (`ssr: false`), because the engine scripts read `window` when they load. Search engines get the shell, not the page content. Server rendering the Library, Work and Notes pages is the next step if SEO matters.
 - Fonts load from Fontshare and Google Fonts, as in the prototype.
 - There are no accounts. Builder saves workshops in the visitor's browser (localStorage), so they don't follow someone to another device. Export (Agenda PDF, CSV, JSON) is how a workshop leaves the browser.
+- Book a workshop writes enquiries to a Google Sheet. Setup: `docs/enquiries.md`.
 - Nothing calls an AI model. The checks and one-click adjustments in Builder are local rules.

@@ -32,3 +32,4 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #ff4b
 .scp-focus-k:focus{transform:translateY(-3px) rotate(0deg) !important;border-color:#ece9e0 !important}
 .scp-hover-l:hover{opacity:1 !important;color:#ece9e0 !important}
 .scp-hover-m:hover{background:#121210 !important}
+.scp-focus-n:focus{border-bottom-color:#ece9e0 !important}

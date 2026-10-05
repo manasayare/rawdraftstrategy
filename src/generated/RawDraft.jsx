@@ -185,28 +185,12 @@ Component.prototype.template = function (V) {
   return (
     <>
       <div style={{"background":"#0b0b0a","color":"#ece9e0","minHeight":"100vh","fontFamily":"'Satoshi',sans-serif","fontSize":"16px","lineHeight":"1.5"}}>
-        <div role="status" aria-label="Product status" style={{"display":"flex","flexWrap":"wrap","alignItems":"center","gap":"4px 18px","padding":"7px clamp(16px,3vw,40px)","borderBottom":"1px solid #2a2925","fontSize":"13px","lineHeight":"1.45","color":"#8f8b80"}}>
-          <span style={{"display":"inline-flex","alignItems":"center","gap":"8px","color":"#ece9e0","whiteSpace":"nowrap"}}>
-            <span aria-hidden="true" style={{"width":"7px","height":"7px","borderRadius":"50%","background":"#ff4b23","boxShadow":"0 0 0 3px rgba(255,75,35,.18)"}}></span>
-            {"Public beta"}
+        <div role="status" aria-label="Product status" style={{"display":"flex","alignItems":"center","gap":"14px","padding":"7px clamp(16px,3vw,40px)","background":"#ff4b23","color":"#0b0b0a","fontSize":"13px","lineHeight":"1.45","fontWeight":"500"}}>
+          <span style={{"display":"inline-flex","alignItems":"center","gap":"8px","whiteSpace":"nowrap"}}>
+            <span aria-hidden="true" style={{"width":"7px","height":"7px","borderRadius":"50%","background":"#0b0b0a","animation":"rdblink 1.6s infinite"}}></span>
+            {"Live beta"}
           </span>
-          <span style={{"display":"inline-flex","flexWrap":"wrap","gap":"4px 14px"}}>
-            <span>
-              <span style={{"color":"#c9c5ba"}}>
-                {"Live"}
-              </span>
-              {" · Library, Builder, Run mode, Agenda PDF"}
-            </span>
-            <span>
-              <span style={{"color":"#c9c5ba"}}>
-                {"Free"}
-              </span>
-              {" · No account needed"}
-            </span>
-          </span>
-          <span style={{"marginLeft":"auto","whiteSpace":"nowrap"}}>
-            {"Updated 5 Oct 2026"}
-          </span>
+          <rd-uptime since="2026-10-05T00:00:00+05:30" style={{"fontVariantNumeric":"tabular-nums","whiteSpace":"nowrap"}}></rd-uptime>
         </div>
         <header style={{"position":"sticky","top":"0","zIndex":"30","background":"#0b0b0a","borderBottom":"1px solid #2a2925"}}>
           <div style={{"display":"flex","alignItems":"center","gap":"20px","height":"60px","padding":"0 clamp(16px,3vw,40px)"}}>
@@ -946,53 +930,10 @@ Component.prototype.template = function (V) {
                 </div>
               </section>
               <section style={{"padding":"clamp(64px,10vw,150px) clamp(16px,3vw,40px)","borderBottom":"1px solid #2a2925"}}>
-                <div style={{"display":"flex","justifyContent":"space-between","alignItems":"baseline","flexWrap":"wrap","gap":"8px 40px"}}>
-                  <h2 style={{"margin":"0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(32px,3.6vw,56px)","letterSpacing":"-.03em"}}>
-                    {"Why we work in drafts"}
-                  </h2>
-                  <p style={{"margin":"0","fontSize":"17px","color":"#8f8b80"}}>
-                    {"Creation · Chaos · Clarity · Cadence"}
-                  </p>
-                </div>
-                <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.cycCols)};gap:24px clamp(24px,4vw,64px);align-items:center;margin-top:clamp(28px,4vw,56px)`)}>
-                  <div ref={V.cycHost} style={dcCss(`width:100%;height:${dcStr(V.cycH)};border-top:1px solid #2a2925;border-bottom:1px solid #2a2925`)}></div>
-                  <div aria-live="polite" style={{"minWidth":"0"}}>
-                    <div style={{"fontSize":"15px","color":"#8f8b80"}}>
-                      {dcText(V.cycNow?.label)}
-                    </div>
-                    <div style={dcCss(`margin-top:8px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:${dcStr(V.cycTitleSize)};letter-spacing:-.04em;line-height:.95;color:#ece9e0`)}>
-                      {dcText(V.cycNow?.title)}
-                    </div>
-                    <div lang="hi" style={{"marginTop":"10px","fontFamily":"'Tiro Devanagari Hindi','Noto Serif Devanagari',serif","fontSize":"clamp(22px,2vw,30px)","lineHeight":"1.2","color":"#8f8b80"}}>
-                      {dcText(V.cycNow?.dev)}
-                    </div>
-                    <p style={{"margin":"clamp(14px,2vw,24px) 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(22px,2.2vw,32px)","letterSpacing":"-.015em","lineHeight":"1.15","maxWidth":"22ch"}}>
-                      {dcText(V.cycNow?.statement)}
-                    </p>
-                    <p style={{"margin":"10px 0 0","fontSize":"17px","lineHeight":"1.45","color":"#c9c5ba","maxWidth":"40ch"}}>
-                      {dcText(V.cycNow?.support)}
-                    </p>
-                  </div>
-                </div>
-                <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.stageCols)};gap:16px 24px;margin-top:clamp(24px,3vw,40px)`)}>
-                  {dcList(V.stages).map((s_5, $i5) => (
-                    <React.Fragment key={$i5}>
-                      <button onClick={s_5?.pick} style={dcCss(`text-align:left;background:none;border:0;border-top:2px solid ${dcStr(s_5?.rule)};padding:12px 0 4px;color:#ece9e0;cursor:pointer;transition:border-color .4s`)}>
-                        <span style={{"display":"flex","justifyContent":"space-between","gap":"8px","fontSize":"14px","color":"#8f8b80"}}>
-                          <span>
-                            {dcText(s_5?.n)}
-                          </span>
-                          <span style={{"color":"#ff4b23"}}>
-                            {dcText(s_5?.loop)}
-                          </span>
-                        </span>
-                        <span style={dcCss(`display:block;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(20px,2vw,28px);letter-spacing:-.02em;margin-top:4px;color:${dcStr(s_5?.c)};transition:color .4s`)}>
-                          {dcText(s_5?.k)}
-                        </span>
-                      </button>
-                    </React.Fragment>
-                  ))}
-                </div>
+                <h2 style={{"margin":"0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(32px,3.6vw,56px)","letterSpacing":"-.03em"}}>
+                  {"Why we work in drafts"}
+                </h2>
+                <rd-cycle-scroll style={{"marginTop":"clamp(20px,3vw,40px)"}}></rd-cycle-scroll>
                 <p style={{"margin":"clamp(28px,4vw,48px) 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(22px,2.4vw,34px)","letterSpacing":"-.015em","lineHeight":"1.2","maxWidth":"30ch"}}>
                   {"You make something. Reality pushes back. You structure what survives. Eventually the system can run."}
                 </p>
@@ -1012,19 +953,19 @@ Component.prototype.template = function (V) {
                   </a>
                 </div>
                 <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fill,minmax(min(100%,280px),1fr))","gap":"16px"}}>
-                  {dcList(V.homeWork).map((w_6, $i6) => (
-                    <React.Fragment key={$i6}>
-                      <a href={dcHref(w_6?.href)} style={{"display":"flex","flexDirection":"column","background":"#0f0f0e","border":"1px solid #2a2925","color":"#ece9e0","textDecoration":"none","transition":"border-color .2s"}} className="scp-hover-7">
-                        <rd-ascii key={[w_6?.shape, w_6?.seed].join("|")} shape={w_6?.shape} seed={w_6?.seed} style={{"display":"block","position":"relative","overflow":"hidden","width":"100%","aspectRatio":"16/10","borderBottom":"1px solid #2a2925"}}></rd-ascii>
+                  {dcList(V.homeWork).map((w_5, $i5) => (
+                    <React.Fragment key={$i5}>
+                      <a href={dcHref(w_5?.href)} style={{"display":"flex","flexDirection":"column","background":"#0f0f0e","border":"1px solid #2a2925","color":"#ece9e0","textDecoration":"none","transition":"border-color .2s"}} className="scp-hover-7">
+                        <rd-ascii key={[w_5?.shape, w_5?.seed].join("|")} shape={w_5?.shape} seed={w_5?.seed} style={{"display":"block","position":"relative","overflow":"hidden","width":"100%","aspectRatio":"16/10","borderBottom":"1px solid #2a2925"}}></rd-ascii>
                         <span style={{"display":"flex","flexDirection":"column","gap":"8px","padding":"18px 18px 20px","flex":"1"}}>
                           <span style={{"fontSize":"14px","color":"#8f8b80"}}>
-                            {dcText(w_6?.meta)}
+                            {dcText(w_5?.meta)}
                           </span>
                           <span style={{"fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(20px,1.8vw,24px)","letterSpacing":"-.015em","lineHeight":"1.12"}}>
-                            {dcText(w_6?.title)}
+                            {dcText(w_5?.title)}
                           </span>
                           <span style={{"fontSize":"15px","color":"#8f8b80","lineHeight":"1.45"}}>
-                            {dcText(w_6?.question)}
+                            {dcText(w_5?.question)}
                           </span>
                           <span style={{"marginTop":"auto","paddingTop":"10px","fontSize":"15px","color":"#ff4b23"}}>
                             {"Read →"}
@@ -1092,17 +1033,17 @@ Component.prototype.template = function (V) {
         </main>
         <footer style={{"borderTop":"1px solid #2a2925","marginTop":"clamp(64px,8vw,120px)","padding":"clamp(32px,4vw,56px) clamp(16px,3vw,40px) 24px"}}>
           <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(min(100%,150px),1fr))","gap":"28px 40px","maxWidth":"880px"}}>
-            {dcList(V.footCols).map((c_7, $i7) => (
-              <React.Fragment key={$i7}>
+            {dcList(V.footCols).map((c_6, $i6) => (
+              <React.Fragment key={$i6}>
                 <div>
                   <div style={{"fontSize":"14px","color":"#8f8b80","marginBottom":"10px"}}>
-                    {dcText(c_7?.h)}
+                    {dcText(c_6?.h)}
                   </div>
                   <div style={{"display":"flex","flexDirection":"column","gap":"2px","fontSize":"15px"}}>
-                    {dcList(c_7?.links).map((l_8, $i8) => (
-                      <React.Fragment key={$i8}>
-                        <a href={dcHref(l_8?.href)} target={l_8?.target} style={{"color":"#ece9e0","textDecoration":"none","minHeight":"32px","display":"inline-flex","alignItems":"center"}} className="scp-hover-0">
-                          {dcText(l_8?.label)}
+                    {dcList(c_6?.links).map((l_7, $i7) => (
+                      <React.Fragment key={$i7}>
+                        <a href={dcHref(l_7?.href)} target={l_7?.target} style={{"color":"#ece9e0","textDecoration":"none","minHeight":"32px","display":"inline-flex","alignItems":"center"}} className="scp-hover-0">
+                          {dcText(l_7?.label)}
                         </a>
                       </React.Fragment>
                     ))}

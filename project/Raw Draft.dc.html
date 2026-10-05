@@ -29,7 +29,8 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #ff4b
 <script src="rd-builder.js"></script>
 <script src="rd-lib.js"></script>
 <script src="rd-cycle.js"></script>
-<script src="rd-qualify.js"></script>
+<script src="rd-cycle-scroll.js"></script>
+<script src="rd-uptime.js"></script>
 <script src="rd-ascii.js"></script>
 <script src="rd-structure.js"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&display=swap">
@@ -37,10 +38,9 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #ff4b
 </helmet>
 <div style="background:#0b0b0a;color:#ece9e0;min-height:100vh;font-family:'Satoshi',sans-serif;font-size:16px;line-height:1.5">
 
-<div role="status" aria-label="Product status" style="display:flex;flex-wrap:wrap;align-items:center;gap:4px 18px;padding:7px clamp(16px,3vw,40px);border-bottom:1px solid #2a2925;font-size:13px;line-height:1.45;color:#8f8b80">
-<span style="display:inline-flex;align-items:center;gap:8px;color:#ece9e0;white-space:nowrap"><span aria-hidden="true" style="width:7px;height:7px;border-radius:50%;background:#ff4b23;box-shadow:0 0 0 3px rgba(255,75,35,.18)"></span>Public beta</span>
-<span style="display:inline-flex;flex-wrap:wrap;gap:4px 14px"><span><span style="color:#c9c5ba">Live</span> · Library, Builder, Run mode, Agenda PDF</span><span><span style="color:#c9c5ba">Free</span> · No account needed</span></span>
-<span style="margin-left:auto;white-space:nowrap">Updated 5 Oct 2026</span>
+<div role="status" aria-label="Product status" style="display:flex;align-items:center;gap:14px;padding:7px clamp(16px,3vw,40px);background:#ff4b23;color:#0b0b0a;font-size:13px;line-height:1.45;font-weight:500">
+<span style="display:inline-flex;align-items:center;gap:8px;white-space:nowrap"><span aria-hidden="true" style="width:7px;height:7px;border-radius:50%;background:#0b0b0a;animation:rdblink 1.6s infinite"></span>Live beta</span>
+<rd-uptime since="2026-10-05T00:00:00+05:30" style="font-variant-numeric:tabular-nums;white-space:nowrap"></rd-uptime>
 </div>
 
 <header style="position:sticky;top:0;z-index:30;background:#0b0b0a;border-bottom:1px solid #2a2925">
@@ -174,28 +174,8 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #ff4b
 </section>
 
 <section style="padding:clamp(64px,10vw,150px) clamp(16px,3vw,40px);border-bottom:1px solid #2a2925">
-<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px 40px">
 <h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em">Why we work in drafts</h2>
-<p style="margin:0;font-size:17px;color:#8f8b80">Creation · Chaos · Clarity · Cadence</p>
-</div>
-<div style="display:grid;grid-template-columns:{{ cycCols }};gap:24px clamp(24px,4vw,64px);align-items:center;margin-top:clamp(28px,4vw,56px)">
-<div ref="{{ cycHost }}" style="width:100%;height:{{ cycH }};border-top:1px solid #2a2925;border-bottom:1px solid #2a2925"></div>
-<div aria-live="polite" style="min-width:0">
-<div style="font-size:15px;color:#8f8b80">{{ cycNow.label }}</div>
-<div style="margin-top:8px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:{{ cycTitleSize }};letter-spacing:-.04em;line-height:.95;color:#ece9e0">{{ cycNow.title }}</div>
-<div lang="hi" style="margin-top:10px;font-family:'Tiro Devanagari Hindi','Noto Serif Devanagari',serif;font-size:clamp(22px,2vw,30px);line-height:1.2;color:#8f8b80">{{ cycNow.dev }}</div>
-<p style="margin:clamp(14px,2vw,24px) 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(22px,2.2vw,32px);letter-spacing:-.015em;line-height:1.15;max-width:22ch">{{ cycNow.statement }}</p>
-<p style="margin:10px 0 0;font-size:17px;line-height:1.45;color:#c9c5ba;max-width:40ch">{{ cycNow.support }}</p>
-</div>
-</div>
-<div style="display:grid;grid-template-columns:{{ stageCols }};gap:16px 24px;margin-top:clamp(24px,3vw,40px)">
-<sc-for list="{{ stages }}" as="s" hint-placeholder-count="4">
-<button onClick="{{ s.pick }}" style="text-align:left;background:none;border:0;border-top:2px solid {{ s.rule }};padding:12px 0 4px;color:#ece9e0;cursor:pointer;transition:border-color .4s">
-<span style="display:flex;justify-content:space-between;gap:8px;font-size:14px;color:#8f8b80"><span>{{ s.n }}</span><span style="color:#ff4b23">{{ s.loop }}</span></span>
-<span style="display:block;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(20px,2vw,28px);letter-spacing:-.02em;margin-top:4px;color:{{ s.c }};transition:color .4s">{{ s.k }}</span>
-</button>
-</sc-for>
-</div>
+<rd-cycle-scroll style="margin-top:clamp(20px,3vw,40px)"></rd-cycle-scroll>
 <p style="margin:clamp(28px,4vw,48px) 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(22px,2.4vw,34px);letter-spacing:-.015em;line-height:1.2;max-width:30ch">You make something. Reality pushes back. You structure what survives. Eventually the system can run.</p>
 <div style="display:flex;flex-wrap:wrap;gap:10px 24px;margin-top:16px;font-size:15px"><a href="#/practice" style="color:#ece9e0">What a Raw Draft is</a></div>
 </section>

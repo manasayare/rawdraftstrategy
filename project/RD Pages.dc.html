@@ -25,16 +25,20 @@
 <sc-for list="{{ fGroups }}" as="g" hint-placeholder-count="2"><div style="display:flex;flex-wrap:wrap;gap:0 20px;align-items:baseline"><span style="flex:0 0 64px;font-size:14px;color:#8f8b80">{{ g.k }}</span><sc-for list="{{ g.opts }}" as="o" hint-placeholder-count="4"><button onClick="{{ o.pick }}" aria-pressed="{{ o.aria }}" style="background:none;border:0;border-bottom:1px solid {{ o.rule }};color:{{ o.c }};min-height:40px;padding:0;cursor:pointer;font-size:15px" style-hover="color:#ece9e0">{{ o.label }}</button></sc-for></div></sc-for>
 </div>
 </sc-if>
-<div style="margin-top:clamp(24px,3vw,40px);border-top:1px solid #ece9e0">
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px;margin-top:clamp(24px,3vw,40px)">
 <sc-for list="{{ results }}" as="r" hint-placeholder-count="6">
-<a href="{{ r.href }}" style="display:grid;grid-template-columns:{{ rowCols }};gap:8px clamp(20px,3vw,40px);align-items:baseline;padding:22px 0;border-bottom:1px solid #2a2925;color:#ece9e0;text-decoration:none" style-hover="color:#ff4b23">
-<span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(24px,2.4vw,34px);letter-spacing:-.02em;line-height:1.05;text-wrap:balance">{{ r.title }}</span>
-<span style="font-size:17px;line-height:1.4;color:#c9c5ba">{{ r.desc }}</span>
-<span style="font-size:14px;line-height:1.5;color:#8f8b80">{{ r.meta }}</span>
+<a href="{{ r.href }}" style="display:flex;flex-direction:column;background:#0f0f0e;border:1px solid #2a2925;color:#ece9e0;text-decoration:none;transition:border-color .2s" style-hover="border-color:#ff4b23;color:#ece9e0">
+<rd-ascii shape="{{ r.shape }}" seed="{{ r.seed }}" style="display:block;position:relative;overflow:hidden;width:100%;aspect-ratio:16/10;border-bottom:1px solid #2a2925"></rd-ascii>
+<span style="display:flex;flex-direction:column;gap:8px;padding:18px 18px 20px;flex:1">
+<span style="font-size:14px;color:#8f8b80">{{ r.meta }}</span>
+<span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(20px,1.8vw,24px);letter-spacing:-.015em;line-height:1.12">{{ r.title }}</span>
+<span style="font-size:15px;color:#8f8b80;line-height:1.45">{{ r.desc }}</span>
+<span style="margin-top:auto;padding-top:10px;font-size:15px;color:#ff4b23">Read →</span>
+</span>
 </a>
 </sc-for>
-<sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}"><div style="padding:32px 0;font-size:17px;color:#c9c5ba">Nothing matches that yet. <button onClick="{{ clearAll }}" style="background:none;border:0;color:#ece9e0;border-bottom:1px solid #ff4b23;padding:0;cursor:pointer;font-size:17px">Clear search and filters</button></div></sc-if>
 </div>
+<sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}"><div style="padding:32px 0;font-size:17px;color:#c9c5ba">Nothing matches that yet. <button onClick="{{ clearAll }}" style="background:none;border:0;color:#ece9e0;border-bottom:1px solid #ff4b23;padding:0;cursor:pointer;font-size:17px">Clear search and filters</button></div></sc-if>
 <p style="margin:16px 0 0;font-size:14px;color:#8f8b80">Work entries are anonymised placeholders until real project notes are published.</p>
 </section>
 </sc-if>
@@ -188,41 +192,21 @@
 </div>
 </section>
 <section style="padding:clamp(56px,8vw,120px) 0 0;">
-<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px 40px">
 <h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em">The cycle of creation</h2>
-<p style="margin:0;font-size:17px;color:#8f8b80">Creation · Chaos · Clarity · Cadence</p>
-</div>
-<div style="display:grid;grid-template-columns:{{ cycCols }};gap:24px clamp(24px,4vw,64px);align-items:center;margin-top:clamp(28px,4vw,56px)">
-<div ref="{{ cycHost }}" style="width:100%;height:{{ cycH }};border-top:1px solid #2a2925;border-bottom:1px solid #2a2925"></div>
-<div aria-live="polite" style="min-width:0">
-<div style="font-size:15px;color:#8f8b80">{{ cycNow.label }}</div>
-<div style="margin-top:8px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:{{ cycTitleSize }};letter-spacing:-.04em;line-height:.95;color:#ece9e0">{{ cycNow.title }}</div>
-<div lang="hi" style="margin-top:10px;font-family:'Tiro Devanagari Hindi','Noto Serif Devanagari',serif;font-size:clamp(22px,2vw,30px);line-height:1.2;color:#8f8b80">{{ cycNow.dev }}</div>
-<p style="margin:clamp(14px,2vw,24px) 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(22px,2.2vw,32px);letter-spacing:-.015em;line-height:1.15;max-width:22ch">{{ cycNow.statement }}</p>
-<p style="margin:10px 0 0;font-size:17px;line-height:1.45;color:#c9c5ba;max-width:40ch">{{ cycNow.support }}</p>
-</div>
-</div>
-<div style="display:grid;grid-template-columns:{{ stageCols }};gap:16px 24px;margin-top:clamp(24px,3vw,40px)">
-<sc-for list="{{ stages }}" as="s" hint-placeholder-count="4">
-<button onClick="{{ s.pick }}" style="text-align:left;background:none;border:0;border-top:2px solid {{ s.rule }};padding:12px 0 4px;color:#ece9e0;cursor:pointer;transition:border-color .4s">
-<span style="display:flex;justify-content:space-between;gap:8px;font-size:14px;color:#8f8b80"><span>{{ s.n }}</span><span style="color:#ff4b23">{{ s.loop }}</span></span>
-<span style="display:block;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(20px,2vw,28px);letter-spacing:-.02em;margin-top:4px;color:{{ s.c }};transition:color .4s">{{ s.k }}</span>
-</button>
-</sc-for>
-</div>
+<rd-cycle-scroll style="margin-top:clamp(20px,3vw,40px)"></rd-cycle-scroll>
 <p style="margin:clamp(28px,4vw,48px) 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(22px,2.4vw,34px);letter-spacing:-.015em;line-height:1.2;max-width:30ch">This is why we work in drafts. You make something. Reality pushes back. You structure what survives. Eventually the system can run.</p>
 </section>
 <section style="padding:clamp(56px,8vw,120px) 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:24px clamp(32px,6vw,96px)">
 <h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em;line-height:1">How a session fits</h2>
 <div style="max-width:52ch;font-size:19px;line-height:1.5">
-<p style="margin:0">Every workshop or Sprint answers four things: the question, the room, the work and the output. Builder asks about them, chooses methods from the Library and sequences them. You can change all of it.</p>
+<p style="margin:0">Every workshop or Sprint answers four things: the question, the room, the work and the output. In Builder you pick methods from the Library, sequence them and set the timing. Every part stays editable.</p>
 <div style="display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:18px;font-size:16px"><a href="#/builder" style="white-space:nowrap">Build a workshop</a><a href="#/library" style="white-space:nowrap">Browse the Library</a></div>
 </div>
 </section>
 <section style="padding:clamp(56px,8vw,120px) 0 0">
 <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px 40px;margin-bottom:clamp(20px,3vw,32px)">
 <h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em;line-height:1">What we work on</h2>
-<p style="margin:0;font-size:17px;color:#8f8b80;max-width:44ch">Examples of questions Builder and Raw Draft help structure. Most touch several.</p>
+<p style="margin:0;font-size:17px;color:#8f8b80;max-width:44ch">Areas we work in, with examples from the work and the Library. Most projects touch several.</p>
 </div>
 <div style="background-color:#111110;background-image:linear-gradient(rgba(236,233,224,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(236,233,224,.045) 1px,transparent 1px);background-size:48px 48px;border:1px solid #2a2925;padding:clamp(20px,3.5vw,56px)">
 <div style="display:grid;grid-template-columns:{{ areaCols }};gap:clamp(14px,2vw,28px) clamp(14px,2vw,24px);align-items:start">
@@ -232,8 +216,9 @@
 <div style="display:flex;justify-content:space-between;gap:12px;font-size:13px;color:#8f8b80"><span>{{ a.n }}</span><span style="color:{{ a.gc }}">{{ a.g }}</span></div>
 <div style="margin-top:clamp(16px,2vw,28px);font-family:'Clash Display',sans-serif;font-weight:500;font-size:{{ a.fs }};letter-spacing:-.02em;line-height:1.02;text-wrap:balance">{{ a.k }}</div>
 <p style="margin:10px 0 0;font-size:15px;line-height:1.45;color:#c9c5ba">{{ a.d }}</p>
-<button onClick="{{ a.toggle }}" aria-expanded="{{ a.aria }}" style="display:flex;justify-content:space-between;width:100%;margin-top:12px;background:none;border:0;border-top:1px solid #2a2925;color:#8f8b80;min-height:40px;padding:8px 0 0;cursor:pointer;font-size:13px;text-align:left" style-hover="color:#ece9e0"><span>Typical question</span><span>{{ a.sign }}</span></button>
-<sc-if value="{{ a.open }}" hint-placeholder-val="{{ false }}"><p style="margin:6px 0 0;font-size:16px;line-height:1.35;color:#ece9e0">“{{ a.q }}”</p><a href="{{ a.href }}" style="display:inline-flex;align-items:center;min-height:36px;margin-top:4px;font-size:14px;white-space:nowrap">Find methods for this →</a></sc-if>
+<div style="margin-top:12px;padding-top:8px;border-top:1px solid #2a2925;font-size:12px;letter-spacing:.06em;color:#8f8b80">EXAMPLES</div>
+<div style="display:flex;flex-direction:column;margin-top:2px"><sc-for list="{{ a.ex }}" as="e" hint-placeholder-count="3"><a href="{{ e.href }}" style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:7px 0;border-bottom:1px solid #2a2925;color:#ece9e0;text-decoration:none;font-size:15px;line-height:1.3" style-hover="color:#ff4b23"><span>{{ e.title }}</span><span style="flex:none;font-size:12px;color:#8f8b80">{{ e.kind }}</span></a></sc-for></div>
+<a href="{{ a.href }}" style="display:inline-flex;align-items:center;min-height:36px;margin-top:4px;font-size:14px;white-space:nowrap">More in the Library →</a>
 </div>
 </sc-for>
 </div>
@@ -242,24 +227,12 @@
 <section style="padding:clamp(56px,8vw,120px) 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:20px clamp(32px,6vw,96px)">
 <div><h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em;line-height:1">Manas Ayare</h2><p style="margin:10px 0 0;font-size:17px;color:#8f8b80">Product Strategy</p></div>
 <div style="max-width:52ch">
-<p style="margin:0;font-size:19px;line-height:1.5">Manas trained in mechanical engineering and industrial design, and has worked in product strategy and experience design across enterprise systems, startups, AI, financial services and public systems. He designs and runs the workshops and sprints, and brings in <a href="#/network">specialists from the network</a> when a question needs them.</p>
+<p style="margin:0;font-size:19px;line-height:1.5">Manas trained in mechanical engineering and industrial design, and has worked in product strategy and experience design across enterprise systems, startups, AI, financial services and public systems. He designs and runs the workshops and sprints, and brings in specialists from the network when a question needs them.</p>
 <div style="display:flex;flex-wrap:wrap;gap:4px 24px;margin-top:20px;font-size:16px"><sc-for list="{{ links }}" as="l" hint-placeholder-count="1"><a href="{{ l.href }}" target="{{ l.target }}" rel="noopener" style="display:inline-flex;align-items:center;min-height:44px">{{ l.label }}</a></sc-for></div>
 </div>
 </section>
-<section style="padding:clamp(56px,8vw,120px) 0 0">
-<h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em;line-height:1">Questions</h2>
-<div style="margin-top:clamp(24px,3vw,40px);border-top:1px solid #ece9e0;max-width:1000px">
-<sc-for list="{{ faqs }}" as="f" hint-placeholder-count="4"><div style="border-bottom:1px solid #2a2925">
-<button onClick="{{ f.toggle }}" aria-expanded="{{ f.aria }}" style="display:flex;justify-content:space-between;gap:24px;align-items:baseline;width:100%;text-align:left;background:none;border:0;color:#ece9e0;min-height:64px;padding:18px 0;cursor:pointer" style-hover="color:#ff4b23"><span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(20px,2vw,26px);letter-spacing:-.01em;line-height:1.2">{{ f.q }}</span><span style="font-size:20px;flex:none">{{ f.sign }}</span></button>
-<sc-if value="{{ f.open }}" hint-placeholder-val="{{ false }}"><p style="margin:0 0 22px;max-width:60ch;font-size:18px;line-height:1.5;color:#c9c5ba">{{ f.a }}</p></sc-if>
-</div></sc-for>
-</div>
-</section>
-</div>
-</sc-if>
-
 <sc-if value="{{ isNetwork }}" hint-placeholder-val="{{ false }}">
-<div data-screen-label="Network" id="rd-network" style="padding-top:clamp(64px,9vw,140px)">
+<div data-screen-label="Network" id="rd-network" style="padding-top:clamp(56px,8vw,120px)">
 <section style="max-width:1100px;border-top:1px solid #ece9e0;padding-top:clamp(28px,3vw,44px)">
 <div style="font-size:15px;color:#8f8b80">Network</div>
 <h2 style="margin:12px 0 0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(40px,6vw,96px);letter-spacing:-.045em;line-height:.9">The practice stays small.<br><span style="color:#8f8b80">The field around it does not.</span></h2>
@@ -301,11 +274,21 @@
 <sc-for list="{{ netSteps }}" as="s" hint-placeholder-count="3"><div style="padding:20px 24px 24px 0;border-bottom:1px solid #2a2925"><div style="font-size:14px;color:#8f8b80">{{ s.pre }}</div><div style="margin-top:6px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,52px);letter-spacing:-.03em;line-height:1;color:{{ s.c }}">{{ s.k }}</div><div style="margin-top:10px;font-size:16px;color:#c9c5ba;max-width:30ch">{{ s.d }}</div></div></sc-for>
 </div>
 </section>
+</div>
+</sc-if>
 <section style="padding:clamp(56px,8vw,120px) 0 0">
-<a href="#/work-with-us" style="display:inline-flex;align-items:center;min-height:56px;background:#ff4b23;color:#0b0b0a;padding:0 24px;text-decoration:none;font-size:18px;font-weight:500;white-space:nowrap" style-hover="background:#ece9e0;color:#0b0b0a">Book a workshop</a>
+<h2 style="margin:0;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.03em;line-height:1">Questions</h2>
+<div style="margin-top:clamp(24px,3vw,40px);border-top:1px solid #ece9e0;max-width:1000px">
+<sc-for list="{{ faqs }}" as="f" hint-placeholder-count="4"><div style="border-bottom:1px solid #2a2925">
+<button onClick="{{ f.toggle }}" aria-expanded="{{ f.aria }}" style="display:flex;justify-content:space-between;gap:24px;align-items:baseline;width:100%;text-align:left;background:none;border:0;color:#ece9e0;min-height:64px;padding:18px 0;cursor:pointer" style-hover="color:#ff4b23"><span style="font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(20px,2vw,26px);letter-spacing:-.01em;line-height:1.2">{{ f.q }}</span><span style="font-size:20px;flex:none">{{ f.sign }}</span></button>
+<sc-if value="{{ f.open }}" hint-placeholder-val="{{ false }}"><p style="margin:0 0 22px;max-width:60ch;font-size:18px;line-height:1.5;color:#c9c5ba">{{ f.a }}</p></sc-if>
+</div></sc-for>
+</div>
 </section>
 </div>
 </sc-if>
+
+
 
 <sc-if value="{{ isSources }}" hint-placeholder-val="{{ false }}">
 <section data-screen-label="Sources">
@@ -343,6 +326,14 @@ class Component extends DCLogic {
   scrollNet() { if (this.props.view !== "network") { this.netDone = false; return; } if (this.netDone) return; const el = document.getElementById("rd-network"); if (!el) return; this.netDone = true; setTimeout(() => window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 70), 60); }
   componentDidUpdate(pp) { this.scrollNet(); if (pp.tab !== this.props.tab && this.props.tab) this.setState({ tab: this.props.tab }); }
   componentWillUnmount() { clearInterval(this.poll); window.removeEventListener("resize", this.onResize); if (this.eng) this.eng.destroy(); }
+  // What we work on: per area, a Library search term, a Work topic and Library examples.
+  static AREA_EX = [["strategy", "Strategy", ["foundation-sprint", "decision-sprint"]], ["product", "Product", ["product-strategy-sprint", "design-sprint"]], ["brand", "Brand", ["brand-strategy-sprint", "positioning-workshop"]],
+    ["service", "Experience", ["service-design-sprint", "customer-journey-workshop"]], ["research", "Research", ["research-sprint", "assumption-mapping-workshop"]], ["futures", "Futures", ["foresight-sprint", "future-scenarios-workshop"]],
+    ["AI", "AI", ["ai-product-strategy-sprint", "ai-opportunity-workshop"]], ["go-to-market", "Business", ["gtm-sprint", "positioning-sprint"]], ["decision", "Business", ["decision-workshop", "opportunity-sprint"]]];
+  areaEx(i) {
+    const [, topic, ids] = Component.AREA_EX[i], L = window.RDL, w = (window.RD ? RD.work : []).find(x => (x.topics || []).includes(topic));
+    return (w ? [{ title: w.title, kind: "Work", href: "#/work/" + w.id }] : []).concat(L ? L.refs(ids).map(x => ({ title: x.title, kind: x.typeLabel, href: x.href })) : []);
+  }
   cycHost = el => {
     if (el === this.cycEl) return;
     if (this.eng) { this.eng.destroy(); this.eng = null; }
@@ -370,7 +361,7 @@ class Component extends DCLogic {
         ...(() => { const B = Component.BOARD, wide = S.w >= 900, mid = S.w >= 560, cols = wide ? 12 : mid ? 6 : 2, r = wide ? 1 : mid ? .6 : .3;
           const tape = i => ["18px", "42%", "60%", "24px", "50%"][i % 5];
           return { areaCols: "repeat(" + cols + ",minmax(0,1fr))", valCols: wide ? "repeat(12,minmax(0,1fr))" : "minmax(0,1fr)", areaPad: wide ? "20px 22px 26px" : "16px 16px 20px", valPad: wide ? "24px 26px 30px" : "20px 18px 24px",
-            areas: Component.AREAS.map(([k, g, d, q], i) => ({ k, g, d, q, href: "#/library?q=" + encodeURIComponent(k.split(" ")[0]), open: !!S.aOpen[i], sign: S.aOpen[i] ? "−" : "+", aria: S.aOpen[i] ? "true" : "false", toggle: () => this.setState(st => ({ aOpen: Object.assign({}, st.aOpen, { [i]: !st.aOpen[i] }) })), n: String(i + 1).padStart(2, "0"), gc: i === 0 ? "#ff4b23" : "#8f8b80", span: wide ? B.span[i] : mid ? 3 : 2, mt: wide ? B.mt[i] + "px" : mid ? (i % 2 ? "14px" : "0px") : "0px", rot: B.rot[i] * r + "deg", tape: tape(i), tapeRot: (i % 2 ? 3 : -4) + "deg", fs: mid ? "clamp(22px,2.2vw,32px)" : "19px" })),
+            areas: Component.AREAS.map(([k, g, d, q], i) => ({ k, g, d, q, href: "#/library?q=" + encodeURIComponent(Component.AREA_EX[i][0]), ex: this.areaEx(i), n: String(i + 1).padStart(2, "0"), gc: i === 0 ? "#ff4b23" : "#8f8b80", span: wide ? B.span[i] : mid ? 3 : 2, mt: wide ? B.mt[i] + "px" : mid ? (i % 2 ? "14px" : "0px") : "0px", rot: B.rot[i] * r + "deg", tape: tape(i), tapeRot: (i % 2 ? 3 : -4) + "deg", fs: mid ? "clamp(22px,2.2vw,32px)" : "19px" })),
             values: Component.VALUES.map(([k, d], i) => ({ k, d, n: String(i + 1).padStart(2, "0"), span: 6, mt: wide ? [0, 30, 8, 22][i] + "px" : "0px", rot: [.8, -1, -.5, .9][i] * (wide ? 1 : .3) + "deg", tape: tape(i + 2), tapeRot: (i % 2 ? -3 : 4) + "deg" })) }; })(),
         faqs: Component.FAQ.map(([q, ans], i) => { const open = !!S.faq[i]; return { q, a: ans, open, aria: open ? "true" : "false", sign: open ? "−" : "+", toggle: () => this.setState(st => ({ faq: Object.assign({}, st.faq, { [i]: !st.faq[i] }) })) }; }),
         links: [["LinkedIn", (RD.links || {}).linkedin, "_blank"], ["Substack", (RD.links || {}).substack, "_blank"], ["Book a workshop", "#/work-with-us", "_self"]].filter(l => l[1]).map(([label, href, target]) => ({ label, href, target })) });
@@ -393,9 +384,9 @@ class Component extends DCLogic {
     }
     if (v === "hub") {
       const titles = ids => L.refs(ids || []).map(x => x.title);
-      const W = RD.work.map(w => { const d = L.workD(w), sp = titles(w.relatedSprints); return { kind: "work", title: w.title, desc: w.question || w.descriptor, href: d.href, topics: w.topics || [], format: w.format, year: w.date ? w.date.slice(0, 4) : "",
+      const W = RD.work.map(w => { const d = L.workD(w), sp = titles(w.relatedSprints); return { kind: "work", shape: d.shape, seed: d.seed, title: w.title, desc: w.question || w.descriptor, href: d.href, topics: w.topics || [], format: w.format, year: w.date ? w.date.slice(0, 4) : "",
         meta: ["Work", (w.topics || []).join(" / "), sp[0]].filter(Boolean).join(" · "), hay: [w.title, w.descriptor, w.question, w.sector, w.type, (w.topics || []).join(" ")].concat(sp, titles(w.relatedFrameworks), titles(w.relatedMethods)).join(" ").toLowerCase() }; });
-      const N = RD.notes.slice().sort((x, y) => y.date.localeCompare(x.date)).map(n => { const d = L.noteD(n); return { kind: "notes", title: n.title, desc: n.dek, href: d.href, topics: n.topics || [n.topic], format: n.format, year: n.date.slice(0, 4),
+      const N = RD.notes.slice().sort((x, y) => y.date.localeCompare(x.date)).map(n => { const d = L.noteD(n); return { kind: "notes", shape: d.shape, seed: d.seed, title: n.title, desc: n.dek, href: d.href, topics: n.topics || [n.topic], format: n.format, year: n.date.slice(0, 4),
         meta: ["Notes", (n.topics || [n.topic]).join(" / "), n.date.slice(0, 4)].join(" · "), hay: [n.title, n.dek, n.topic, (n.body || []).join(" ")].concat(titles(n.related)).join(" ").toLowerCase() }; });
       const pool = S.tab === "work" ? W : S.tab === "notes" ? N : W.concat(N);
       const words = S.hq.trim().toLowerCase().split(/\s+/).filter(Boolean);

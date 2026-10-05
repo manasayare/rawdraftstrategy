@@ -1,4 +1,5 @@
-// Raw Draft cycle engine. RDCycle.mount(el, { onStage(i, phase) }) -> { goTo(i), destroy() }
+// Raw Draft cycle engine. RDCycle.mount(el, { onStage(i, phase), driven }) -> { goTo(i), setProgress(f), destroy() }
+// driven: time stands still until setProgress(0..1) moves it, e.g. from scroll. The visible state eases towards it.
 // One persistent set of nodes changes state: potential, creation (field expands), chaos (competing links), chaos/clarity (local binding),
 // clarity (nodes bind into units, units into bodies, bodies connect), cadence (circulation), a new disturbance, creation again.
 (function () {
@@ -58,6 +59,9 @@
 
   function stageOf(t) { if (t < T.cha) return [0, "Creation"]; if (t < T.osc) return [1, "Chaos"]; if (t < T.cla - 3) return [Math.sin((t - T.osc) * .7) > 0 ? 2 : 1, "Chaos ⇄ Clarity"]; if (t < T.cad) return [2, "Clarity"]; if (t < T.per) return [3, "Cadence"]; return [3, "A new disturbance"]; }
 
+  // One stage at a time, no back-and-forth, for scroll-driven use.
+  function simpleStage(t) { const i = t < T.cha + 1 ? 0 : t < (T.osc + T.cla) / 2 ? 1 : t < T.cad ? 2 : 3; return [i, ["Creation", "Chaos", "Clarity", "Cadence"][i]]; }
+
   function draw(ctx, S, P, t, W, H) {
     ctx.clearRect(0, 0, W, H);
     const { C, chaos, atomB, molB, centers, back, cx, cy } = S;
@@ -96,16 +100,19 @@
       frames.forEach((ft, k) => { ctx.save(); ctx.translate(vert ? 0 : k * fw, vert ? k * fh : 0); ctx.beginPath(); ctx.rect(0, 0, fw, fh); ctx.clip(); const s = build(fw, fh, true); draw(ctx, s, targets(s, ft), ft, fw, fh); ctx.restore();
         if (k) { ctx.strokeStyle = `rgba(${INK},.15)`; ctx.beginPath(); vert ? (ctx.moveTo(0, k * fh), ctx.lineTo(W, k * fh)) : (ctx.moveTo(k * fw, 0), ctx.lineTo(k * fw, H)); ctx.stroke(); } }); }
     const raw = () => (performance.now() - t0) / 1000 + off, wrap = x => ((x % T.end) + T.end) % T.end;
-    function now() { if (warp) { const u = clamp((performance.now() - warp.s) / warp.d, 0, 1); off = lerp(warp.from, warp.to, sm(u)) - (performance.now() - t0) / 1000; if (u >= 1) warp = null; } return wrap(raw()); }
+    const D0 = T.cre + .6, D1 = T.per - .6; let dTarget = D0, dT = D0;
+    function now() { if (opts.driven) return dT; if (warp) { const u = clamp((performance.now() - warp.s) / warp.d, 0, 1); off = lerp(warp.from, warp.to, sm(u)) - (performance.now() - t0) / 1000; if (u >= 1) warp = null; } return wrap(raw()); }
     function frame(ts) { if (destroyed) return; raf = vis ? requestAnimationFrame(frame) : 0; if (!S) return; ts = ts || performance.now(); const dt = lastF ? Math.min(.1, (ts - lastF) / 1000) : .016; lastF = ts;
+      if (opts.driven) dT += (dTarget - dT) * (1 - Math.exp(-dt * 3));
       const t = now(), tg = targets(S, t), k = 1 - Math.exp(-dt * 4), ka = 1 - Math.exp(-dt * 5);
       for (let i = 0; i < P.length; i++) { const p = P[i], q = tg[i], kk = t < T.cre + .3 && !warp ? 1 : k; p.x += (q.x - p.x) * kk; p.y += (q.y - p.y) * kk; p.a += (q.a - p.a) * ka; p.coh += (q.coh - p.coh) * ka; p.c1 += (q.c1 - p.c1) * ka; p.c2 += (q.c2 - p.c2) * ka; }
-      draw(ctx, S, P, t, W, H); const [i, ph] = stageOf(t); const key = i + ph; if (key !== lastStage) { lastStage = key; opts.onStage && opts.onStage(i, ph); } }
+      draw(ctx, S, P, t, W, H); const [i, ph] = opts.driven ? simpleStage(t) : stageOf(t); const key = i + ph; if (key !== lastStage) { lastStage = key; opts.onStage && opts.onStage(i, ph); } }
     const ro = new ResizeObserver(size); ro.observe(el); size(); if (!reduce) raf = requestAnimationFrame(frame);
     const io = new IntersectionObserver(es => { vis = es.some(e => e.isIntersecting); if (vis && !raf && !reduce) { lastF = 0; raf = requestAnimationFrame(frame); } }, { threshold: 0 }); io.observe(el);
     if (reduce) opts.onStage && opts.onStage(-1, "");
     return {
       // move through intervening states quickly instead of cutting, so the same system visibly transforms
+      setProgress(f) { dTarget = lerp(D0, D1, clamp(f, 0, 1)); },
       goTo(i) { if (reduce) return; const cur = raw(), base = cur - wrap(cur); let to = base + START[i]; if (to < cur - .5) to += T.end; warp = { from: cur, to, s: performance.now(), d: clamp((to - cur) * 90, 600, 2600) }; },
       destroy() { destroyed = true; cancelAnimationFrame(raf); ro.disconnect(); io.disconnect(); el.innerHTML = ""; }
     };

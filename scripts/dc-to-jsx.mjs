@@ -27,7 +27,7 @@ const PAGES = {
 };
 
 // Engine and data scripts, in the order Raw Draft.dc.html loads them.
-const ENGINE = ["rd-data.js", "rd-backlog.js", "rd-sprint-formats.js", "rd-network.js", "rd-builder.js", "rd-lib.js", "rd-cycle.js", "rd-qualify.js", "rd-ascii.js", "rd-structure.js", "rd-visual.js"];
+const ENGINE = ["rd-data.js", "rd-backlog.js", "rd-sprint-formats.js", "rd-network.js", "rd-builder.js", "rd-lib.js", "rd-cycle.js", "rd-cycle-scroll.js", "rd-uptime.js", "rd-ascii.js", "rd-structure.js", "rd-visual.js"];
 
 // Hash routing → path routing. Every replacement must match exactly once.
 const PATCHES = {

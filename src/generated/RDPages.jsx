@@ -19,6 +19,14 @@ class Component extends DCLogic {
   scrollNet() { if (this.props.view !== "network") { this.netDone = false; return; } if (this.netDone) return; const el = document.getElementById("rd-network"); if (!el) return; this.netDone = true; setTimeout(() => window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 70), 60); }
   componentDidUpdate(pp) { this.scrollNet(); if (pp.tab !== this.props.tab && this.props.tab) this.setState({ tab: this.props.tab }); }
   componentWillUnmount() { clearInterval(this.poll); window.removeEventListener("resize", this.onResize); if (this.eng) this.eng.destroy(); }
+  // What we work on: per area, a Library search term, a Work topic and Library examples.
+  static AREA_EX = [["strategy", "Strategy", ["foundation-sprint", "decision-sprint"]], ["product", "Product", ["product-strategy-sprint", "design-sprint"]], ["brand", "Brand", ["brand-strategy-sprint", "positioning-workshop"]],
+    ["service", "Experience", ["service-design-sprint", "customer-journey-workshop"]], ["research", "Research", ["research-sprint", "assumption-mapping-workshop"]], ["futures", "Futures", ["foresight-sprint", "future-scenarios-workshop"]],
+    ["AI", "AI", ["ai-product-strategy-sprint", "ai-opportunity-workshop"]], ["go-to-market", "Business", ["gtm-sprint", "positioning-sprint"]], ["decision", "Business", ["decision-workshop", "opportunity-sprint"]]];
+  areaEx(i) {
+    const [, topic, ids] = Component.AREA_EX[i], L = window.RDL, w = (window.RD ? RD.work : []).find(x => (x.topics || []).includes(topic));
+    return (w ? [{ title: w.title, kind: "Work", href: "#/work/" + w.id }] : []).concat(L ? L.refs(ids).map(x => ({ title: x.title, kind: x.typeLabel, href: x.href })) : []);
+  }
   cycHost = el => {
     if (el === this.cycEl) return;
     if (this.eng) { this.eng.destroy(); this.eng = null; }
@@ -46,7 +54,7 @@ class Component extends DCLogic {
         ...(() => { const B = Component.BOARD, wide = S.w >= 900, mid = S.w >= 560, cols = wide ? 12 : mid ? 6 : 2, r = wide ? 1 : mid ? .6 : .3;
           const tape = i => ["18px", "42%", "60%", "24px", "50%"][i % 5];
           return { areaCols: "repeat(" + cols + ",minmax(0,1fr))", valCols: wide ? "repeat(12,minmax(0,1fr))" : "minmax(0,1fr)", areaPad: wide ? "20px 22px 26px" : "16px 16px 20px", valPad: wide ? "24px 26px 30px" : "20px 18px 24px",
-            areas: Component.AREAS.map(([k, g, d, q], i) => ({ k, g, d, q, href: "#/library?q=" + encodeURIComponent(k.split(" ")[0]), open: !!S.aOpen[i], sign: S.aOpen[i] ? "−" : "+", aria: S.aOpen[i] ? "true" : "false", toggle: () => this.setState(st => ({ aOpen: Object.assign({}, st.aOpen, { [i]: !st.aOpen[i] }) })), n: String(i + 1).padStart(2, "0"), gc: i === 0 ? "#ff4b23" : "#8f8b80", span: wide ? B.span[i] : mid ? 3 : 2, mt: wide ? B.mt[i] + "px" : mid ? (i % 2 ? "14px" : "0px") : "0px", rot: B.rot[i] * r + "deg", tape: tape(i), tapeRot: (i % 2 ? 3 : -4) + "deg", fs: mid ? "clamp(22px,2.2vw,32px)" : "19px" })),
+            areas: Component.AREAS.map(([k, g, d, q], i) => ({ k, g, d, q, href: "#/library?q=" + encodeURIComponent(Component.AREA_EX[i][0]), ex: this.areaEx(i), n: String(i + 1).padStart(2, "0"), gc: i === 0 ? "#ff4b23" : "#8f8b80", span: wide ? B.span[i] : mid ? 3 : 2, mt: wide ? B.mt[i] + "px" : mid ? (i % 2 ? "14px" : "0px") : "0px", rot: B.rot[i] * r + "deg", tape: tape(i), tapeRot: (i % 2 ? 3 : -4) + "deg", fs: mid ? "clamp(22px,2.2vw,32px)" : "19px" })),
             values: Component.VALUES.map(([k, d], i) => ({ k, d, n: String(i + 1).padStart(2, "0"), span: 6, mt: wide ? [0, 30, 8, 22][i] + "px" : "0px", rot: [.8, -1, -.5, .9][i] * (wide ? 1 : .3) + "deg", tape: tape(i + 2), tapeRot: (i % 2 ? -3 : 4) + "deg" })) }; })(),
         faqs: Component.FAQ.map(([q, ans], i) => { const open = !!S.faq[i]; return { q, a: ans, open, aria: open ? "true" : "false", sign: open ? "−" : "+", toggle: () => this.setState(st => ({ faq: Object.assign({}, st.faq, { [i]: !st.faq[i] }) })) }; }),
         links: [["LinkedIn", (RD.links || {}).linkedin, "_blank"], ["Substack", (RD.links || {}).substack, "_blank"], ["Book a workshop", "#/work-with-us", "_self"]].filter(l => l[1]).map(([label, href, target]) => ({ label, href, target })) });
@@ -69,9 +77,9 @@ class Component extends DCLogic {
     }
     if (v === "hub") {
       const titles = ids => L.refs(ids || []).map(x => x.title);
-      const W = RD.work.map(w => { const d = L.workD(w), sp = titles(w.relatedSprints); return { kind: "work", title: w.title, desc: w.question || w.descriptor, href: d.href, topics: w.topics || [], format: w.format, year: w.date ? w.date.slice(0, 4) : "",
+      const W = RD.work.map(w => { const d = L.workD(w), sp = titles(w.relatedSprints); return { kind: "work", shape: d.shape, seed: d.seed, title: w.title, desc: w.question || w.descriptor, href: d.href, topics: w.topics || [], format: w.format, year: w.date ? w.date.slice(0, 4) : "",
         meta: ["Work", (w.topics || []).join(" / "), sp[0]].filter(Boolean).join(" · "), hay: [w.title, w.descriptor, w.question, w.sector, w.type, (w.topics || []).join(" ")].concat(sp, titles(w.relatedFrameworks), titles(w.relatedMethods)).join(" ").toLowerCase() }; });
-      const N = RD.notes.slice().sort((x, y) => y.date.localeCompare(x.date)).map(n => { const d = L.noteD(n); return { kind: "notes", title: n.title, desc: n.dek, href: d.href, topics: n.topics || [n.topic], format: n.format, year: n.date.slice(0, 4),
+      const N = RD.notes.slice().sort((x, y) => y.date.localeCompare(x.date)).map(n => { const d = L.noteD(n); return { kind: "notes", shape: d.shape, seed: d.seed, title: n.title, desc: n.dek, href: d.href, topics: n.topics || [n.topic], format: n.format, year: n.date.slice(0, 4),
         meta: ["Notes", (n.topics || [n.topic]).join(" / "), n.date.slice(0, 4)].join(" · "), hay: [n.title, n.dek, n.topic, (n.body || []).join(" ")].concat(titles(n.related)).join(" ").toLowerCase() }; });
       const pool = S.tab === "work" ? W : S.tab === "notes" ? N : W.concat(N);
       const words = S.hq.trim().toLowerCase().split(/\s+/).filter(Boolean);
@@ -174,33 +182,39 @@ Component.prototype.template = function (V) {
                   </div>
                 </>
               ) : null}
-              <div style={{"marginTop":"clamp(24px,3vw,40px)","borderTop":"1px solid #ece9e0"}}>
+              <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fill,minmax(min(100%,300px),1fr))","gap":"16px","marginTop":"clamp(24px,3vw,40px)"}}>
                 {dcList(V.results).map((r_3, $i3) => (
                   <React.Fragment key={$i3}>
-                    <a href={dcHref(r_3?.href)} style={dcCss(`display:grid;grid-template-columns:${dcStr(V.rowCols)};gap:8px clamp(20px,3vw,40px);align-items:baseline;padding:22px 0;border-bottom:1px solid #2a2925;color:#ece9e0;text-decoration:none`)} className="scp-hover-0">
-                      <span style={{"fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(24px,2.4vw,34px)","letterSpacing":"-.02em","lineHeight":"1.05","textWrap":"balance"}}>
-                        {dcText(r_3?.title)}
-                      </span>
-                      <span style={{"fontSize":"17px","lineHeight":"1.4","color":"#c9c5ba"}}>
-                        {dcText(r_3?.desc)}
-                      </span>
-                      <span style={{"fontSize":"14px","lineHeight":"1.5","color":"#8f8b80"}}>
-                        {dcText(r_3?.meta)}
+                    <a href={dcHref(r_3?.href)} style={{"display":"flex","flexDirection":"column","background":"#0f0f0e","border":"1px solid #2a2925","color":"#ece9e0","textDecoration":"none","transition":"border-color .2s"}} className="scp-hover-7">
+                      <rd-ascii key={[r_3?.shape, r_3?.seed].join("|")} shape={r_3?.shape} seed={r_3?.seed} style={{"display":"block","position":"relative","overflow":"hidden","width":"100%","aspectRatio":"16/10","borderBottom":"1px solid #2a2925"}}></rd-ascii>
+                      <span style={{"display":"flex","flexDirection":"column","gap":"8px","padding":"18px 18px 20px","flex":"1"}}>
+                        <span style={{"fontSize":"14px","color":"#8f8b80"}}>
+                          {dcText(r_3?.meta)}
+                        </span>
+                        <span style={{"fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(20px,1.8vw,24px)","letterSpacing":"-.015em","lineHeight":"1.12"}}>
+                          {dcText(r_3?.title)}
+                        </span>
+                        <span style={{"fontSize":"15px","color":"#8f8b80","lineHeight":"1.45"}}>
+                          {dcText(r_3?.desc)}
+                        </span>
+                        <span style={{"marginTop":"auto","paddingTop":"10px","fontSize":"15px","color":"#ff4b23"}}>
+                          {"Read →"}
+                        </span>
                       </span>
                     </a>
                   </React.Fragment>
                 ))}
-                {V.noResults ? (
-                  <>
-                    <div style={{"padding":"32px 0","fontSize":"17px","color":"#c9c5ba"}}>
-                      {"Nothing matches that yet. "}
-                      <button onClick={V.clearAll} style={{"background":"none","border":"0","color":"#ece9e0","borderBottom":"1px solid #ff4b23","padding":"0","cursor":"pointer","fontSize":"17px"}}>
-                        {"Clear search and filters"}
-                      </button>
-                    </div>
-                  </>
-                ) : null}
               </div>
+              {V.noResults ? (
+                <>
+                  <div style={{"padding":"32px 0","fontSize":"17px","color":"#c9c5ba"}}>
+                    {"Nothing matches that yet. "}
+                    <button onClick={V.clearAll} style={{"background":"none","border":"0","color":"#ece9e0","borderBottom":"1px solid #ff4b23","padding":"0","cursor":"pointer","fontSize":"17px"}}>
+                      {"Clear search and filters"}
+                    </button>
+                  </div>
+                </>
+              ) : null}
               <p style={{"margin":"16px 0 0","fontSize":"14px","color":"#8f8b80"}}>
                 {"Work entries are anonymised placeholders until real project notes are published."}
               </p>
@@ -624,53 +638,10 @@ Component.prototype.template = function (V) {
                 </div>
               </section>
               <section style={{"padding":"clamp(56px,8vw,120px) 0 0"}}>
-                <div style={{"display":"flex","justifyContent":"space-between","alignItems":"baseline","flexWrap":"wrap","gap":"8px 40px"}}>
-                  <h2 style={{"margin":"0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(32px,3.6vw,56px)","letterSpacing":"-.03em"}}>
-                    {"The cycle of creation"}
-                  </h2>
-                  <p style={{"margin":"0","fontSize":"17px","color":"#8f8b80"}}>
-                    {"Creation · Chaos · Clarity · Cadence"}
-                  </p>
-                </div>
-                <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.cycCols)};gap:24px clamp(24px,4vw,64px);align-items:center;margin-top:clamp(28px,4vw,56px)`)}>
-                  <div ref={V.cycHost} style={dcCss(`width:100%;height:${dcStr(V.cycH)};border-top:1px solid #2a2925;border-bottom:1px solid #2a2925`)}></div>
-                  <div aria-live="polite" style={{"minWidth":"0"}}>
-                    <div style={{"fontSize":"15px","color":"#8f8b80"}}>
-                      {dcText(V.cycNow?.label)}
-                    </div>
-                    <div style={dcCss(`margin-top:8px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:${dcStr(V.cycTitleSize)};letter-spacing:-.04em;line-height:.95;color:#ece9e0`)}>
-                      {dcText(V.cycNow?.title)}
-                    </div>
-                    <div lang="hi" style={{"marginTop":"10px","fontFamily":"'Tiro Devanagari Hindi','Noto Serif Devanagari',serif","fontSize":"clamp(22px,2vw,30px)","lineHeight":"1.2","color":"#8f8b80"}}>
-                      {dcText(V.cycNow?.dev)}
-                    </div>
-                    <p style={{"margin":"clamp(14px,2vw,24px) 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(22px,2.2vw,32px)","letterSpacing":"-.015em","lineHeight":"1.15","maxWidth":"22ch"}}>
-                      {dcText(V.cycNow?.statement)}
-                    </p>
-                    <p style={{"margin":"10px 0 0","fontSize":"17px","lineHeight":"1.45","color":"#c9c5ba","maxWidth":"40ch"}}>
-                      {dcText(V.cycNow?.support)}
-                    </p>
-                  </div>
-                </div>
-                <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.stageCols)};gap:16px 24px;margin-top:clamp(24px,3vw,40px)`)}>
-                  {dcList(V.stages).map((s_21, $i21) => (
-                    <React.Fragment key={$i21}>
-                      <button onClick={s_21?.pick} style={dcCss(`text-align:left;background:none;border:0;border-top:2px solid ${dcStr(s_21?.rule)};padding:12px 0 4px;color:#ece9e0;cursor:pointer;transition:border-color .4s`)}>
-                        <span style={{"display":"flex","justifyContent":"space-between","gap":"8px","fontSize":"14px","color":"#8f8b80"}}>
-                          <span>
-                            {dcText(s_21?.n)}
-                          </span>
-                          <span style={{"color":"#ff4b23"}}>
-                            {dcText(s_21?.loop)}
-                          </span>
-                        </span>
-                        <span style={dcCss(`display:block;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(20px,2vw,28px);letter-spacing:-.02em;margin-top:4px;color:${dcStr(s_21?.c)};transition:color .4s`)}>
-                          {dcText(s_21?.k)}
-                        </span>
-                      </button>
-                    </React.Fragment>
-                  ))}
-                </div>
+                <h2 style={{"margin":"0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(32px,3.6vw,56px)","letterSpacing":"-.03em"}}>
+                  {"The cycle of creation"}
+                </h2>
+                <rd-cycle-scroll style={{"marginTop":"clamp(20px,3vw,40px)"}}></rd-cycle-scroll>
                 <p style={{"margin":"clamp(28px,4vw,48px) 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(22px,2.4vw,34px)","letterSpacing":"-.015em","lineHeight":"1.2","maxWidth":"30ch"}}>
                   {"This is why we work in drafts. You make something. Reality pushes back. You structure what survives. Eventually the system can run."}
                 </p>
@@ -681,7 +652,7 @@ Component.prototype.template = function (V) {
                 </h2>
                 <div style={{"maxWidth":"52ch","fontSize":"19px","lineHeight":"1.5"}}>
                   <p style={{"margin":"0"}}>
-                    {"Every workshop or Sprint answers four things: the question, the room, the work and the output. Builder asks about them, chooses methods from the Library and sequences them. You can change all of it."}
+                    {"Every workshop or Sprint answers four things: the question, the room, the work and the output. In Builder you pick methods from the Library, sequence them and set the timing. Every part stays editable."}
                   </p>
                   <div style={{"display":"flex","flexWrap":"wrap","gap":"10px 22px","marginTop":"18px","fontSize":"16px"}}>
                     <a href="/builder" style={{"whiteSpace":"nowrap"}}>
@@ -699,49 +670,49 @@ Component.prototype.template = function (V) {
                     {"What we work on"}
                   </h2>
                   <p style={{"margin":"0","fontSize":"17px","color":"#8f8b80","maxWidth":"44ch"}}>
-                    {"Examples of questions Builder and Raw Draft help structure. Most touch several."}
+                    {"Areas we work in, with examples from the work and the Library. Most projects touch several."}
                   </p>
                 </div>
                 <div style={{"backgroundColor":"#111110","backgroundImage":"linear-gradient(rgba(236,233,224,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(236,233,224,.045) 1px,transparent 1px)","backgroundSize":"48px 48px","border":"1px solid #2a2925","padding":"clamp(20px,3.5vw,56px)"}}>
                   <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.areaCols)};gap:clamp(14px,2vw,28px) clamp(14px,2vw,24px);align-items:start`)}>
-                    {dcList(V.areas).map((a_22, $i22) => (
-                      <React.Fragment key={$i22}>
-                        <div data-card="1" tabIndex="0" style={dcCss(`grid-column:span ${dcStr(a_22?.span)};margin-top:${dcStr(a_22?.mt)};position:relative;background:#1a1917;border:1px solid #34332e;padding:${dcStr(V.areaPad)};transform:rotate(${dcStr(a_22?.rot)});transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;box-shadow:0 1px 0 rgba(0,0,0,.4);outline:none`)} className="scp-hover-j scp-focus-k">
-                          <span aria-hidden="true" style={dcCss(`position:absolute;top:-6px;left:${dcStr(a_22?.tape)};width:38px;height:12px;background:rgba(236,233,224,.13);transform:rotate(${dcStr(a_22?.tapeRot)})`)}></span>
+                    {dcList(V.areas).map((a_21, $i21) => (
+                      <React.Fragment key={$i21}>
+                        <div data-card="1" tabIndex="0" style={dcCss(`grid-column:span ${dcStr(a_21?.span)};margin-top:${dcStr(a_21?.mt)};position:relative;background:#1a1917;border:1px solid #34332e;padding:${dcStr(V.areaPad)};transform:rotate(${dcStr(a_21?.rot)});transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;box-shadow:0 1px 0 rgba(0,0,0,.4);outline:none`)} className="scp-hover-j scp-focus-k">
+                          <span aria-hidden="true" style={dcCss(`position:absolute;top:-6px;left:${dcStr(a_21?.tape)};width:38px;height:12px;background:rgba(236,233,224,.13);transform:rotate(${dcStr(a_21?.tapeRot)})`)}></span>
                           <div style={{"display":"flex","justifyContent":"space-between","gap":"12px","fontSize":"13px","color":"#8f8b80"}}>
                             <span>
-                              {dcText(a_22?.n)}
+                              {dcText(a_21?.n)}
                             </span>
-                            <span style={dcCss(`color:${dcStr(a_22?.gc)}`)}>
-                              {dcText(a_22?.g)}
+                            <span style={dcCss(`color:${dcStr(a_21?.gc)}`)}>
+                              {dcText(a_21?.g)}
                             </span>
                           </div>
-                          <div style={dcCss(`margin-top:clamp(16px,2vw,28px);font-family:'Clash Display',sans-serif;font-weight:500;font-size:${dcStr(a_22?.fs)};letter-spacing:-.02em;line-height:1.02;text-wrap:balance`)}>
-                            {dcText(a_22?.k)}
+                          <div style={dcCss(`margin-top:clamp(16px,2vw,28px);font-family:'Clash Display',sans-serif;font-weight:500;font-size:${dcStr(a_21?.fs)};letter-spacing:-.02em;line-height:1.02;text-wrap:balance`)}>
+                            {dcText(a_21?.k)}
                           </div>
                           <p style={{"margin":"10px 0 0","fontSize":"15px","lineHeight":"1.45","color":"#c9c5ba"}}>
-                            {dcText(a_22?.d)}
+                            {dcText(a_21?.d)}
                           </p>
-                          <button onClick={a_22?.toggle} aria-expanded={a_22?.aria} style={{"display":"flex","justifyContent":"space-between","width":"100%","marginTop":"12px","background":"none","border":"0","borderTop":"1px solid #2a2925","color":"#8f8b80","minHeight":"40px","padding":"8px 0 0","cursor":"pointer","fontSize":"13px","textAlign":"left"}} className="scp-hover-1">
-                            <span>
-                              {"Typical question"}
-                            </span>
-                            <span>
-                              {dcText(a_22?.sign)}
-                            </span>
-                          </button>
-                          {a_22?.open ? (
-                            <>
-                              <p style={{"margin":"6px 0 0","fontSize":"16px","lineHeight":"1.35","color":"#ece9e0"}}>
-                                {"“"}
-                                {dcText(a_22?.q)}
-                                {"”"}
-                              </p>
-                              <a href={dcHref(a_22?.href)} style={{"display":"inline-flex","alignItems":"center","minHeight":"36px","marginTop":"4px","fontSize":"14px","whiteSpace":"nowrap"}}>
-                                {"Find methods for this →"}
-                              </a>
-                            </>
-                          ) : null}
+                          <div style={{"marginTop":"12px","paddingTop":"8px","borderTop":"1px solid #2a2925","fontSize":"12px","letterSpacing":".06em","color":"#8f8b80"}}>
+                            {"EXAMPLES"}
+                          </div>
+                          <div style={{"display":"flex","flexDirection":"column","marginTop":"2px"}}>
+                            {dcList(a_21?.ex).map((e_22, $i22) => (
+                              <React.Fragment key={$i22}>
+                                <a href={dcHref(e_22?.href)} style={{"display":"flex","justifyContent":"space-between","gap":"12px","alignItems":"baseline","padding":"7px 0","borderBottom":"1px solid #2a2925","color":"#ece9e0","textDecoration":"none","fontSize":"15px","lineHeight":"1.3"}} className="scp-hover-0">
+                                  <span>
+                                    {dcText(e_22?.title)}
+                                  </span>
+                                  <span style={{"flex":"none","fontSize":"12px","color":"#8f8b80"}}>
+                                    {dcText(e_22?.kind)}
+                                  </span>
+                                </a>
+                              </React.Fragment>
+                            ))}
+                          </div>
+                          <a href={dcHref(a_21?.href)} style={{"display":"inline-flex","alignItems":"center","minHeight":"36px","marginTop":"4px","fontSize":"14px","whiteSpace":"nowrap"}}>
+                            {"More in the Library →"}
+                          </a>
                         </div>
                       </React.Fragment>
                     ))}
@@ -759,11 +730,7 @@ Component.prototype.template = function (V) {
                 </div>
                 <div style={{"maxWidth":"52ch"}}>
                   <p style={{"margin":"0","fontSize":"19px","lineHeight":"1.5"}}>
-                    {"Manas trained in mechanical engineering and industrial design, and has worked in product strategy and experience design across enterprise systems, startups, AI, financial services and public systems. He designs and runs the workshops and sprints, and brings in "}
-                    <a href="/network">
-                      {"specialists from the network"}
-                    </a>
-                    {" when a question needs them."}
+                    {"Manas trained in mechanical engineering and industrial design, and has worked in product strategy and experience design across enterprise systems, startups, AI, financial services and public systems. He designs and runs the workshops and sprints, and brings in specialists from the network when a question needs them."}
                   </p>
                   <div style={{"display":"flex","flexWrap":"wrap","gap":"4px 24px","marginTop":"20px","fontSize":"16px"}}>
                     {dcList(V.links).map((l_23, $i23) => (
@@ -776,26 +743,169 @@ Component.prototype.template = function (V) {
                   </div>
                 </div>
               </section>
+              {V.isNetwork ? (
+                <>
+                  <div data-screen-label="Network" id="rd-network" style={{"paddingTop":"clamp(56px,8vw,120px)"}}>
+                    <section style={{"maxWidth":"1100px","borderTop":"1px solid #ece9e0","paddingTop":"clamp(28px,3vw,44px)"}}>
+                      <div style={{"fontSize":"15px","color":"#8f8b80"}}>
+                        {"Network"}
+                      </div>
+                      <h2 style={{"margin":"12px 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(40px,6vw,96px)","letterSpacing":"-.045em","lineHeight":".9"}}>
+                        {"The practice stays small."}
+                        <br />
+                        <span style={{"color":"#8f8b80"}}>
+                          {"The field around it does not."}
+                        </span>
+                      </h2>
+                      <p style={{"margin":"clamp(24px,3vw,40px) 0 0","maxWidth":"50ch","fontSize":"clamp(18px,1.6vw,22px)","lineHeight":"1.45"}}>
+                        {"We bring in the right people when the question needs them. Advisors shape the thinking, collaborators join the work, partners help build it."}
+                      </p>
+                    </section>
+                    {dcList(V.netGroups).map((g_24, $i24) => (
+                      <React.Fragment key={$i24}>
+                        <section style={{"padding":"clamp(56px,8vw,120px) 0 0"}}>
+                          <div style={{"display":"flex","justifyContent":"space-between","alignItems":"baseline","flexWrap":"wrap","gap":"8px 40px","marginBottom":"clamp(20px,3vw,32px)"}}>
+                            <h2 style={{"margin":"0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(32px,3.6vw,56px)","letterSpacing":"-.03em","lineHeight":"1"}}>
+                              {dcText(g_24?.title)}
+                            </h2>
+                            <p style={{"margin":"0","fontSize":"17px","color":"#8f8b80","maxWidth":"46ch"}}>
+                              {dcText(g_24?.d)}
+                            </p>
+                          </div>
+                          <div style={{"backgroundColor":"#111110","backgroundImage":"linear-gradient(rgba(236,233,224,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(236,233,224,.045) 1px,transparent 1px)","backgroundSize":"48px 48px","border":"1px solid #2a2925","padding":"clamp(20px,3.5vw,56px)"}}>
+                            <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.netCols)};gap:clamp(14px,2vw,28px) clamp(14px,2vw,24px);align-items:start`)}>
+                              {dcList(g_24?.cards).map((x_25, $i25) => (
+                                <React.Fragment key={$i25}>
+                                  <div data-card="1" style={dcCss(`margin-top:${dcStr(x_25?.mt)};position:relative;background:#1a1917;border:1px solid #34332e;padding:20px 20px 22px;transform:rotate(${dcStr(x_25?.rot)});transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;box-shadow:0 1px 0 rgba(0,0,0,.4)`)} className="scp-hover-j">
+                                    <span aria-hidden="true" style={dcCss(`position:absolute;top:-6px;left:${dcStr(x_25?.tape)};width:38px;height:12px;background:rgba(236,233,224,.13);transform:rotate(${dcStr(x_25?.tapeRot)})`)}></span>
+                                    <div style={{"display":"flex","justifyContent":"space-between","alignItems":"flex-start","gap":"12px"}}>
+                                      <div style={{"display":"flex","gap":"12px","alignItems":"center","minWidth":"0"}}>
+                                        {x_25?.hasImg ? (
+                                          <>
+                                            <img src={x_25?.img} alt="" style={dcCss(`width:40px;height:40px;object-fit:${dcStr(x_25?.fit)};filter:grayscale(1);opacity:.85;flex:none`)} />
+                                          </>
+                                        ) : null}
+                                        <span style={{"fontSize":"13px","color":"#8f8b80"}}>
+                                          {dcText(x_25?.role)}
+                                        </span>
+                                      </div>
+                                      {x_25?.hasLink ? (
+                                        <>
+                                          <a href={dcHref(x_25?.link)} target="_blank" rel="noopener" aria-label={x_25?.linkLabel} style={{"flex":"none","display":"inline-flex","alignItems":"center","justifyContent":"center","minWidth":"32px","height":"32px","border":"1px solid #4a4843","color":"#ece9e0","fontSize":"12px","fontWeight":"700","textDecoration":"none"}} className="scp-hover-g">
+                                            {dcText(x_25?.glyph)}
+                                          </a>
+                                        </>
+                                      ) : null}
+                                      {x_25?.noLink ? (
+                                        <>
+                                          <span aria-hidden="true" style={{"flex":"none","display":"inline-flex","alignItems":"center","justifyContent":"center","minWidth":"32px","height":"32px","border":"1px dashed #4a4843","color":"#5a5850","fontSize":"12px","fontWeight":"700"}}>
+                                            {dcText(x_25?.glyph)}
+                                          </span>
+                                        </>
+                                      ) : null}
+                                    </div>
+                                    <div style={{"marginTop":"22px","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(22px,2vw,28px)","letterSpacing":"-.02em","lineHeight":"1.05"}}>
+                                      {dcText(x_25?.name)}
+                                    </div>
+                                    <p style={{"margin":"10px 0 0","fontSize":"15px","lineHeight":"1.45","color":"#c9c5ba"}}>
+                                      {dcText(x_25?.d)}
+                                    </p>
+                                    {x_25?.placeholder ? (
+                                      <>
+                                        <div style={{"marginTop":"10px","fontSize":"12px","color":"#ff4b23"}}>
+                                          {"Placeholder record"}
+                                        </div>
+                                      </>
+                                    ) : null}
+                                  </div>
+                                </React.Fragment>
+                              ))}
+                            </div>
+                          </div>
+                        </section>
+                      </React.Fragment>
+                    ))}
+                    <section style={{"padding":"clamp(56px,8vw,120px) 0 0"}}>
+                      <div style={{"marginBottom":"clamp(20px,3vw,32px)"}}>
+                        <h2 style={{"margin":"0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(32px,3.6vw,56px)","letterSpacing":"-.03em","lineHeight":"1"}}>
+                          {"Worked with"}
+                        </h2>
+                      </div>
+                      {V.hasWorked ? (
+                        <>
+                          <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fill,minmax(min(100%,180px),1fr))","borderTop":"1px solid #2a2925","borderLeft":"1px solid #2a2925"}}>
+                            {dcList(V.worked).map((o_26, $i26) => (
+                              <React.Fragment key={$i26}>
+                                <a href={dcHref(o_26?.url)} target="_blank" rel="noopener" style={{"display":"flex","alignItems":"center","justifyContent":"center","minHeight":"110px","padding":"16px","borderRight":"1px solid #2a2925","borderBottom":"1px solid #2a2925","color":"#8f8b80","opacity":".7","textDecoration":"none","fontSize":"16px","textAlign":"center"}} className="scp-hover-l">
+                                  {dcText(o_26?.name)}
+                                </a>
+                              </React.Fragment>
+                            ))}
+                          </div>
+                        </>
+                      ) : null}
+                      {V.noWorked ? (
+                        <>
+                          <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fill,minmax(min(100%,180px),1fr))","borderTop":"1px dashed #2a2925","borderLeft":"1px dashed #2a2925"}}>
+                            {dcList(V.workedSlots).map((o_27, $i27) => (
+                              <React.Fragment key={$i27}>
+                                <div style={{"minHeight":"110px","borderRight":"1px dashed #2a2925","borderBottom":"1px dashed #2a2925"}}></div>
+                              </React.Fragment>
+                            ))}
+                          </div>
+                          <p style={{"margin":"14px 0 0","fontSize":"15px","color":"#8f8b80"}}>
+                            {"Organisations are listed here once the work is confirmed."}
+                          </p>
+                        </>
+                      ) : null}
+                    </section>
+                    <section style={{"padding":"clamp(56px,8vw,120px) 0 0"}}>
+                      <div style={{"marginBottom":"clamp(24px,3vw,40px)"}}>
+                        <h2 style={{"margin":"0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(32px,3.6vw,56px)","letterSpacing":"-.03em","lineHeight":"1"}}>
+                          {"How the network works"}
+                        </h2>
+                      </div>
+                      <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(min(100%,240px),1fr))","borderTop":"1px solid #ece9e0"}}>
+                        {dcList(V.netSteps).map((s_28, $i28) => (
+                          <React.Fragment key={$i28}>
+                            <div style={{"padding":"20px 24px 24px 0","borderBottom":"1px solid #2a2925"}}>
+                              <div style={{"fontSize":"14px","color":"#8f8b80"}}>
+                                {dcText(s_28?.pre)}
+                              </div>
+                              <div style={dcCss(`margin-top:6px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,52px);letter-spacing:-.03em;line-height:1;color:${dcStr(s_28?.c)}`)}>
+                                {dcText(s_28?.k)}
+                              </div>
+                              <div style={{"marginTop":"10px","fontSize":"16px","color":"#c9c5ba","maxWidth":"30ch"}}>
+                                {dcText(s_28?.d)}
+                              </div>
+                            </div>
+                          </React.Fragment>
+                        ))}
+                      </div>
+                    </section>
+                  </div>
+                </>
+              ) : null}
               <section style={{"padding":"clamp(56px,8vw,120px) 0 0"}}>
                 <h2 style={{"margin":"0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(32px,3.6vw,56px)","letterSpacing":"-.03em","lineHeight":"1"}}>
                   {"Questions"}
                 </h2>
                 <div style={{"marginTop":"clamp(24px,3vw,40px)","borderTop":"1px solid #ece9e0","maxWidth":"1000px"}}>
-                  {dcList(V.faqs).map((f_24, $i24) => (
-                    <React.Fragment key={$i24}>
+                  {dcList(V.faqs).map((f_29, $i29) => (
+                    <React.Fragment key={$i29}>
                       <div style={{"borderBottom":"1px solid #2a2925"}}>
-                        <button onClick={f_24?.toggle} aria-expanded={f_24?.aria} style={{"display":"flex","justifyContent":"space-between","gap":"24px","alignItems":"baseline","width":"100%","textAlign":"left","background":"none","border":"0","color":"#ece9e0","minHeight":"64px","padding":"18px 0","cursor":"pointer"}} className="scp-hover-0">
+                        <button onClick={f_29?.toggle} aria-expanded={f_29?.aria} style={{"display":"flex","justifyContent":"space-between","gap":"24px","alignItems":"baseline","width":"100%","textAlign":"left","background":"none","border":"0","color":"#ece9e0","minHeight":"64px","padding":"18px 0","cursor":"pointer"}} className="scp-hover-0">
                           <span style={{"fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(20px,2vw,26px)","letterSpacing":"-.01em","lineHeight":"1.2"}}>
-                            {dcText(f_24?.q)}
+                            {dcText(f_29?.q)}
                           </span>
                           <span style={{"fontSize":"20px","flex":"none"}}>
-                            {dcText(f_24?.sign)}
+                            {dcText(f_29?.sign)}
                           </span>
                         </button>
-                        {f_24?.open ? (
+                        {f_29?.open ? (
                           <>
                             <p style={{"margin":"0 0 22px","maxWidth":"60ch","fontSize":"18px","lineHeight":"1.5","color":"#c9c5ba"}}>
-                              {dcText(f_24?.a)}
+                              {dcText(f_29?.a)}
                             </p>
                           </>
                         ) : null}
@@ -803,154 +913,6 @@ Component.prototype.template = function (V) {
                     </React.Fragment>
                   ))}
                 </div>
-              </section>
-            </div>
-          </>
-        ) : null}
-        {V.isNetwork ? (
-          <>
-            <div data-screen-label="Network" id="rd-network" style={{"paddingTop":"clamp(64px,9vw,140px)"}}>
-              <section style={{"maxWidth":"1100px","borderTop":"1px solid #ece9e0","paddingTop":"clamp(28px,3vw,44px)"}}>
-                <div style={{"fontSize":"15px","color":"#8f8b80"}}>
-                  {"Network"}
-                </div>
-                <h2 style={{"margin":"12px 0 0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(40px,6vw,96px)","letterSpacing":"-.045em","lineHeight":".9"}}>
-                  {"The practice stays small."}
-                  <br />
-                  <span style={{"color":"#8f8b80"}}>
-                    {"The field around it does not."}
-                  </span>
-                </h2>
-                <p style={{"margin":"clamp(24px,3vw,40px) 0 0","maxWidth":"50ch","fontSize":"clamp(18px,1.6vw,22px)","lineHeight":"1.45"}}>
-                  {"We bring in the right people when the question needs them. Advisors shape the thinking, collaborators join the work, partners help build it."}
-                </p>
-              </section>
-              {dcList(V.netGroups).map((g_25, $i25) => (
-                <React.Fragment key={$i25}>
-                  <section style={{"padding":"clamp(56px,8vw,120px) 0 0"}}>
-                    <div style={{"display":"flex","justifyContent":"space-between","alignItems":"baseline","flexWrap":"wrap","gap":"8px 40px","marginBottom":"clamp(20px,3vw,32px)"}}>
-                      <h2 style={{"margin":"0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(32px,3.6vw,56px)","letterSpacing":"-.03em","lineHeight":"1"}}>
-                        {dcText(g_25?.title)}
-                      </h2>
-                      <p style={{"margin":"0","fontSize":"17px","color":"#8f8b80","maxWidth":"46ch"}}>
-                        {dcText(g_25?.d)}
-                      </p>
-                    </div>
-                    <div style={{"backgroundColor":"#111110","backgroundImage":"linear-gradient(rgba(236,233,224,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(236,233,224,.045) 1px,transparent 1px)","backgroundSize":"48px 48px","border":"1px solid #2a2925","padding":"clamp(20px,3.5vw,56px)"}}>
-                      <div style={dcCss(`display:grid;grid-template-columns:${dcStr(V.netCols)};gap:clamp(14px,2vw,28px) clamp(14px,2vw,24px);align-items:start`)}>
-                        {dcList(g_25?.cards).map((x_26, $i26) => (
-                          <React.Fragment key={$i26}>
-                            <div data-card="1" style={dcCss(`margin-top:${dcStr(x_26?.mt)};position:relative;background:#1a1917;border:1px solid #34332e;padding:20px 20px 22px;transform:rotate(${dcStr(x_26?.rot)});transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;box-shadow:0 1px 0 rgba(0,0,0,.4)`)} className="scp-hover-j">
-                              <span aria-hidden="true" style={dcCss(`position:absolute;top:-6px;left:${dcStr(x_26?.tape)};width:38px;height:12px;background:rgba(236,233,224,.13);transform:rotate(${dcStr(x_26?.tapeRot)})`)}></span>
-                              <div style={{"display":"flex","justifyContent":"space-between","alignItems":"flex-start","gap":"12px"}}>
-                                <div style={{"display":"flex","gap":"12px","alignItems":"center","minWidth":"0"}}>
-                                  {x_26?.hasImg ? (
-                                    <>
-                                      <img src={x_26?.img} alt="" style={dcCss(`width:40px;height:40px;object-fit:${dcStr(x_26?.fit)};filter:grayscale(1);opacity:.85;flex:none`)} />
-                                    </>
-                                  ) : null}
-                                  <span style={{"fontSize":"13px","color":"#8f8b80"}}>
-                                    {dcText(x_26?.role)}
-                                  </span>
-                                </div>
-                                {x_26?.hasLink ? (
-                                  <>
-                                    <a href={dcHref(x_26?.link)} target="_blank" rel="noopener" aria-label={x_26?.linkLabel} style={{"flex":"none","display":"inline-flex","alignItems":"center","justifyContent":"center","minWidth":"32px","height":"32px","border":"1px solid #4a4843","color":"#ece9e0","fontSize":"12px","fontWeight":"700","textDecoration":"none"}} className="scp-hover-g">
-                                      {dcText(x_26?.glyph)}
-                                    </a>
-                                  </>
-                                ) : null}
-                                {x_26?.noLink ? (
-                                  <>
-                                    <span aria-hidden="true" style={{"flex":"none","display":"inline-flex","alignItems":"center","justifyContent":"center","minWidth":"32px","height":"32px","border":"1px dashed #4a4843","color":"#5a5850","fontSize":"12px","fontWeight":"700"}}>
-                                      {dcText(x_26?.glyph)}
-                                    </span>
-                                  </>
-                                ) : null}
-                              </div>
-                              <div style={{"marginTop":"22px","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(22px,2vw,28px)","letterSpacing":"-.02em","lineHeight":"1.05"}}>
-                                {dcText(x_26?.name)}
-                              </div>
-                              <p style={{"margin":"10px 0 0","fontSize":"15px","lineHeight":"1.45","color":"#c9c5ba"}}>
-                                {dcText(x_26?.d)}
-                              </p>
-                              {x_26?.placeholder ? (
-                                <>
-                                  <div style={{"marginTop":"10px","fontSize":"12px","color":"#ff4b23"}}>
-                                    {"Placeholder record"}
-                                  </div>
-                                </>
-                              ) : null}
-                            </div>
-                          </React.Fragment>
-                        ))}
-                      </div>
-                    </div>
-                  </section>
-                </React.Fragment>
-              ))}
-              <section style={{"padding":"clamp(56px,8vw,120px) 0 0"}}>
-                <div style={{"marginBottom":"clamp(20px,3vw,32px)"}}>
-                  <h2 style={{"margin":"0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(32px,3.6vw,56px)","letterSpacing":"-.03em","lineHeight":"1"}}>
-                    {"Worked with"}
-                  </h2>
-                </div>
-                {V.hasWorked ? (
-                  <>
-                    <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fill,minmax(min(100%,180px),1fr))","borderTop":"1px solid #2a2925","borderLeft":"1px solid #2a2925"}}>
-                      {dcList(V.worked).map((o_27, $i27) => (
-                        <React.Fragment key={$i27}>
-                          <a href={dcHref(o_27?.url)} target="_blank" rel="noopener" style={{"display":"flex","alignItems":"center","justifyContent":"center","minHeight":"110px","padding":"16px","borderRight":"1px solid #2a2925","borderBottom":"1px solid #2a2925","color":"#8f8b80","opacity":".7","textDecoration":"none","fontSize":"16px","textAlign":"center"}} className="scp-hover-l">
-                            {dcText(o_27?.name)}
-                          </a>
-                        </React.Fragment>
-                      ))}
-                    </div>
-                  </>
-                ) : null}
-                {V.noWorked ? (
-                  <>
-                    <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fill,minmax(min(100%,180px),1fr))","borderTop":"1px dashed #2a2925","borderLeft":"1px dashed #2a2925"}}>
-                      {dcList(V.workedSlots).map((o_28, $i28) => (
-                        <React.Fragment key={$i28}>
-                          <div style={{"minHeight":"110px","borderRight":"1px dashed #2a2925","borderBottom":"1px dashed #2a2925"}}></div>
-                        </React.Fragment>
-                      ))}
-                    </div>
-                    <p style={{"margin":"14px 0 0","fontSize":"15px","color":"#8f8b80"}}>
-                      {"Organisations are listed here once the work is confirmed."}
-                    </p>
-                  </>
-                ) : null}
-              </section>
-              <section style={{"padding":"clamp(56px,8vw,120px) 0 0"}}>
-                <div style={{"marginBottom":"clamp(24px,3vw,40px)"}}>
-                  <h2 style={{"margin":"0","fontFamily":"'Clash Display',sans-serif","fontWeight":"500","fontSize":"clamp(32px,3.6vw,56px)","letterSpacing":"-.03em","lineHeight":"1"}}>
-                    {"How the network works"}
-                  </h2>
-                </div>
-                <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit,minmax(min(100%,240px),1fr))","borderTop":"1px solid #ece9e0"}}>
-                  {dcList(V.netSteps).map((s_29, $i29) => (
-                    <React.Fragment key={$i29}>
-                      <div style={{"padding":"20px 24px 24px 0","borderBottom":"1px solid #2a2925"}}>
-                        <div style={{"fontSize":"14px","color":"#8f8b80"}}>
-                          {dcText(s_29?.pre)}
-                        </div>
-                        <div style={dcCss(`margin-top:6px;font-family:'Clash Display',sans-serif;font-weight:500;font-size:clamp(32px,3.6vw,52px);letter-spacing:-.03em;line-height:1;color:${dcStr(s_29?.c)}`)}>
-                          {dcText(s_29?.k)}
-                        </div>
-                        <div style={{"marginTop":"10px","fontSize":"16px","color":"#c9c5ba","maxWidth":"30ch"}}>
-                          {dcText(s_29?.d)}
-                        </div>
-                      </div>
-                    </React.Fragment>
-                  ))}
-                </div>
-              </section>
-              <section style={{"padding":"clamp(56px,8vw,120px) 0 0"}}>
-                <a href="/work-with-us" style={{"display":"inline-flex","alignItems":"center","minHeight":"56px","background":"#ff4b23","color":"#0b0b0a","padding":"0 24px","textDecoration":"none","fontSize":"18px","fontWeight":"500","whiteSpace":"nowrap"}} className="scp-hover-2">
-                  {"Book a workshop"}
-                </a>
               </section>
             </div>
           </>
